@@ -1,2 +1,9 @@
-# Project exclude paths
-/out/
+# For IntelliJ projects
+.idea/
+out/
+*.iml
+META-INF/
+
+
+# For testing and helper classes
+Main.java
