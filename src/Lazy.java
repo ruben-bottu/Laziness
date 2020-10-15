@@ -3,20 +3,20 @@ import java.util.function.Supplier;
 public class Lazy<T> {
     private boolean evaluated;
     private T value;
-    private final Supplier<T> func;
+    private final Supplier<T> function;
 
-    private Lazy(Supplier<T> func) {
+    private Lazy(Supplier<T> function) {
         this.evaluated = false;
-        this.func = func;
+        this.function = function;
     }
 
-    public static <T> Lazy<T> of(Supplier<T> func) {
-        return new Lazy<>(func);
+    public static <T> Lazy<T> of(Supplier<T> function) {
+        return new Lazy<>(function);
     }
 
     public T value() {
         if (!evaluated) {
-            value = func.get();
+            value = function.get();
             evaluated = true;
         }
         return value;

@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-public abstract class LazyList<E> {
+public abstract class LazyList<E> implements Iterable<E> {
     public final Lazy<E> value;
     public final Lazy<LazyList<E>> tail;
 
@@ -14,15 +14,26 @@ public abstract class LazyList<E> {
         this.tail = tail;
     }
 
-    private static <E> LazyList<E> ofHelper(Iterator<? extends E> iterator) {
+    private static <E> LazyList<E> concat(Iterator<E> iterator, LazyList<E> elements) {
+        if (iterator.hasNext()) {
+            return NormalNode.of(
+                    Lazy.of(iterator::next),
+                    Lazy.of(() -> concat(iterator, elements))
+            );
+        }
+        return elements;
+    }
+
+    /*private static <E> LazyList<E> ofHelper(Iterator<E> iterator) {
         if (iterator.hasNext()) {
             return NormalNode.of(Lazy.of(iterator::next), Lazy.of(() -> ofHelper(iterator)));
         }
         return EndNode.empty();
-    }
+    }*/
 
-    public static <E> LazyList<E> of(Iterable<? extends E> elements) {
-        return ofHelper(elements.iterator());
+    public static <E> LazyList<E> of(Iterable<E> elements) {
+        //return ofHelper(elements.iterator());
+        return concat(elements.iterator(), EndNode.empty());
     }
 
     @SafeVarargs
@@ -30,18 +41,45 @@ public abstract class LazyList<E> {
         return LazyList.of(Arrays.asList(elements));
     }
 
+    /*public LazyList<E> concat(LazyList<E> elements) {
+        return none() ? elements :
+                NormalNode.of(value, Lazy.of(() -> tail.value().concat(elements)));
+    }*/
+
+    /*public LazyList<E> concat(Iterable<E> elements) {
+        return none() ? LazyList.of(elements) :
+                NormalNode.of(value, Lazy.of(() -> tail.value().concat(elements)));
+    }*/
+
+    public LazyList<E> concat(Iterable<E> elements) {
+        LazyList<E> partTwo = (elements instanceof LazyList ? (LazyList<E>) elements : LazyList.of(elements));
+        return none() ? partTwo :
+                NormalNode.of(value, Lazy.of(() -> tail.value().concat(elements)));
+    }
+
+    public abstract boolean any();
+
+    public boolean none() {
+        return !any();
+    }
+
     public abstract <R> LazyList<R> map(Function<E, R> transform);
 
     public abstract LazyList<E> filter(Predicate<E> predicate);
 
     private List<E> toListHelper(List<E> result) {
-        if (this instanceof EndNode) return result;
+        if (none()) return result;
         result.add(value.value());
         return tail.value().toListHelper(result);
     }
 
     public List<E> toList() {
         return toListHelper(new ArrayList<>());
+    }
+
+    @Override
+    public Iterator<E> iterator() {
+        return LazyListIterator.of(this);
     }
 
 
@@ -54,6 +92,11 @@ public abstract class LazyList<E> {
 
         public static <E> LazyList<E> of(Lazy<E> value, Lazy<LazyList<E>> tail) {
             return new NormalNode<>(value, tail);
+        }
+
+        @Override
+        public boolean any() {
+            return true;
         }
 
         @Override
@@ -82,6 +125,11 @@ public abstract class LazyList<E> {
 
         public static <E> LazyList<E> empty() {
             return new EndNode<>(null, null);
+        }
+
+        @Override
+        public boolean any() {
+            return false;
         }
 
         @Override
