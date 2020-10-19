@@ -1,3 +1,5 @@
+package domain;
+
 import java.util.function.Supplier;
 
 public class Lazy<T> {

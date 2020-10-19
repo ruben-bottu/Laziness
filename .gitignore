@@ -7,6 +7,4 @@ META-INF/
 
 # For testing and helper classes
 Main.java
-Animal.java
-Dog.java
 LazyList UML.xml

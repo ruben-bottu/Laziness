@@ -1,3 +1,5 @@
+package domain;
+
 import java.util.Iterator;
 
 public class LazyListIterator<E> implements Iterator<E> {

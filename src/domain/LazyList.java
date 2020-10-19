@@ -1,3 +1,5 @@
+package domain;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -40,6 +42,25 @@ public abstract class LazyList<E> implements Iterable<E> {
     public static <E> LazyList<E> of(E... elements) {
         return LazyList.of(Arrays.asList(elements));
     }
+
+    // werkt niet
+    public E get(int index) {
+        if (index == 0) return value.value();
+        return tail.value().get(index - 1);
+    }
+
+    public E first() {
+        return value.value();
+    }
+
+    public E single() {
+        if (tail.value().any()) throw new IllegalStateException("List must contain exactly one element");
+        return first();
+    }
+
+    /*public E get(int index) {
+        return (index == 0 ? value.value() : tail.value().get(index - 1));
+    }*/
 
     /*public LazyList<E> concat(LazyList<E> elements) {
         return none() ? elements :
