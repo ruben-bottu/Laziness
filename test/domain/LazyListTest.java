@@ -68,7 +68,7 @@ public class LazyListTest {
     }
 
     private void initializeLocalDates() {
-        l1 = LocalDate.of(512, 3, 64);
+        l1 = LocalDate.of(512, 3, 31);
         l2 = LocalDate.MAX;
         l3 = LocalDate.now();
         l4 = LocalDate.of(-20, 1, 13);
@@ -88,10 +88,10 @@ public class LazyListTest {
     }
 
     private void initializeLists() {
-        integerList = new ArrayList<>(Arrays.asList(i1, i2, i3, i4, i5, i6, i7, i8));
-        personList = new ArrayList<>(Arrays.asList(p1, p2, p3, p4, p5, p6));
-        animalList = new ArrayList<>(Arrays.asList(d1, d2, d3, d4, d5, d6));
-        localDateList = new ArrayList<>(Arrays.asList(l1, l2, l3, l4, l5, l6, l7));
+        integerList = Arrays.asList(i1, i2, i3, i4, i5, i6, i7, i8);
+        personList = Arrays.asList(p1, p2, p3, p4, p5, p6);
+        animalList = Arrays.asList(d1, d2, d3, d4, d5, d6);
+        localDateList = Arrays.asList(l1, l2, l3, l4, l5, l6, l7);
     }
 
     private void initializeLazyLists() {
@@ -119,6 +119,7 @@ public class LazyListTest {
         assertEquals(d4, animals.tail.value().tail.value().tail.value().value.value());
         assertEquals(d5, animals.tail.value().tail.value().tail.value().tail.value().value.value());
         assertEquals(d6, animals.tail.value().tail.value().tail.value().tail.value().tail.value().value.value());
+        assertNull(animals.tail.value().tail.value().tail.value().tail.value().tail.value().tail.value().value);
     }
 
     @Test
@@ -177,7 +178,7 @@ public class LazyListTest {
     public void concat_Concatenates_LazyList_with_given_Iterable() {
         Person e1 = new Person("Jan", "Janssens");
         Person e2 = new Person("Eveline", "Roberts");
-        assertEquals(LazyList.of(e1, e2, p1, p2, p3, p4, p5, p6), LazyList.of(e1, e2).concat(personSet));
+        assertEquals(Arrays.asList(e1, e2, p1, p2, p3, p4, p5, p6), LazyList.of(e1, e2).concat(personSet).toList());
     }
 
     @Test
@@ -193,10 +194,6 @@ public class LazyListTest {
     }
 
     @Test
-    public void none() {
-    }
-
-    @Test
     public void none_Returns_true_if_LazyList_does_not_contain_elements() {
         assertTrue(LazyList.of().none());
     }
@@ -209,14 +206,26 @@ public class LazyListTest {
     }
 
     @Test
-    public void map() {
+    public void map_Applies_given_transformation_on_each_element_in_LazyList() {
+        List<String> expectedList = Arrays.asList("Turner", "Johnson", "Vanilla", "Allstar", "Targaryen", "Jefferson");
+        assertEquals(expectedList, personLazyList.map(Person::getSecondName).toList());
     }
 
     @Test
-    public void filter() {
+    public void filter_Removes_elements_that_do_not_satisfy_given_predicate() {
+        List<Animal> expectedList = Arrays.asList(d3, d5, d6);
+        assertEquals(expectedList, animalLazyList.filter(animal -> animal.getAge() > 5).toList());
     }
 
     @Test
-    public void iterator() {
+    public void iterator_Returns_Iterator_that_loops_through_LazyList() {
+        Iterator<LocalDate> it = localDateLazyList.iterator();
+        assertEquals(l1, it.next());
+        assertEquals(l2, it.next());
+        assertEquals(l3, it.next());
+        assertEquals(l4, it.next());
+        assertEquals(l5, it.next());
+        assertEquals(l6, it.next());
+        assertEquals(l7, it.next());
     }
 }

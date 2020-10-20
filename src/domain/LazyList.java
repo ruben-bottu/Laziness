@@ -16,7 +16,8 @@ public abstract class LazyList<E> implements Iterable<E> {
         this.tail = tail;
     }
 
-    private static <E> LazyList<E> concat(Iterator<E> iterator, LazyList<E> elements) {
+    // FOUT !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! E element = iterator.next()
+    /*private static <E> LazyList<E> concat(Iterator<E> iterator, LazyList<E> elements) {
         if (iterator.hasNext()) {
             return NormalNode.of(
                     Lazy.of(iterator::next),
@@ -24,7 +25,7 @@ public abstract class LazyList<E> implements Iterable<E> {
             );
         }
         return elements;
-    }
+    }*/
 
     /*private static <E> LazyList<E> ofHelper(Iterator<E> iterator) {
         if (iterator.hasNext()) {
@@ -33,9 +34,17 @@ public abstract class LazyList<E> implements Iterable<E> {
         return EndNode.empty();
     }*/
 
+    private static <E> LazyList<E> ofHelper(Iterator<E> iterator) {
+        if (iterator.hasNext()) {
+            E element = iterator.next();
+            return NormalNode.of(Lazy.of(() -> element), Lazy.of(() -> ofHelper(iterator)));
+        }
+        return EndNode.empty();
+    }
+
     public static <E> LazyList<E> of(Iterable<E> elements) {
-        //return ofHelper(elements.iterator());
-        return concat(elements.iterator(), EndNode.empty());
+        return ofHelper(elements.iterator());
+        //return concat(elements.iterator(), EndNode.empty());
     }
 
     @SafeVarargs
@@ -43,16 +52,14 @@ public abstract class LazyList<E> implements Iterable<E> {
         return LazyList.of(Arrays.asList(elements));
     }
 
-    // werkt niet
-    public E get(int index) {
-        return index == 0 ? value.value() : tail.value().get(index - 1);
-    }
+    public abstract E get(int index);
 
     public E first() {
         return value.value();
     }
 
     public E single() {
+        System.out.println(tail.value().any());
         if (tail.value().any()) throw new IllegalStateException("List must contain exactly one element");
         return first();
     }
@@ -114,6 +121,11 @@ public abstract class LazyList<E> implements Iterable<E> {
             return new NormalNode<>(value, tail);
         }
 
+        public E get(int index) {
+            if (index < 0) throw new IndexOutOfBoundsException();
+            return index == 0 ? value.value() : tail.value().get(index - 1);
+        }
+
         @Override
         public boolean any() {
             return true;
@@ -145,6 +157,10 @@ public abstract class LazyList<E> implements Iterable<E> {
 
         public static <E> LazyList<E> empty() {
             return new EndNode<>(null, null);
+        }
+
+        public E get(int index) {
+            throw new IndexOutOfBoundsException();
         }
 
         @Override
