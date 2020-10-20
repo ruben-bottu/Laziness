@@ -45,8 +45,7 @@ public abstract class LazyList<E> implements Iterable<E> {
 
     // werkt niet
     public E get(int index) {
-        if (index == 0) return value.value();
-        return tail.value().get(index - 1);
+        return index == 0 ? value.value() : tail.value().get(index - 1);
     }
 
     public E first() {
