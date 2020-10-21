@@ -248,6 +248,13 @@ public class LazyListTest {
     public void find_Returns_first_element_matching_given_predicate() {
         assertEquals(l4, localDateLazyList.find(localDate -> localDate.getMonthValue() < 3));
         assertEquals(p3, personLazyList.find(person -> person.getFirstName().contains("t")));
+        assertEquals(i8, integerLazyList.find(integer -> integer > 100).intValue());
+    }
+
+    @Test
+    public void find_Returns_null_if_no_element_matches_given_predicate() {
+        assertNull(integerLazyList.find(integer -> integer > 75 && integer < 100));
+        assertNull(animalLazyList.find(animal -> animal.getAge() > 13));
     }
 
     @Test
@@ -264,12 +271,6 @@ public class LazyListTest {
         assertEquals(-1, animalLazyList.indexOf(new Animal(2)));
         assertEquals(-1, personLazyList.indexOf(new Person("James", "Walker")));
         assertEquals(-1, localDateLazyList.indexOf(LocalDate.of(441, 3, 11)));
-    }
-
-    @Test
-    public void find_Returns_null_if_no_element_matches_given_predicate() {
-        assertNull(integerLazyList.find(integer -> integer > 75 && integer < 100));
-        assertNull(animalLazyList.find(animal -> animal.getAge() > 13));
     }
 
     @Test
