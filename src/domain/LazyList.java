@@ -51,13 +51,13 @@ public abstract class LazyList<E> implements Iterable<E> {
 
     public abstract E get(int index);
 
+    public E first() {
+        return value.value();
+    }
+
     public E single() {
         if (isEmpty() || tail.value().any()) throw new IllegalStateException("List must contain exactly one element");
         return first();
-    }
-
-    public E first() {
-        return value.value();
     }
 
     public E last() {
@@ -74,9 +74,11 @@ public abstract class LazyList<E> implements Iterable<E> {
         return 1 + tail.value().size();
     }*/
 
-    public int size() {
+    /*public int size() {
         return isTailEmpty() ? 1 : tail.value().size() + 1;
-    }
+    }*/
+
+    public abstract int size();
 
     public E random() {
         return get(new Random().nextInt(size()));
@@ -93,10 +95,13 @@ public abstract class LazyList<E> implements Iterable<E> {
                 (predicate.test(value.value()) ? value.value() : tail.value().find(predicate));
     }*/
 
-    public E find(Predicate<E> predicate) {
+    /// Werkt
+    /*public E find(Predicate<E> predicate) {
         return predicate.test(value.value()) ? value.value() :
                 (isTailEmpty() ? null : tail.value().find(predicate));
-    }
+    }*/
+
+    public abstract E find(Predicate<E> predicate);
 
     /*public int indexOf(E element) {
         if (tail.value().isEmpty()) return -1;
@@ -114,10 +119,12 @@ public abstract class LazyList<E> implements Iterable<E> {
         return value.value().equals(element) ? counter : tail.value().indexOfHelper(counter + 1, element);
     }*/
 
-    private int indexOfHelper(int counter, E element) {
+    /*private int indexOfHelper(int counter, E element) {
         return value.value().equals(element) ? counter :
                 (isTailEmpty() ? -1 : tail.value().indexOfHelper(counter + 1, element));
-    }
+    }*/
+
+    protected abstract int indexOfHelper(int counter, E element);
 
     public int indexOf(E element) {
         return indexOfHelper(0, element);
@@ -170,11 +177,13 @@ public abstract class LazyList<E> implements Iterable<E> {
 
     public abstract LazyList<E> filter(Predicate<E> predicate);
 
-    private List<E> toListHelper(List<E> result) {
+    /*private List<E> toListHelper(List<E> result) {
         if (isEmpty()) return result;
         result.add(value.value());
         return tail.value().toListHelper(result);
-    }
+    }*/
+
+    protected abstract List<E> toListHelper(List<E> result);
 
     public List<E> toList() {
         return toListHelper(new ArrayList<>());
@@ -209,6 +218,17 @@ public abstract class LazyList<E> implements Iterable<E> {
         public int indexOf(E element) {
             return indexOfHelper(0, element);
         }*/
+        public int size() {
+            return 1 + tail.value().size();
+        }
+
+        public E find(Predicate<E> predicate) {
+            return predicate.test(value.value()) ? value.value() : tail.value().find(predicate);
+        }
+
+        protected int indexOfHelper(int counter, E element) {
+            return value.value().equals(element) ? counter : tail.value().indexOfHelper(counter + 1, element);
+        }
 
         @Override
         public boolean any() {
@@ -234,6 +254,12 @@ public abstract class LazyList<E> implements Iterable<E> {
                     NormalNode.of(value, Lazy.of(() -> tail.value().filter(predicate))) :
                     tail.value().filter(predicate);
         }
+
+        @Override
+        protected List<E> toListHelper(List<E> result) {
+            result.add(value.value());
+            return tail.value().toListHelper(result);
+        }
     }
 
 
@@ -250,6 +276,18 @@ public abstract class LazyList<E> implements Iterable<E> {
 
         public E get(int index) {
             throw new IndexOutOfBoundsException();
+        }
+
+        public int size() {
+            return 0;
+        }
+
+        public E find(Predicate<E> predicate) {
+            return null;
+        }
+
+        protected int indexOfHelper(int counter, E element) {
+            return -1;
         }
 
         @Override
@@ -273,6 +311,11 @@ public abstract class LazyList<E> implements Iterable<E> {
         @Override
         public LazyList<E> filter(Predicate<E> predicate) {
             return this;
+        }
+
+        @Override
+        protected List<E> toListHelper(List<E> result) {
+            return result;
         }
     }
 }
