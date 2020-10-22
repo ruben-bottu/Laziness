@@ -258,6 +258,22 @@ public class LazyListTest {
     }
 
     @Test
+    public void indexOfFirst_Returns_index_of_first_occurrence_of_given_element_in_LazyList() {
+        assertEquals(0, localDateLazyList.indexOfFirst(localDate -> localDate.getDayOfMonth() < 50));
+        assertEquals(1, personLazyList.indexOfFirst(person -> person.getSecondName().contains("h")));
+        assertEquals(4, animalLazyList.indexOfFirst(animal -> animal.getAge() > 6));
+        assertEquals(7, integerLazyList.indexOfFirst(integer -> integer > 75));
+    }
+
+    @Test
+    public void indexOfFirst_Returns_minus_one_if_LazyList_does_not_contain_given_element_() {
+        assertEquals(-1, integerLazyList.indexOfFirst(integer -> integer == 2));
+        assertEquals(-1, animalLazyList.indexOfFirst(animal -> animal.getAge() > 13));
+        assertEquals(-1, personLazyList.indexOfFirst(person -> person.getFirstName().contains("b") || person.getSecondName().contains("b")));
+        assertEquals(-1, localDateLazyList.indexOfFirst(localDate -> localDate.getYear() > 2020 && localDate.getYear() < 4058));
+    }
+
+    @Test
     public void indexOf_Returns_index_of_first_occurrence_of_given_element_in_LazyList() {
         assertEquals(0, integerLazyList.indexOf(i1));
         assertEquals(4, personLazyList.indexOf(p5));
@@ -271,6 +287,14 @@ public class LazyListTest {
         assertEquals(-1, animalLazyList.indexOf(new Animal(2)));
         assertEquals(-1, personLazyList.indexOf(new Person("James", "Walker")));
         assertEquals(-1, localDateLazyList.indexOf(LocalDate.of(441, 3, 11)));
+    }
+
+    @Test
+    public void lastIndex_Returns_the_index_of_the_last_element() {
+        assertEquals(7, integerLazyList.lastIndex());
+        assertEquals(5, personLazyList.lastIndex());
+        assertEquals(5, animalLazyList.lastIndex());
+        assertEquals(6, localDateLazyList.lastIndex());
     }
 
     @Test
