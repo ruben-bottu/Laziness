@@ -153,11 +153,13 @@ public abstract class LazyList<E> implements Iterable<E> {
                 NormalNode.of(value, Lazy.of(() -> tail.value().concat(elements)));
     }*/
 
-    public LazyList<E> concat(Iterable<E> elements) {
+    /*public LazyList<E> concat(Iterable<E> elements) {
         LazyList<E> partTwo = (elements instanceof LazyList ? (LazyList<E>) elements : LazyList.of(elements));
         return isEmpty() ? partTwo :
                 NormalNode.of(value, Lazy.of(() -> tail.value().concat(elements)));
-    }
+    }*/
+
+    public abstract LazyList<E> concat(Iterable<E> elements);
 
     public abstract boolean any();
 
@@ -230,6 +232,10 @@ public abstract class LazyList<E> implements Iterable<E> {
             return value.value().equals(element) ? counter : tail.value().indexOfHelper(counter + 1, element);
         }
 
+        public LazyList<E> concat(Iterable<E> elements) {
+            return NormalNode.of(value, Lazy.of(() -> tail.value().concat(elements)));
+        }
+
         @Override
         public boolean any() {
             return true;
@@ -288,6 +294,10 @@ public abstract class LazyList<E> implements Iterable<E> {
 
         protected int indexOfHelper(int counter, E element) {
             return -1;
+        }
+
+        public LazyList<E> concat(Iterable<E> elements) {
+            return elements instanceof LazyList ? (LazyList<E>) elements : LazyList.of(elements);
         }
 
         @Override
