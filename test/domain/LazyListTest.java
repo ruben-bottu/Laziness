@@ -232,6 +232,40 @@ public class LazyListTest {
     }
 
     @Test
+    public void isNested_Returns_true_if_LazyList_is_nested() {
+        LazyList<LazyList<Integer>> nestedLazyList = LazyList.of(
+                LazyList.of(9, 6, 3, 5),
+                LazyList.of(1),
+                LazyList.of(4, 0, 3, 7, 5)
+        );
+        assertTrue(nestedLazyList.isNested());
+    }
+
+    @Test
+    public void all_Returns_true_if_all_elements_match_given_predicate() {
+        assertTrue(integerLazyList.all(integer -> integer > -257));
+        assertTrue(personLazyList.all(person -> person.getFirstName().length() > 2));
+        assertTrue(animalLazyList.all(animal -> animal.getAge() != 10));
+        assertTrue(localDateLazyList.all(localDate -> localDate.getYear() != 1861));
+    }
+
+    @Test
+    public void all_Returns_false_if_one_or_more_elements_do_not_match_given_predicate() {
+        assertFalse(integerLazyList.all(integer -> integer > 10));
+        assertFalse(personLazyList.all(person -> !person.getFirstName().contains("tr")));
+        assertFalse(animalLazyList.all(animal -> animal.getAge() != 4));
+        assertFalse(localDateLazyList.all(localDate -> localDate.getYear() < 1000 || localDate.getYear() > 2000));
+    }
+
+    @Test
+    public void isNested_Returns_false_if_LazyList_is_not_nested() {
+        assertFalse(integerLazyList.isNested());
+        assertFalse(personLazyList.isNested());
+        assertFalse(animalLazyList.isNested());
+        assertFalse(localDateLazyList.isNested());
+    }
+
+    @Test
     public void size_Returns_the_size_of_LazyList() {
         assertEquals(8, integerLazyList.size());
         assertEquals(6, personLazyList.size());
@@ -295,6 +329,22 @@ public class LazyListTest {
         assertEquals(5, personLazyList.lastIndex());
         assertEquals(5, animalLazyList.lastIndex());
         assertEquals(6, localDateLazyList.lastIndex());
+    }
+
+    @Test
+    public void contains_Returns_true_if_LazyList_contains_the_given_element() {
+        assertTrue(integerLazyList.contains(5));
+        assertTrue(personLazyList.contains(new Person("Alex", "Johnson")));
+        assertTrue(animalList.contains(new Dog(5, "Shiba")));
+        assertTrue(localDateLazyList.contains(LocalDate.of(1974, 12, 25)));
+    }
+
+    @Test
+    public void contains_Returns_false_if_LazyList_does_not_contain_the_given_element() {
+        assertFalse(integerLazyList.contains(9));
+        assertFalse(personLazyList.contains(new Person("Magdalena", "Yves")));
+        assertFalse(animalList.contains(new Dog(4, "Shibaa")));
+        assertFalse(localDateLazyList.contains(LocalDate.of(1974, 12, 24)));
     }
 
     @Test

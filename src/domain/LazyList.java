@@ -72,7 +72,61 @@ public abstract class LazyList<E> implements Iterable<E> {
         return indexOfFirst(item -> item.equals(element));
     }
 
-    public abstract int lastIndex();
+    public int lastIndex() {
+        return size() - 1;
+    }
+
+    /*public IdeaList<Integer> indices() {
+        return rangeInclusive(0, lastIndex());
+    }*/
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        LazyList<?> lazyList = (LazyList<?>) o;
+        return Objects.equals(value, lazyList.value) &&
+                Objects.equals(tail, lazyList.tail);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(value, tail);
+    }
+
+    public boolean contains(E element) {
+        return indexOf(element) != -1;
+    }
+
+    public boolean isEmpty() {
+        return none();
+    }
+
+    public boolean isNested() {
+        return value.value() instanceof LazyList;
+    }
+
+    private boolean isTailEmpty() {
+        return tail.value().isEmpty();
+    }
+
+    public boolean all(Predicate<E> predicate) {
+        return !map(predicate::test).contains(false);
+    }
+
+    public abstract boolean any();
+
+    public boolean any(Predicate<E> predicate) {
+        return map(predicate::test).contains(true);
+    }
+
+    public boolean none() {
+        return !any();
+    }
+
+    public boolean none(Predicate<E> predicate) {
+        return !any(predicate);
+    }
 
     /*public LazyList<E> concat(Iterable<E> elements) {
         LazyList<E> partTwo = (elements instanceof LazyList ? (LazyList<E>) elements : LazyList.of(elements));
@@ -81,20 +135,6 @@ public abstract class LazyList<E> implements Iterable<E> {
     }*/
 
     public abstract LazyList<E> concat(Iterable<E> elements);
-
-    public abstract boolean any();
-
-    public boolean none() {
-        return !any();
-    }
-
-    public boolean isEmpty() {
-        return none();
-    }
-
-    public boolean isTailEmpty() {
-        return tail.value().isEmpty();
-    }
 
     public abstract <R> LazyList<R> map(Function<E, R> transform);
 
@@ -143,10 +183,6 @@ public abstract class LazyList<E> implements Iterable<E> {
 
         protected int indexOfFirstHelper(int counter, Predicate<E> predicate) {
             return predicate.test(value.value()) ? counter : tail.value().indexOfFirstHelper(counter + 1, predicate);
-        }
-
-        public int lastIndex() {
-            return 1 + tail.value().lastIndex();
         }
 
         public LazyList<E> concat(Iterable<E> elements) {
@@ -209,10 +245,6 @@ public abstract class LazyList<E> implements Iterable<E> {
         }
 
         protected int indexOfFirstHelper(int counter, Predicate<E> predicate) {
-            return -1;
-        }
-
-        public int lastIndex() {
             return -1;
         }
 
