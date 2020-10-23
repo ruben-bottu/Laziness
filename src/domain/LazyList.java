@@ -94,8 +94,12 @@ public abstract class LazyList<E> implements Iterable<E> {
         return Objects.hash(value, tail);
     }
 
-    public boolean contains(E element) {
+    /*public boolean contains(E element) {
         return indexOf(element) != -1;
+    }*/
+
+    public boolean contains(E element) {
+        return find(item -> item.equals(element)) != null;
     }
 
     public boolean isEmpty() {

@@ -209,6 +209,22 @@ public class LazyListTest {
     }
 
     @Test
+    public void any_Returns_true_if_at_least_one_element_matches_predicate() {
+        assertTrue(integerLazyList.any(integer -> integer < 10));
+        assertTrue(personLazyList.any(person -> person.getSecondName().contains("o")));
+        assertTrue(animalLazyList.any(animal -> animal.getAge() > 5));
+        assertTrue(localDateLazyList.any(localDate -> localDate.getDayOfMonth() > 15 && localDate.getDayOfMonth() < 30));
+    }
+
+    @Test
+    public void any_Returns_false_if_no_element_matches_predicate() {
+        assertFalse(integerLazyList.any(integer -> integer == 3));
+        assertFalse(personLazyList.any(person -> person.getFirstName().charAt(2) == 'a'));
+        assertFalse(animalLazyList.any(animal -> animal.getAge() == 8));
+        assertFalse(localDateLazyList.any(localDate -> localDate.getDayOfMonth() == 3));
+    }
+
+    @Test
     public void none_Returns_true_if_LazyList_does_not_contain_elements() {
         assertTrue(LazyList.of().none());
     }
@@ -218,6 +234,22 @@ public class LazyListTest {
         assertFalse(personLazyList.none());
         assertFalse(animalLazyList.none());
         assertFalse(LazyList.of("bla").none());
+    }
+
+    @Test
+    public void none_Returns_true_if_no_element_matches_predicate() {
+        assertTrue(integerLazyList.none(integer -> integer == 3));
+        assertTrue(personLazyList.none(person -> person.getFirstName().charAt(2) == 'a'));
+        assertTrue(animalLazyList.none(animal -> animal.getAge() == 8));
+        assertTrue(localDateLazyList.none(localDate -> localDate.getDayOfMonth() == 3));
+    }
+
+    @Test
+    public void none_Returns_false_if_at_least_one_element_matches_predicate() {
+        assertFalse(integerLazyList.none(integer -> integer < 10));
+        assertFalse(personLazyList.none(person -> person.getSecondName().contains("o")));
+        assertFalse(animalLazyList.none(animal -> animal.getAge() > 5));
+        assertFalse(localDateLazyList.none(localDate -> localDate.getDayOfMonth() > 15 && localDate.getDayOfMonth() < 30));
     }
 
     @Test
