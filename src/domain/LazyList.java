@@ -193,16 +193,16 @@ public abstract class LazyList<E> implements Iterable<E> {
             return first();
         }
 
-        public int size() {
-            return 1 + tail.value().size();
-        }
-
         public E find(Predicate<E> predicate) {
             return predicate.test(value.value()) ? value.value() : tail.value().find(predicate);
         }
 
         protected int indexOfFirstHelper(int counter, Predicate<E> predicate) {
             return predicate.test(value.value()) ? counter : tail.value().indexOfFirstHelper(counter + 1, predicate);
+        }
+
+        public int size() {
+            return 1 + tail.value().size();
         }
 
         @Override
@@ -269,16 +269,16 @@ public abstract class LazyList<E> implements Iterable<E> {
             throw new IllegalStateException("List cannot be empty");
         }
 
-        public int size() {
-            return 0;
-        }
-
         public E find(Predicate<E> predicate) {
             return null;
         }
 
         protected int indexOfFirstHelper(int counter, Predicate<E> predicate) {
             return -1;
+        }
+
+        public int size() {
+            return 0;
         }
 
         @Override

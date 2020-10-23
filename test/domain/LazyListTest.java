@@ -154,6 +154,14 @@ public class LazyListTest {
         assertEquals(p6, personLazyList.get(5));
     }
 
+    @Test
+    public void first_Returns_first_element_of_LazyList() {
+        assertEquals(i1, integerLazyList.first().intValue());
+        assertEquals(p1, personLazyList.first());
+        assertEquals(d1, animalLazyList.first());
+        assertEquals(l1, localDateLazyList.first());
+    }
+
     @Test(expected = IllegalStateException.class)
     public void single_Throws_exception_if_LazyList_contains_more_than_one_element() {
         integerLazyList.single();
@@ -169,14 +177,6 @@ public class LazyListTest {
         assertEquals(l5, LazyList.of(l5).single());
         assertEquals(d2, LazyList.of(d2).single());
         assertEquals(p4, LazyList.of(p4).single());
-    }
-
-    @Test
-    public void first_Returns_first_element_of_LazyList() {
-        assertEquals(i1, integerLazyList.first().intValue());
-        assertEquals(p1, personLazyList.first());
-        assertEquals(d1, animalLazyList.first());
-        assertEquals(l1, localDateLazyList.first());
     }
 
     @Test
@@ -293,6 +293,51 @@ public class LazyListTest {
     }
 
     @Test
+    public void isEmpty_Returns_true_if_LazyList_is_empty() {
+        assertTrue(LazyList.of().isEmpty());
+    }
+
+    @Test
+    public void isEmpty_Returns_false_if_LazyList_is_not_empty() {
+        assertFalse(localDateLazyList.isEmpty());
+        assertFalse(personLazyList.isEmpty());
+    }
+
+    @Test
+    public void isNested_Returns_true_if_LazyList_is_nested() {
+        LazyList<LazyList<Integer>> nestedLazyList = LazyList.of(
+                LazyList.of(9, 6, 3, 5),
+                LazyList.of(1),
+                LazyList.of(4, 0, 3, 7, 5)
+        );
+        assertTrue(nestedLazyList.isNested());
+    }
+
+    @Test
+    public void isNested_Returns_false_if_LazyList_is_not_nested() {
+        assertFalse(integerLazyList.isNested());
+        assertFalse(personLazyList.isNested());
+        assertFalse(animalLazyList.isNested());
+        assertFalse(localDateLazyList.isNested());
+    }
+
+    @Test
+    public void all_Returns_true_if_all_elements_match_given_predicate() {
+        assertTrue(integerLazyList.all(integer -> integer > -257));
+        assertTrue(personLazyList.all(person -> person.getFirstName().length() > 2));
+        assertTrue(animalLazyList.all(animal -> animal.getAge() != 10));
+        assertTrue(localDateLazyList.all(localDate -> localDate.getYear() != 1861));
+    }
+
+    @Test
+    public void all_Returns_false_if_one_or_more_elements_do_not_match_given_predicate() {
+        assertFalse(integerLazyList.all(integer -> integer > 10));
+        assertFalse(personLazyList.all(person -> !person.getFirstName().contains("tr")));
+        assertFalse(animalLazyList.all(animal -> animal.getAge() != 4));
+        assertFalse(localDateLazyList.all(localDate -> localDate.getYear() < 1000 || localDate.getYear() > 2000));
+    }
+
+    @Test
     public void any_Returns_true_if_LazyList_contains_elements() {
         assertTrue(localDateLazyList.any());
         assertTrue(integerLazyList.any());
@@ -348,51 +393,6 @@ public class LazyListTest {
         assertFalse(localDateLazyList.none(localDate -> localDate.getDayOfMonth() > 15 && localDate.getDayOfMonth() < 30));
     }
 
-    @Test
-    public void isEmpty_Returns_true_if_LazyList_is_empty() {
-        assertTrue(LazyList.of().isEmpty());
-    }
-
-    @Test
-    public void isEmpty_Returns_false_if_LazyList_is_not_empty() {
-        assertFalse(localDateLazyList.isEmpty());
-        assertFalse(personLazyList.isEmpty());
-    }
-
-    @Test
-    public void isNested_Returns_true_if_LazyList_is_nested() {
-        LazyList<LazyList<Integer>> nestedLazyList = LazyList.of(
-                LazyList.of(9, 6, 3, 5),
-                LazyList.of(1),
-                LazyList.of(4, 0, 3, 7, 5)
-        );
-        assertTrue(nestedLazyList.isNested());
-    }
-
-    @Test
-    public void all_Returns_true_if_all_elements_match_given_predicate() {
-        assertTrue(integerLazyList.all(integer -> integer > -257));
-        assertTrue(personLazyList.all(person -> person.getFirstName().length() > 2));
-        assertTrue(animalLazyList.all(animal -> animal.getAge() != 10));
-        assertTrue(localDateLazyList.all(localDate -> localDate.getYear() != 1861));
-    }
-
-    @Test
-    public void all_Returns_false_if_one_or_more_elements_do_not_match_given_predicate() {
-        assertFalse(integerLazyList.all(integer -> integer > 10));
-        assertFalse(personLazyList.all(person -> !person.getFirstName().contains("tr")));
-        assertFalse(animalLazyList.all(animal -> animal.getAge() != 4));
-        assertFalse(localDateLazyList.all(localDate -> localDate.getYear() < 1000 || localDate.getYear() > 2000));
-    }
-
-    @Test
-    public void isNested_Returns_false_if_LazyList_is_not_nested() {
-        assertFalse(integerLazyList.isNested());
-        assertFalse(personLazyList.isNested());
-        assertFalse(animalLazyList.isNested());
-        assertFalse(localDateLazyList.isNested());
-    }
-
 
     // Modifiers ====================================================================================
     @Test
@@ -416,6 +416,6 @@ public class LazyListTest {
         assertEquals(expectedList, animalLazyList.filter(animal -> animal.getAge() > 5).toList());
     }
 
-    
+
     // Ranges =======================================================================================
 }
