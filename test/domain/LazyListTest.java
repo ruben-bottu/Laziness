@@ -124,6 +124,11 @@ public class LazyListTest {
         assertNull(animals.tail.value().tail.value().tail.value().tail.value().tail.value().tail.value().value);
     }
 
+    @Test
+    public void empty_Returns_an_empty_LazyList() {
+        assertTrue(LazyList.empty().isEmpty());
+    }
+
 
     // Getters ======================================================================================
     @Test(expected = IndexOutOfBoundsException.class)
@@ -226,18 +231,18 @@ public class LazyListTest {
 
     @Test
     public void indexOf_Returns_index_of_first_occurrence_of_given_element_in_LazyList() {
-        assertEquals(0, integerLazyList.indexOf(i1));
-        assertEquals(4, personLazyList.indexOf(p5));
-        assertEquals(2, animalLazyList.indexOf(d3));
-        assertEquals(6, localDateLazyList.indexOf(l7));
+        assertEquals(0, integerLazyList.indexOfFirst(i1));
+        assertEquals(4, personLazyList.indexOfFirst(p5));
+        assertEquals(2, animalLazyList.indexOfFirst(d3));
+        assertEquals(6, localDateLazyList.indexOfFirst(l7));
     }
 
     @Test
     public void indexOf_Returns_minus_one_if_LazyList_does_not_contain_given_element_() {
-        assertEquals(-1, integerLazyList.indexOf(101));
-        assertEquals(-1, animalLazyList.indexOf(new Animal(2)));
-        assertEquals(-1, personLazyList.indexOf(new Person("James", "Walker")));
-        assertEquals(-1, localDateLazyList.indexOf(LocalDate.of(441, 3, 11)));
+        assertEquals(-1, integerLazyList.indexOfFirst(101));
+        assertEquals(-1, animalLazyList.indexOfFirst(new Animal(2)));
+        assertEquals(-1, personLazyList.indexOfFirst(new Person("James", "Walker")));
+        assertEquals(-1, localDateLazyList.indexOfFirst(LocalDate.of(441, 3, 11)));
     }
 
     @Test
@@ -290,6 +295,26 @@ public class LazyListTest {
         assertFalse(personLazyList.contains(new Person("Magdalena", "Yves")));
         assertFalse(animalList.contains(new Dog(4, "Shibaa")));
         assertFalse(localDateLazyList.contains(LocalDate.of(1974, 12, 24)));
+    }
+
+    @Test
+    public void containsAll_Returns_true_if_LazyList_contains_all_given_elements() {
+        Queue<Person> queue = new LinkedList<>();
+        queue.offer(new Person("Jefke", "Merens"));
+        queue.add(new Person("Marie", "Bosmans"));
+
+        LazyList<Person> personList = LazyList.of(new Person("Jefke", "Merens"), new Person("Nathalie", "Hofdaal"), new Person("Marie", "Bosmans"));
+        assertTrue(personList.containsAll(queue));
+    }
+
+    @Test
+    public void containsAll_Returns_false_if_LazyList_does_not_contain_all_given_elements() {
+        Queue<Person> queue = new LinkedList<>();
+        queue.offer(new Person("Jefke", "Merens"));
+        queue.add(new Person("Marie", "Bosmans"));
+
+        LazyList<Person> personList = LazyList.of(new Person("Jefke", "Merens"), new Person("Nathalie", "Hofdaal"));
+        assertFalse(personList.containsAll(queue));
     }
 
     @Test
@@ -401,6 +426,13 @@ public class LazyListTest {
         Person e2 = new Person("Eveline", "Roberts");
         assertEquals(Arrays.asList(e1, e2, p1, p2, p3, p4, p5, p6), LazyList.of(e1, e2).concat(personSet).toList());
     }
+
+    /*@Test
+    public void concat_Concatenates_LazyList_with_given_LazyList() {
+        Person e1 = new Person("Jan", "Janssens");
+        Person e2 = new Person("Eveline", "Roberts");
+        assertEquals(Arrays.asList(e1, e2, p1, p2, p3, p4, p5, p6), LazyList.of(e1, e2).concat(personLazyList).toList());
+    }*/
 
 
     // List operations ==============================================================================

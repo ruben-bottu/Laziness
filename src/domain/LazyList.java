@@ -25,7 +25,7 @@ public abstract class LazyList<E> implements Iterable<E> {
         return elements;
     }*/
 
-    private static <E> LazyList<E> ofHelper(Iterator<E> iterator) {
+    private static <E> LazyList<E> ofHelper(Iterator<? extends E> iterator) {
         if (iterator.hasNext()) {
             E element = iterator.next();
             return NormalNode.of(Lazy.of(() -> element), Lazy.of(() -> ofHelper(iterator)));
@@ -33,7 +33,7 @@ public abstract class LazyList<E> implements Iterable<E> {
         return EndNode.empty();
     }
 
-    public static <E> LazyList<E> of(Iterable<E> elements) {
+    public static <E> LazyList<E> of(Iterable<? extends E> elements) {
         return ofHelper(elements.iterator());
         //return concat(elements.iterator(), EndNode.empty());
     }
@@ -41,6 +41,10 @@ public abstract class LazyList<E> implements Iterable<E> {
     @SafeVarargs
     public static <E> LazyList<E> of(E... elements) {
         return LazyList.of(Arrays.asList(elements));
+    }
+
+    public static <E> LazyList<E> empty() {
+        return LazyList.of();
     }
 
 
@@ -69,7 +73,7 @@ public abstract class LazyList<E> implements Iterable<E> {
         return indexOfFirstHelper(0, predicate);
     }
 
-    public int indexOf(E element) {
+    public int indexOfFirst(E element) {
         return indexOfFirst(item -> item.equals(element));
     }
 
@@ -118,10 +122,15 @@ public abstract class LazyList<E> implements Iterable<E> {
         return find(item -> item.equals(element)) != null;
     }
 
+    public boolean containsAll(Iterable<E> elements) {
+        return LazyList.of(elements).all(this::contains);
+    }
+
     public boolean isEmpty() {
         return none();
     }
 
+    // What if the nested element is not a LazyList?? Maybe with LazyList.of(E... elements) it is possible to insert other types of collection into LazyList
     public boolean isNested() {
         return value.value() instanceof LazyList;
     }
@@ -148,15 +157,11 @@ public abstract class LazyList<E> implements Iterable<E> {
         return !any(predicate);
     }
 
-    /*public LazyList<E> concat(Iterable<E> elements) {
-        LazyList<E> partTwo = (elements instanceof LazyList ? (LazyList<E>) elements : LazyList.of(elements));
-        return isEmpty() ? partTwo :
-                NormalNode.of(value, Lazy.of(() -> tail.value().concat(elements)));
-    }*/
-
 
     // Modifiers ====================================================================================
-    public abstract LazyList<E> concat(Iterable<E> elements);
+    //public abstract LazyList<E> insert(int index, Iterable<E>)
+
+    public abstract LazyList<E> concat(Iterable<? extends E> elements);
 
 
     // List operations ==============================================================================
@@ -220,7 +225,7 @@ public abstract class LazyList<E> implements Iterable<E> {
 
 
         // Modifiers ====================================================================================
-        public LazyList<E> concat(Iterable<E> elements) {
+        public LazyList<E> concat(Iterable<? extends E> elements) {
             return NormalNode.of(value, Lazy.of(() -> tail.value().concat(elements)));
         }
 
@@ -295,8 +300,8 @@ public abstract class LazyList<E> implements Iterable<E> {
 
 
         // Modifiers ====================================================================================
-        public LazyList<E> concat(Iterable<E> elements) {
-            return elements instanceof LazyList ? (LazyList<E>) elements : LazyList.of(elements);
+        public LazyList<E> concat(Iterable<? extends E> elements) {
+            return LazyList.of(elements);
         }
 
 
