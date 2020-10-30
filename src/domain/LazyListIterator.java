@@ -9,13 +9,13 @@ public class LazyListIterator<E> implements Iterator<E> {
         currentNode = elements;
     }
 
-    public static <E> LazyListIterator<E> of(LazyList<E> elements) {
+    public static <E> Iterator<E> of(LazyList<E> elements) {
         return new LazyListIterator<>(elements);
     }
 
     @Override
     public boolean hasNext() {
-        return currentNode.tail.value().any();
+        return currentNode.any();
     }
 
     @Override

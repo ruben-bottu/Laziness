@@ -113,6 +113,14 @@ public class LazyListTest {
     }
 
     @Test
+    public void LazyList_of_Creates_LazyList_with_given_covariant_Iterable() {
+        LazyList<Object> objects = LazyList.of("bla", "foo", "zaza");
+        assertEquals("bla", objects.value.value());
+        assertEquals("foo", objects.tail.value().value.value());
+        assertEquals("zaza", objects.tail.value().tail.value().value.value());
+    }
+
+    @Test
     public void LazyList_of_Creates_LazyList_with_given_objects() {
         LazyList<Animal> animals = LazyList.of(d1, d2, d3, d4, d5, d6);
         assertEquals(d1, animals.value.value());
@@ -201,16 +209,16 @@ public class LazyListTest {
     }
 
     @Test
-    public void find_Returns_first_element_matching_given_predicate() {
-        assertEquals(l4, localDateLazyList.find(localDate -> localDate.getMonthValue() < 3));
-        assertEquals(p3, personLazyList.find(person -> person.getFirstName().contains("t")));
-        assertEquals(i8, integerLazyList.find(integer -> integer > 100).intValue());
+    public void findFirst_Returns_first_element_matching_given_predicate() {
+        assertEquals(l4, localDateLazyList.findFirst(localDate -> localDate.getMonthValue() < 3));
+        assertEquals(p3, personLazyList.findFirst(person -> person.getFirstName().contains("t")));
+        assertEquals(i8, integerLazyList.findFirst(integer -> integer > 100).intValue());
     }
 
     @Test
-    public void find_Returns_null_if_no_element_matches_given_predicate() {
-        assertNull(integerLazyList.find(integer -> integer > 75 && integer < 100));
-        assertNull(animalLazyList.find(animal -> animal.getAge() > 13));
+    public void findFirst_Returns_null_if_no_element_matches_given_predicate() {
+        assertNull(integerLazyList.findFirst(integer -> integer > 75 && integer < 100));
+        assertNull(animalLazyList.findFirst(animal -> animal.getAge() > 13));
     }
 
     @Test
@@ -277,6 +285,24 @@ public class LazyListTest {
         assertEquals(l5, it.next());
         assertEquals(l6, it.next());
         assertEquals(l7, it.next());
+    }
+
+    @Test
+    public void iterator_Returns_Iterator_that_loops_through_LazyList_2() {
+        Iterator<Integer> it = LazyList.of(6, 0, 1, 7, 5, 4).iterator();
+        assertTrue(it.hasNext());
+        assertEquals(6, it.next().intValue());
+        assertTrue(it.hasNext());
+        assertEquals(0, it.next().intValue());
+        assertTrue(it.hasNext());
+        assertEquals(1, it.next().intValue());
+        assertTrue(it.hasNext());
+        assertEquals(7, it.next().intValue());
+        assertTrue(it.hasNext());
+        assertEquals(5, it.next().intValue());
+        assertTrue(it.hasNext());
+        assertEquals(4, it.next().intValue());
+        assertFalse(it.hasNext());
     }
 
 
@@ -421,18 +447,76 @@ public class LazyListTest {
 
     // Modifiers ====================================================================================
     @Test
+    public void insert_Inserts_given_element_at_specified_position() {
+        LocalDate local1 = LocalDate.of(1002, 7, 1);
+        LocalDate local2 = LocalDate.of(4014, 6, 9);
+        // index = 3
+        LazyList<LocalDate> expected = LazyList.of(l1, l2, l3, local1, local2, l4, l5, l6, l7);
+        assertEquals(expected.toList(), localDateLazyList.insert(3, Arrays.asList(local1, local2)).toList());
+    }
+
+    @Test(expected = IndexOutOfBoundsException.class)
+    public void insert_Throws_Exception_if_index_just_negative() {
+        personLazyList.insert(-1, personSet);
+    }
+
+    @Test(expected = IndexOutOfBoundsException.class)
+    public void insert_Throws_Exception_if_index_negative() {
+        personLazyList.insert(-23, personSet);
+    }
+
+    @Test(expected = IndexOutOfBoundsException.class)
+    public void insert_Throws_Exception_if_index_just_bigger_than_upper_bound() {
+        personLazyList.insert(6, personSet).toList();
+    }
+
+    @Test(expected = IndexOutOfBoundsException.class)
+    public void insert_Throws_Exception_if_index_bigger_than_upper_bound() {
+        personLazyList.insert(47, personSet).toList();
+    }
+
+    @Test
     public void concat_Concatenates_LazyList_with_given_Iterable() {
         Person e1 = new Person("Jan", "Janssens");
         Person e2 = new Person("Eveline", "Roberts");
         assertEquals(Arrays.asList(e1, e2, p1, p2, p3, p4, p5, p6), LazyList.of(e1, e2).concat(personSet).toList());
     }
 
-    /*@Test
+    @Test
     public void concat_Concatenates_LazyList_with_given_LazyList() {
         Person e1 = new Person("Jan", "Janssens");
         Person e2 = new Person("Eveline", "Roberts");
         assertEquals(Arrays.asList(e1, e2, p1, p2, p3, p4, p5, p6), LazyList.of(e1, e2).concat(personLazyList).toList());
-    }*/
+    }
+
+    @Test
+    public void add_Adds_the_given_elements_to_the_end_of_the_list() {
+        Dog d1 = new Dog(9, "Lassy");
+        Dog d2 = new Dog(1, "Lulu");
+        Dog d3 = new Dog(11, "Lala");
+        Dog d4 = new Dog(428, "Momo");
+        Dog d5 = new Dog(0, "Giri");
+        assertEquals(Arrays.asList(d1, d2, d3, d4, d5), LazyList.of(d1, d2).add(d3, d4, d5).toList());
+    }
+
+    @Test
+    public void removeFirst_Removes_first_instance_of_the_given_element_from_the_list() {
+        LazyList<Person> expected = LazyList.of(p1, p2, p5, p5, p3, p4, p5);
+        LazyList<Person> inputList = LazyList.of(p5, p1, p2, p5, p5, p3, p4, p5);
+        assertEquals(expected.toList(), inputList.removeFirst(p5).toList());
+    }
+
+    @Test
+    public void removeFirst_Returns_empty_list_if_list_empty() {
+        assertEquals(LazyList.empty().toList(), LazyList.empty().removeFirst(p1).toList());
+    }
+
+    @Test
+    public void removeAll_Removes_all_instances_of_the_given_element_from_the_list() {
+        LazyList<Person> expected = LazyList.of(p1, p2, p3, p4);
+        LazyList<Person> inputList = LazyList.of(p5, p1, p2, p5, p5, p3, p4, p5);
+        assertEquals(expected.toList(), inputList.removeAll(p5).toList());
+    }
 
 
     // List operations ==============================================================================
