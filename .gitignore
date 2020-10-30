@@ -5,7 +5,6 @@ out/
 META-INF/
 
 # For prototypes
-LazyListLazyIterator.java
 
 # For testing and helper classes
 Main.java

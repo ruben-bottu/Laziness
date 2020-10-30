@@ -222,6 +222,19 @@ public class LazyListTest {
     }
 
     @Test
+    public void first_Returns_first_element_matching_given_predicate() {
+        assertEquals(l4, localDateLazyList.first(localDate -> localDate.getMonthValue() < 3));
+        assertEquals(p3, personLazyList.first(person -> person.getFirstName().contains("t")));
+        assertEquals(i8, integerLazyList.first(integer -> integer > 100).intValue());
+    }
+
+    @Test
+    public void first_Returns_null_if_no_element_matches_given_predicate() {
+        assertNull(integerLazyList.first(integer -> integer > 75 && integer < 100));
+        assertNull(animalLazyList.first(animal -> animal.getAge() > 13));
+    }
+
+    @Test
     public void indexOfFirst_Returns_index_of_first_occurrence_of_given_element_in_LazyList() {
         assertEquals(0, localDateLazyList.indexOfFirst(localDate -> localDate.getDayOfMonth() < 50));
         assertEquals(1, personLazyList.indexOfFirst(person -> person.getSecondName().contains("h")));
@@ -344,6 +357,20 @@ public class LazyListTest {
     }
 
     @Test
+    public void containsAll_Returns_true_if_list_contains_all_given_LazyList_elements() {
+        LazyList<Person> personList = LazyList.of(new Person("Jefke", "Merens"), new Person("Nathalie", "Hofdaal"), new Person("Marie", "Bosmans"));
+        LazyList<Person> elements = LazyList.of(new Person("Jefke", "Merens"), new Person("Marie", "Bosmans"));
+        assertTrue(personList.containsAll(elements));
+    }
+
+    @Test
+    public void containsAll_Returns_false_if_list_does_not_contain_all_given_LazyList_elements() {
+        LazyList<Person> personList = LazyList.of(new Person("Jefke", "Merens"), new Person("Nathalie", "Hofdaal"));
+        LazyList<Person> elements = LazyList.of(new Person("Jefke", "Merens"), new Person("Marie", "Bosmans"));
+        assertFalse(personList.containsAll(elements));
+    }
+
+    @Test
     public void isEmpty_Returns_true_if_LazyList_is_empty() {
         assertTrue(LazyList.of().isEmpty());
     }
@@ -361,6 +388,16 @@ public class LazyListTest {
                 LazyList.of(1),
                 LazyList.of(4, 0, 3, 7, 5)
         );
+        assertTrue(nestedLazyList.isNested());
+    }
+
+    @Test
+    public void isNested_Returns_true_if_LazyList_is_nested_2() {
+        Set<Integer> set1 = new HashSet<>(Arrays.asList(111, -25, 2));
+        Set<Integer> set2 = new HashSet<>(Arrays.asList(1, 88));
+        Set<Integer> set3 = new HashSet<>(Arrays.asList(-44, 270, 31, 73, 500));
+
+        LazyList<Set<Integer>> nestedLazyList = LazyList.of(set1, set2, set3);
         assertTrue(nestedLazyList.isNested());
     }
 
@@ -447,10 +484,9 @@ public class LazyListTest {
 
     // Modifiers ====================================================================================
     @Test
-    public void insert_Inserts_given_element_at_specified_position() {
+    public void insert_Inserts_given_elements_at_specified_position() {
         LocalDate local1 = LocalDate.of(1002, 7, 1);
         LocalDate local2 = LocalDate.of(4014, 6, 9);
-        // index = 3
         LazyList<LocalDate> expected = LazyList.of(l1, l2, l3, local1, local2, l4, l5, l6, l7);
         assertEquals(expected.toList(), localDateLazyList.insert(3, Arrays.asList(local1, local2)).toList());
     }
@@ -473,6 +509,34 @@ public class LazyListTest {
     @Test(expected = IndexOutOfBoundsException.class)
     public void insert_Throws_Exception_if_index_bigger_than_upper_bound() {
         personLazyList.insert(47, personSet).toList();
+    }
+
+    @Test
+    public void insert_Inserts_given_LazyList_elements_at_specified_position() {
+        LocalDate local1 = LocalDate.of(1002, 7, 1);
+        LocalDate local2 = LocalDate.of(4014, 6, 9);
+        LazyList<LocalDate> expected = LazyList.of(l1, l2, l3, local1, local2, l4, l5, l6, l7);
+        assertEquals(expected.toList(), localDateLazyList.insert(3, LazyList.of(local1, local2)).toList());
+    }
+
+    @Test(expected = IndexOutOfBoundsException.class)
+    public void insert_Throws_Exception_if_index_just_negative_Lazy() {
+        personLazyList.insert(-1, LazyList.empty());
+    }
+
+    @Test(expected = IndexOutOfBoundsException.class)
+    public void insert_Throws_Exception_if_index_negative_Lazy() {
+        personLazyList.insert(-23, LazyList.empty());
+    }
+
+    @Test(expected = IndexOutOfBoundsException.class)
+    public void insert_Throws_Exception_if_index_just_bigger_than_upper_bound_Lazy() {
+        personLazyList.insert(6, LazyList.empty()).toList();
+    }
+
+    @Test(expected = IndexOutOfBoundsException.class)
+    public void insert_Throws_Exception_if_index_bigger_than_upper_bound_Lazy() {
+        personLazyList.insert(47, LazyList.empty()).toList();
     }
 
     @Test
