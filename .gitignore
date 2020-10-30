@@ -5,6 +5,7 @@ out/
 META-INF/
 
 # For prototypes
+ui/
 
 # For testing and helper classes
 Main.java

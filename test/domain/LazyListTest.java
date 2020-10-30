@@ -24,6 +24,7 @@ public class LazyListTest {
     private LazyList<Integer> integerLazyList;
     private LazyList<Person> personLazyList;
     private LazyList<Animal> animalLazyList;
+    private LazyList<Dog> dogLazyList;
     private LazyList<LocalDate> localDateLazyList;
 
     @Before
@@ -98,6 +99,7 @@ public class LazyListTest {
         integerLazyList = LazyList.of(i1, i2, i3, i4, i5, i6, i7, i8);
         personLazyList = LazyList.of(p1, p2, p3, p4, p5, p6);
         animalLazyList = LazyList.of(d1, d2, d3, d4, d5, d6);
+        dogLazyList = LazyList.of(d1, d2, d3, d4, d5, d6);
         localDateLazyList = LazyList.of(l1, l2, l3, l4, l5, l6, l7);
     }
 
@@ -564,6 +566,38 @@ public class LazyListTest {
     }
 
     @Test
+    public void concatToBackOf_Concatenates_to_the_back_of_the_given_Iterable() {
+        Dog n1 = new Dog(11, "Lala");
+        Dog n2 = new Dog(428, "Momo");
+        Dog n3 = new Dog(0, "Giri");
+        Set<Dog> dogs = new LinkedHashSet<>(Arrays.asList(n1, n2, n3));
+
+        LazyList<Dog> expected = LazyList.of(n1, n2, n3, d1, d2, d3, d4, d5, d6);
+        assertEquals(expected.toList(), dogLazyList.concatToBackOf(dogs).toList());
+    }
+
+    @Test
+    public void concatToBackOf_Concatenates_to_the_back_of_the_given_LazyList() {
+        Dog n1 = new Dog(11, "Lala");
+        Dog n2 = new Dog(428, "Momo");
+        Dog n3 = new Dog(0, "Giri");
+        LazyList<Dog> newDogs = LazyList.of(n1, n2, n3);
+
+        LazyList<Dog> expected = LazyList.of(d1, d2, d3, d4, d5, d6, n1, n2, n3);
+        assertEquals(expected.toList(), newDogs.concatToBackOf(dogLazyList).toList());
+    }
+
+    @Test
+    public void addToFront_Adds_given_elements_to_front_of_the_list() {
+        Dog n1 = new Dog(11, "Lala");
+        Dog n2 = new Dog(428, "Momo");
+        Dog n3 = new Dog(0, "Giri");
+
+        LazyList<Dog> expected = LazyList.of(n1, n2, n3, d1, d2, d3, d4, d5, d6);
+        assertEquals(expected.toList(), dogLazyList.addToFront(n1, n2, n3).toList());
+    }
+
+    @Test
     public void removeFirst_Removes_first_instance_of_the_given_element_from_the_list() {
         LazyList<Person> expected = LazyList.of(p1, p2, p5, p5, p3, p4, p5);
         LazyList<Person> inputList = LazyList.of(p5, p1, p2, p5, p5, p3, p4, p5);
@@ -580,6 +614,26 @@ public class LazyListTest {
         LazyList<Person> expected = LazyList.of(p1, p2, p3, p4);
         LazyList<Person> inputList = LazyList.of(p5, p1, p2, p5, p5, p3, p4, p5);
         assertEquals(expected.toList(), inputList.removeAll(p5).toList());
+    }
+
+    @Test
+    public void forEachIndexed_Performs_given_action_on_each_element_provided_with_its_index() {
+        List<Dog> dogs = new ArrayList<>();
+        List<Integer> indices = new ArrayList<>();
+        dogLazyList.forEachIndexed((idx, cur) -> {
+            indices.add(idx);
+            dogs.add(cur);
+        });
+        assertEquals(dogLazyList.toList(), dogs);
+        assertEquals(Arrays.asList(0, 1, 2, 3, 4, 5), indices);
+    }
+
+    @Test
+    public void forEach_Performs_given_action_on_each_element() {
+        List<Dog> dogs = new ArrayList<>();
+        dogLazyList.forEachIndexed((idx, cur) -> dogs.add(cur));
+
+        assertEquals(dogLazyList.toList(), dogs);
     }
 
 

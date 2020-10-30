@@ -1,10 +1,7 @@
 package domain;
 
 import java.util.*;
-import java.util.function.BiFunction;
-import java.util.function.Function;
-import java.util.function.ObjIntConsumer;
-import java.util.function.Predicate;
+import java.util.function.*;
 
 public abstract class LazyList<E> implements Iterable<E> {
     public final Lazy<E> value;
@@ -16,23 +13,23 @@ public abstract class LazyList<E> implements Iterable<E> {
         this.tail = tail;
     }
 
-    // Maybe replace this with ofHelper if lazyConcat can be used for addToFront(), concatToFront() etc.
-    // This method should be used for receiving data from the outside world and converting it into LazyList format
-    protected static <E> LazyList<E> concat(Iterator<E> iterator, LazyList<E> elements) {
+    private static <I, E> LazyList<E> mainConcat(Iterator<I> iterator, LazyList<E> elements, Function<I, Lazy<E>> transform) {
         if (iterator.hasNext()) {
-            E element = iterator.next();
-            return NormalNode.of(Lazy.of(() -> element), Lazy.of(() -> concat(iterator, elements)));
+            I element = iterator.next();
+            return NormalNode.of(transform.apply(element), Lazy.of(() -> mainConcat(iterator, elements, transform)));
         }
         return elements;
     }
 
+    // Maybe replace this with ofHelper if lazyConcat can be used for addToFront(), concatToFront() etc.
+    // This method should be used for receiving data from the outside world and converting it into LazyList format
+    protected static <E> LazyList<E> concat(Iterator<E> iterator, LazyList<E> elements) {
+        return mainConcat(iterator, elements, element -> Lazy.of(() -> element));
+    }
+
     // This method should be used for the internal workings of the class
     protected static <E> LazyList<E> lazyConcat(Iterator<Lazy<E>> iterator, LazyList<E> elements) {
-        if (iterator.hasNext()) {
-            Lazy<E> element = iterator.next();
-            return NormalNode.of(element, Lazy.of(() -> lazyConcat(iterator, elements)));
-        }
-        return elements;
+        return mainConcat(iterator, elements, element -> element);
     }
 
     /*private static <E> LazyList<E> ofHelper(Iterator<? extends E> iterator) {
@@ -88,7 +85,7 @@ public abstract class LazyList<E> implements Iterable<E> {
     }
 
     public int indexOfFirst(E element) {
-        return indexOfFirst(item -> item.equals(element));
+        return indexOfFirst(current -> current.equals(element));
     }
 
     public int lastIndex() {
@@ -137,7 +134,7 @@ public abstract class LazyList<E> implements Iterable<E> {
     }*/
 
     public boolean contains(E element) {
-        return findFirst(item -> item.equals(element)) != null;
+        return findFirst(current -> current.equals(element)) != null;
     }
 
     public boolean containsAll(Iterable<E> elements) {
@@ -180,12 +177,6 @@ public abstract class LazyList<E> implements Iterable<E> {
 
     public abstract LazyList<E> insert(int index, LazyList<E> elements);
 
-    /*public abstract LazyList<E> concat(Iterable<E> elements);*/
-
-    /*public LazyList<E> concat(Iterable<E> elements) {
-        return concat(iterator(), LazyList.of(elements));
-    }*/
-
     public LazyList<E> concat(Iterable<E> elements) {
         return lazyConcat(lazyIterator(), LazyList.of(elements));
     }
@@ -199,36 +190,37 @@ public abstract class LazyList<E> implements Iterable<E> {
         return concat(Arrays.asList(elements));
     }
 
-    /*@Override
-    public LazyList<E> filter(Predicate<E> predicate) {
-        return predicate.test(value.value()) ?
-                NormalNode.of(value, Lazy.of(() -> tail.value().filter(predicate))) :
-                tail.value().filter(predicate);
-    }*/
+    public LazyList<E> concatToBackOf(Iterable<E> elements) {
+        return concat(elements.iterator(), this);
+    }
+
+    public LazyList<E> concatToBackOf(LazyList<E> elements) {
+        return lazyConcat(elements.lazyIterator(), this);
+    }
+
+    @SafeVarargs
+    public final LazyList<E> addToFront(E... elements) {
+        return concatToBackOf(Arrays.asList(elements));
+    }
 
     public abstract LazyList<E> removeFirst(E element);
 
     public LazyList<E> removeAll(E element) {
-        return filter(cur -> !cur.equals(element));
+        return filter(current -> !current.equals(element));
     }
 
-    // Kan efficiënter denk ik
-    /*public void forEachIndexed(ObjIntConsumer<? super E> action) {
-        for (int i = 0; i < size(); i++) {
-            action.accept(get(i), i);
-        }
-    }*/
-
-    public void forEachIndexed(ObjIntConsumer<? super E> action) {
-        Iterator<Lazy<E>> iterator = lazyIterator();
+    public void forEachIndexed(BiConsumer<Integer, E> action) {
         int index = 0;
-        while (iterator.hasNext()) {
-            E element = iterator.next().value();
-            action.accept(element, index);
+        for(E element : this) {
+            action.accept(index, element);
             index++;
         }
     }
 
+    @Override
+    public void forEach(Consumer<? super E> action) {
+        forEachIndexed((index, current) -> action.accept(current));
+    }
 
     // List operations ==============================================================================
     public abstract <R> LazyList<R> map(Function<E, R> transform);
@@ -239,8 +231,8 @@ public abstract class LazyList<E> implements Iterable<E> {
     // Ranges =======================================================================================
 
 
-    // ==============================================================================================
-    //+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
+
+    /////////////////////////////////////////////////////////////////////////////////////////////////
     private static class NormalNode<E> extends LazyList<E> {
 
         // Constructors and factory methods =============================================================
@@ -336,7 +328,7 @@ public abstract class LazyList<E> implements Iterable<E> {
 
         @Override
         public LazyList<E> insert(int index, Iterable<E> elements) {
-            return insertHelper(index, elements, (middle, tail) -> concat(middle.iterator(), tail));
+            return insertHelper(index, elements, (newElements, tail) -> concat(newElements.iterator(), tail));
         }
 
         /*@Override
@@ -348,7 +340,7 @@ public abstract class LazyList<E> implements Iterable<E> {
 
         @Override
         public LazyList<E> insert(int index, LazyList<E> elements) {
-            return insertHelper(index, elements, (middle, tail) -> lazyConcat(((LazyList<E>)middle).lazyIterator(), tail));
+            return insertHelper(index, elements, (newElements, tail) -> lazyConcat(((LazyList<E>)newElements).lazyIterator(), tail));
         }
 
         /*@Override
@@ -388,8 +380,8 @@ public abstract class LazyList<E> implements Iterable<E> {
     }
 
 
-    // ==============================================================================================
-    // ==============================================================================================
+
+    /////////////////////////////////////////////////////////////////////////////////////////////////
     private static class EndNode<E> extends LazyList<E> {
 
         // Constructors and factory methods =============================================================
