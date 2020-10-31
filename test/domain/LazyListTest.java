@@ -645,6 +645,18 @@ public class LazyListTest {
     }
 
     @Test
+    public void select_Applies_given_transformation_on_each_element_in_LazyList() {
+        List<String> expectedList = Arrays.asList("Turner", "Johnson", "Vanilla", "Allstar", "Targaryen", "Jefferson");
+        assertEquals(expectedList, personLazyList.select(Person::getSecondName).toList());
+    }
+
+    @Test
+    public void where_Removes_elements_that_do_not_satisfy_given_predicate() {
+        List<Animal> expectedList = Arrays.asList(d3, d5, d6);
+        assertEquals(expectedList, animalLazyList.where(animal -> animal.getAge() > 5).toList());
+    }
+
+    @Test
     public void filter_Removes_elements_that_do_not_satisfy_given_predicate() {
         List<Animal> expectedList = Arrays.asList(d3, d5, d6);
         assertEquals(expectedList, animalLazyList.filter(animal -> animal.getAge() > 5).toList());
