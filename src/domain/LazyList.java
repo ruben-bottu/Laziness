@@ -13,35 +13,26 @@ public abstract class LazyList<E> implements Iterable<E> {
         this.tail = tail;
     }
 
-    private static <I, E> LazyList<E> mainConcat(Iterator<I> iterator, LazyList<E> elements, Function<I, Lazy<E>> transform) {
+    private static <I, E> LazyList<E> mainConcat(Iterator<I> iterator, LazyList<E> elements, Function<I, Lazy<E>> makeLazy) {
         if (iterator.hasNext()) {
             I element = iterator.next();
-            return NormalNode.of(transform.apply(element), Lazy.of(() -> mainConcat(iterator, elements, transform)));
+            return NormalNode.of(
+                    makeLazy.apply(element),
+                    Lazy.of(() -> mainConcat(iterator, elements, makeLazy))
+            );
         }
         return elements;
     }
 
-    // Maybe replace this with ofHelper if lazyConcat can be used for addToFront(), concatToFront() etc.
-    // This method should be used for receiving data from the outside world and converting it into LazyList format
     protected static <E> LazyList<E> concat(Iterator<E> iterator, LazyList<E> elements) {
         return mainConcat(iterator, elements, element -> Lazy.of(() -> element));
     }
 
-    // This method should be used for the internal workings of the class
     protected static <E> LazyList<E> lazyConcat(Iterator<Lazy<E>> iterator, LazyList<E> elements) {
         return mainConcat(iterator, elements, element -> element);
     }
 
-    /*private static <E> LazyList<E> ofHelper(Iterator<? extends E> iterator) {
-        if (iterator.hasNext()) {
-            E element = iterator.next();
-            return NormalNode.of(Lazy.of(() -> element), Lazy.of(() -> ofHelper(iterator)));
-        }
-        return EndNode.empty();
-    }*/
-
     public static <E> LazyList<E> of(Iterable<E> elements) {
-        //return ofHelper(elements.iterator());
         return concat(elements.iterator(), EndNode.empty());
     }
 
@@ -252,12 +243,6 @@ public abstract class LazyList<E> implements Iterable<E> {
 
 
         // Getters ======================================================================================
-        /*@Override
-        public E get(int index) {
-            if (index < 0) throw new IndexOutOfBoundsException("Index cannot be negative");
-            return index == 0 ? value.value() : tail.value().get(index - 1);
-        }*/
-
         @Override
         public E get(int index) {
             handleNegativeIndex(index);
