@@ -20,8 +20,8 @@ public class LazyIterator<E> implements Iterator<Lazy<E>> {
 
     @Override
     public Lazy<E> next() {
-        Lazy<E> currentValue = currentNode.value().value;
+        Lazy<E> next = currentNode.value().value;
         currentNode = currentNode.value().tail;
-        return currentValue;
+        return next;
     }
 }

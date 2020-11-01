@@ -662,6 +662,35 @@ public class LazyListTest {
         assertEquals(expectedList, animalLazyList.filter(animal -> animal.getAge() > 5).toList());
     }
 
+    @Test
+    public void zipWith_Returns_list_of_Tuples_built_from_elements_of_this_list_and_other_Iterables_with_same_index() {
+        LocalDate ld1 = LocalDate.of(1993, 6, 1);
+        LocalDate ld2 = LocalDate.of(40, 2, 8);
+
+        LazyList<Dog> dogs = LazyList.of(d1, d2, d3, d4);
+        Queue<LocalDate> dates = new LinkedList<>(Arrays.asList(ld1, ld2));
+        Set<Integer> ints = new LinkedHashSet<>(Arrays.asList(-22, 3, 7, 1025, 0));
+
+        LazyList<Triplet<Dog, LocalDate, Integer>> expected = LazyList.of(
+                Triplet.of(d1, ld1, -22),
+                Triplet.of(d2, ld2, 3)
+        );
+        assertEquals(expected.toList(), dogs.zipWith(dates, ints).toList());
+    }
+
+    @Test
+    public void zipWith_Returns_list_of_Pairs_built_from_elements_of_this_list_and_other_Iterable_with_same_index() {
+        LazyList<Dog> dogs = LazyList.of(d1, d2, d3, d4);
+        Queue<Person> people = new LinkedList<>(Arrays.asList(p5, p6, p2));
+
+        LazyList<Pair<Dog, Person>> expected = LazyList.of(
+                Pair.of(d1, p5),
+                Pair.of(d2, p6),
+                Pair.of(d3, p2)
+        );
+        assertEquals(expected.toList(), dogs.zipWith(people).toList());
+    }
+
 
     // Ranges =======================================================================================
 }

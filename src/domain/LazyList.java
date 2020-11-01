@@ -109,6 +109,10 @@ public abstract class LazyList<E> implements Iterable<E> {
         return LazyIterator.of(Lazy.of(() -> this));
     }
 
+    private Iterator<E> nullIterator() {
+        return NullIterator.empty();
+    }
+
 
     // Checks =======================================================================================
     @Override
@@ -215,10 +219,7 @@ public abstract class LazyList<E> implements Iterable<E> {
 
 
     // List operations ==============================================================================
-    /*public <A> A reduceIndexed(TriFunction<A, E, Integer, A> operation, A initialValue) {
-        A accumulator = initialValue;
-        forEachIndexed((index, current) -> accumulator = operation.apply(accumulator, current, index));
-    }*/
+    //public abstract <A> A reduceIndexed(TriFunction<A, E, Integer, A> operation, A initialValue);
 
     public abstract <R> LazyList<R> map(Function<E, R> transform);
 
@@ -230,6 +231,34 @@ public abstract class LazyList<E> implements Iterable<E> {
 
     public LazyList<E> filter(Predicate<E> predicate) {
         return where(predicate);
+    }
+
+    private static <E, A, B> boolean allHaveNext(Triplet<Iterator<E>, Iterator<A>, Iterator<B>> iterators) {
+        return iterators.first.hasNext() && iterators.second.hasNext() && iterators.third.hasNext();
+    }
+
+    /*private static <E, A, B> boolean allHaveNext(Triplet<Iterator<E>, Iterator<A>, Iterator<B>> iterators) {
+        return iterators.all((first, second, third) -> first.hasNext() && second.hasNext() && third.hasNext());
+    }*/
+
+    private static <E, A, B> Triplet<E, A, B> next(Triplet<Iterator<E>, Iterator<A>, Iterator<B>> iterators) {
+        return Triplet.of(iterators.first.next(), iterators.second.next(), iterators.third.next());
+    }
+
+    private <A, B> LazyList<Triplet<E, A, B>> zipWithHelper(Triplet<Iterator<E>, Iterator<A>, Iterator<B>> iterators) {
+        if (!allHaveNext(iterators)) return EndNode.empty();
+        return NormalNode.of(
+                Lazy.of(() -> next(iterators)),
+                Lazy.of(() -> tail.value().zipWithHelper(iterators))
+        );
+    }
+
+    public <A, B> LazyList<Triplet<E, A, B>> zipWith(Iterable<A> other, Iterable<B> other2) {
+        return zipWithHelper( Triplet.of(iterator(), other.iterator(), other2.iterator()) );
+    }
+
+    public <A> LazyList<Pair<E, A>> zipWith(Iterable<A> other) {
+        return zipWithHelper( Triplet.of(iterator(), other.iterator(), nullIterator()) ).map(Triplet::toPair);
     }
 
 
@@ -318,6 +347,11 @@ public abstract class LazyList<E> implements Iterable<E> {
 
 
         // List operations ==============================================================================
+        /*@Override
+        public <A> A reduceIndexed(TriFunction<Integer, A, E, A> operation, A initialValue) {
+
+        }*/
+
         @Override
         public <R> LazyList<R> map(Function<E, R> transform) {
             return NormalNode.of(
