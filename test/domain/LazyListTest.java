@@ -676,8 +676,27 @@ public class LazyListTest {
 
     // List operations ==============================================================================
     @Test
-    public void reduceIndexed_Reduces_this_list_provided_with_index() {
-        LazyList<Integer> integers = LazyList.of(6, 7, 0, 4);
+    public void reduce_Accumulates_this_list_into_a_single_value_by_applying_given_operation_to_each_element_with_accumulator() {
+        LazyList<Integer> integers = LazyList.of(6, 7, 0, -1, 4, 5, -8);
+        assertEquals(13, integers.reduce(0, Integer::sum).intValue());
+    }
+
+    @Test
+    public void reduce_Returns_0_if_this_list_does_not_contain_elements() {
+        LazyList<Integer> integers = LazyList.empty();
+        assertEquals(0, integers.reduce(0, Integer::sum).intValue());
+    }
+
+    @Test
+    public void reduce_Accumulates_this_list_into_a_single_value_by_applying_given_operation_to_each_element_with_accumulator_3() {
+        LazyList<LocalDate> expected = LazyList.of(l7, l6, l5, l4, l3, l2, l1);
+        assertEquals(expected, localDateLazyList.reduce(LazyList.empty(), LazyList::addToFront));
+    }
+
+    @Test
+    public void reduceIndexed_Accumulates_this_list_into_a_single_value_by_applying_given_operation_to_each_element_with_accumulator_provided_with_index() {
+        String expected = "0Zoe1Alex2Patricia3Jeffie4Daenerys5John";
+        assertEquals(expected, personLazyList.select(Person::getFirstName).reduceIndexed("", (index, acc, current) -> acc + index + current));
     }
 
     @Test

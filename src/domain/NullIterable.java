@@ -9,7 +9,7 @@ public class NullIterable<E> implements Iterable<E> {
     public static <E> Iterable<E> empty() {
         return new NullIterable<>();
     }
-
+    
     @Override
     public Iterator<E> iterator() {
         return NullIterator.empty();

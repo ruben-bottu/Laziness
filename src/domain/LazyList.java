@@ -220,14 +220,14 @@ public abstract class LazyList<E> implements Iterable<E> {
 
 
     // List operations ==============================================================================
-    // First implement reduce and then reduce + withIndex = reduceIndexed
-    // PUT INDEX AT FRONT: TriFunction<Integer, A, E, A>
-    public <A> A reduceIndexed(TriFunction<A, E, Integer, A> operation, A initialValue) {
+    public <A> A reduce(A initialValue, BiFunction<A, E, A> operation) {
         A accumulator = initialValue;
-        for(IndexElement<E> pair : withIndex()) {
-            accumulator = operation.apply(accumulator, pair.element, pair.index);
-        }
+        for (E element : this) accumulator = operation.apply(accumulator, element);
         return accumulator;
+    }
+
+    public <A> A reduceIndexed(A initialValue, TriFunction<Integer, A, E, A> operation) {
+        return withIndex().reduce(initialValue, (acc, pair) -> operation.apply(pair.index, acc, pair.element));
     }
 
     public abstract <R> LazyList<R> map(Function<E, R> transform);
