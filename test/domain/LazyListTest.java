@@ -139,6 +139,13 @@ public class LazyListTest {
         assertTrue(LazyList.empty().isEmpty());
     }
 
+    @Test
+    public void initialise_Initialises_the_list_with_given_length_by_applying_generator_to_each_index() {
+        LazyList<Dog> dogs = LazyList.initialise(3, index -> new Dog(index, "Lassy"));
+        LazyList<Dog> expected = LazyList.of(new Dog(0, "Lassy"), new Dog(1, "Lassy"), new Dog(2, "Lassy"));
+        assertEquals(expected, dogs);
+    }
+
 
     // Getters ======================================================================================
     @Test(expected = IndexOutOfBoundsException.class)
@@ -177,14 +184,19 @@ public class LazyListTest {
         assertEquals(l1, localDateLazyList.first());
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test(expected = NoSuchElementException.class)
+    public void first_Throws_exception_if_list_is_empty() {
+        LazyList.empty().first();
+    }
+
+    @Test(expected = IllegalArgumentException.class)
     public void single_Throws_exception_if_LazyList_contains_more_than_one_element() {
         integerLazyList.single();
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test(expected = NoSuchElementException.class)
     public void single_Throws_exception_if_LazyList_is_empty() {
-        LazyList.of().single();
+        LazyList.empty().single();
     }
 
     @Test
@@ -200,6 +212,11 @@ public class LazyListTest {
         assertEquals(p6, personLazyList.last());
         assertEquals(d6, animalLazyList.last());
         assertEquals(l7, localDateLazyList.last());
+    }
+
+    @Test(expected = NoSuchElementException.class)
+    public void last_Throws_exception_if_list_is_empty() {
+        LazyList.empty().last();
     }
 
     @Test
@@ -449,6 +466,11 @@ public class LazyListTest {
     }
 
     @Test
+    public void isNested_Returns_false_if_list_is_empty() {
+        assertFalse(LazyList.empty().isNested());
+    }
+
+    @Test
     public void all_Returns_true_if_all_elements_match_given_predicate() {
         assertTrue(integerLazyList.all(integer -> integer > -257));
         assertTrue(personLazyList.all(person -> person.getFirstName().length() > 2));
@@ -644,6 +666,19 @@ public class LazyListTest {
     @Test
     public void removeFirst_Returns_empty_list_if_list_empty() {
         assertEquals(LazyList.empty().toList(), LazyList.empty().removeFirst(p1).toList());
+    }
+
+    @Test
+    public void removeFirst_Removes_first_element_from_this_list() {
+        assertEquals(LazyList.of(i2, i3, i4, i5, i6, i7, i8), integerLazyList.removeFirst());
+        assertEquals(LazyList.of(p2, p3, p4, p5, p6), personLazyList.removeFirst());
+        assertEquals(LazyList.of(d2, d3, d4, d5, d6), dogLazyList.removeFirst());
+        assertEquals(LazyList.of(l2, l3, l4, l5, l6, l7), localDateLazyList.removeFirst());
+    }
+
+    @Test
+    public void removeFirst_Returns_empty_list_if_list_empty_2() {
+        assertEquals(LazyList.empty(), LazyList.empty().removeFirst());
     }
 
     @Test

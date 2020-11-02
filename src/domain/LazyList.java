@@ -45,19 +45,19 @@ public abstract class LazyList<E> implements Iterable<E> {
         return LazyList.of();
     }
 
+    public static <E> LazyList<E> initialise(int length, Function<Integer, E> generator) {
+        return rangeLength(0, length).map(generator);
+    }
+
 
     // Getters ======================================================================================
     public abstract E get(int index);
 
-    public E first() {
-        return value.value();
-    }
+    public abstract E first();
 
     public abstract E single();
 
-    public E last() {
-        return tail.value().isEmpty() ? value.value() : tail.value().last();
-    }
+    public abstract E last();
 
     public E random() {
         return get(new Random().nextInt(size()));
@@ -149,9 +149,11 @@ public abstract class LazyList<E> implements Iterable<E> {
         return none();
     }
 
-    public boolean isNested() {
+    /*public boolean isNested() {
         return value.value() instanceof Iterable;
-    }
+    }*/
+
+    public abstract boolean isNested();
 
     public boolean all(Predicate<E> predicate) {
         return !map(predicate::test).contains(false);
@@ -205,6 +207,14 @@ public abstract class LazyList<E> implements Iterable<E> {
 
     public abstract LazyList<E> removeFirst(E element);
 
+    /*public LazyList<E> removeFirst() { // Gooit exception als lijst leeg is
+        return removeFirst(first());
+    }*/
+
+    public LazyList<E> removeFirst() { // Checken ofdat het werkt met lege lijst
+        return tail.value();
+    }
+
     public LazyList<E> removeAll(E element) {
         return where(current -> !current.equals(element));
     }
@@ -229,6 +239,11 @@ public abstract class LazyList<E> implements Iterable<E> {
     public <A> A reduceIndexed(A initialValue, TriFunction<Integer, A, E, A> operation) {
         return withIndex().reduce(initialValue, (acc, pair) -> operation.apply(pair.index, acc, pair.element));
     }
+
+    /*public E reduce(BinaryOperator<E> operation) {
+        E accumulator = first();
+        for (E element : removeFirst())
+    }*/
 
     public abstract <R> LazyList<R> map(Function<E, R> transform);
 
@@ -323,7 +338,7 @@ public abstract class LazyList<E> implements Iterable<E> {
         }
 
         private void handleNegativeIndex(int index) {
-            if (index < 0) throw new IndexOutOfBoundsException("Index cannot be negative");
+            if (index < 0) throw new IndexOutOfBoundsException("Index is negative");
         }
 
 
@@ -335,9 +350,19 @@ public abstract class LazyList<E> implements Iterable<E> {
         }
 
         @Override
+        public E first() {
+            return value.value();
+        }
+
+        @Override
         public E single() {
-            if (tail.value().any()) throw new IllegalStateException("List cannot contain more than one element");
+            if (tail.value().any()) throw new IllegalArgumentException("List has more than one element");
             return first();
+        }
+
+        @Override
+        public E last() {
+            return tail.value().isEmpty() ? value.value() : tail.value().last();
         }
 
         @Override
@@ -352,6 +377,11 @@ public abstract class LazyList<E> implements Iterable<E> {
 
 
         // Checks =======================================================================================
+        @Override
+        public boolean isNested() {
+            return value.value() instanceof Iterable;
+        }
+
         @Override
         public boolean any() {
             return true;
@@ -383,11 +413,6 @@ public abstract class LazyList<E> implements Iterable<E> {
 
 
         // List operations ==============================================================================
-        /*@Override
-        public <A> A reduceIndexed(TriFunction<Integer, A, E, A> operation, A initialValue) {
-
-        }*/
-
         @Override
         public <R> LazyList<R> map(Function<E, R> transform) {
             return NormalNode.of(
@@ -429,7 +454,7 @@ public abstract class LazyList<E> implements Iterable<E> {
         }
 
         private IndexOutOfBoundsException tooHighIndexException() {
-            return new IndexOutOfBoundsException("Index cannot be bigger than upper bound");
+            return new IndexOutOfBoundsException("Index is bigger than upper bound");
         }
 
 
@@ -440,8 +465,18 @@ public abstract class LazyList<E> implements Iterable<E> {
         }
 
         @Override
+        public E first() {
+            throw new NoSuchElementException("List is empty");
+        }
+
+        @Override
         public E single() {
-            throw new IllegalStateException("List cannot be empty");
+            throw new NoSuchElementException("List is empty");
+        }
+
+        @Override
+        public E last() {
+            throw new NoSuchElementException("List is empty");
         }
 
         @Override
@@ -456,6 +491,11 @@ public abstract class LazyList<E> implements Iterable<E> {
 
 
         // Checks =======================================================================================
+        @Override
+        public boolean isNested() {
+            return false;
+        }
+
         @Override
         public boolean any() {
             return false;
