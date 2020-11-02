@@ -1,12 +1,14 @@
 package domain;
 
+import java.util.Objects;
+
 public class IndexElement<E> {
     private final Pair<Integer, E> pair;
     public final int index;
     public final E element;
 
     private IndexElement(int index, E element) {
-        pair = Pair.of(index, element);
+        this.pair = Pair.of(index, element);
         this.index = index;
         this.element = element;
     }
@@ -19,7 +21,9 @@ public class IndexElement<E> {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        return pair.equals(o);
+        IndexElement<?> that = (IndexElement<?>) o;
+        return index == that.index &&
+                Objects.equals(element, that.element);
     }
 
     @Override

@@ -277,6 +277,14 @@ public class LazyListTest {
     }
 
     @Test
+    public void indices_Returns_a_range_of_all_indices_in_this_list() {
+        assertEquals(LazyList.rangeInclusive(0, 7), integerLazyList.indices());
+        assertEquals(LazyList.rangeInclusive(0, 5), personLazyList.indices());
+        assertEquals(LazyList.rangeInclusive(0, 5), animalLazyList.indices());
+        assertEquals(LazyList.rangeInclusive(0, 6), localDateLazyList.indices());
+    }
+
+    @Test
     public void size_Returns_the_size_of_LazyList() {
         assertEquals(8, integerLazyList.size());
         assertEquals(6, personLazyList.size());
@@ -322,6 +330,35 @@ public class LazyListTest {
 
 
     // Checks =======================================================================================
+    @Test
+    public void equals_Returns_true_if_this_list_is_equal_to_the_given_object() {
+        Person np1 = new Person("Zoe", "Turner");
+        Person np2 = new Person("Alex", "Johnson");
+        Person np3 = new Person("Patricia", "Vanilla");
+        Person np4 = new Person("Jeffie", "Allstar");
+        Person np5 = new Person("Daenerys", "Targaryen");
+        Person np6 = new Person("John", "Jefferson");
+        LazyList<Person> newPeople = LazyList.of(np1, np2, np3, np4, np5, np6);
+
+        assertEquals(personLazyList, newPeople);
+        assertEquals(newPeople, personLazyList);
+    }
+
+    @Test
+    public void equals_Returns_false_if_this_list_is_not_equal_to_the_given_object() {
+        Person np1 = new Person("Zoe", "Turner");
+        Person np2 = new Person("Alex", "Johnson");
+        Person np3 = new Person("Patricia", "Vanilla");
+        Person np4 = new Person("Jeffie", "Allstar");
+        Person np5 = new Person("Daenerys", "Targaryen");
+        Person np6 = new Person("John", "Jefferso"); // final n is missing
+        LazyList<Person> newPeople = LazyList.of(np1, np2, np3, np4, np5, np6);
+
+        assertNotEquals(personLazyList, newPeople);
+        assertNotEquals(newPeople, personLazyList);
+    }
+
+
     @Test
     public void contains_Returns_true_if_LazyList_contains_the_given_element() {
         assertTrue(integerLazyList.contains(5));
@@ -542,17 +579,17 @@ public class LazyListTest {
     }
 
     @Test
-    public void concat_Concatenates_LazyList_with_given_Iterable() {
+    public void concatWith_Concatenates_LazyList_with_given_Iterable() {
         Person e1 = new Person("Jan", "Janssens");
         Person e2 = new Person("Eveline", "Roberts");
-        assertEquals(Arrays.asList(e1, e2, p1, p2, p3, p4, p5, p6), LazyList.of(e1, e2).concat(personSet).toList());
+        assertEquals(Arrays.asList(e1, e2, p1, p2, p3, p4, p5, p6), LazyList.of(e1, e2).concatWith(personSet).toList());
     }
 
     @Test
-    public void concat_Concatenates_LazyList_with_given_LazyList() {
+    public void concatWith_Concatenates_LazyList_with_given_LazyList() {
         Person e1 = new Person("Jan", "Janssens");
         Person e2 = new Person("Eveline", "Roberts");
-        assertEquals(Arrays.asList(e1, e2, p1, p2, p3, p4, p5, p6), LazyList.of(e1, e2).concat(personLazyList).toList());
+        assertEquals(Arrays.asList(e1, e2, p1, p2, p3, p4, p5, p6), LazyList.of(e1, e2).concatWith(personLazyList).toList());
     }
 
     @Test
@@ -693,4 +730,100 @@ public class LazyListTest {
 
 
     // Ranges =======================================================================================
+    @Test
+    public void rangeInclusive_Creates_a_range_of_integers_from_given_start_until_end_inclusive() {
+        LazyList<Integer> intRange = LazyList.rangeInclusive(-3, 4);
+        LazyList<Integer> expected = LazyList.of(-3, -2, -1, 0, 1, 2, 3, 4);
+        assertEquals(expected.toList(), intRange.toList());
+    }
+
+    @Test
+    public void rangeInclusive_Returns_singleton_list_if_from_equals_to() {
+        LazyList<Integer> intRange = LazyList.rangeInclusive(741, 741);
+        assertEquals(LazyList.of(741).toList(), intRange.toList());
+    }
+
+    @Test
+    public void rangeInclusive_Returns_empty_list_if_from_bigger_than_to() {
+        LazyList<Integer> intRange = LazyList.rangeInclusive(50, 3);
+        assertEquals(LazyList.empty().toList(), intRange.toList());
+    }
+
+    @Test
+    public void rangeExclusive_Creates_a_range_of_integers_from_given_start_until_end_exclusive() {
+        LazyList<Integer> intRange = LazyList.rangeExclusive(-2, 5);
+        LazyList<Integer> expected = LazyList.of(-2, -1, 0, 1, 2, 3, 4);
+        assertEquals(expected.toList(), intRange.toList());
+    }
+
+    @Test
+    public void rangeExclusive_Returns_singleton_list_if_from_just_smaller_than_to() {
+        LazyList<Integer> intRange = LazyList.rangeExclusive(121, 122);
+        assertEquals(LazyList.of(121).toList(), intRange.toList());
+    }
+
+    @Test
+    public void rangeExclusive_Returns_empty_list_if_from_equals_to() {
+        LazyList<Integer> intRange = LazyList.rangeExclusive(42, 42);
+        assertEquals(LazyList.empty().toList(), intRange.toList());
+    }
+
+    @Test
+    public void rangeExclusive_Returns_empty_list_if_from_bigger_than_to() {
+        LazyList<Integer> intRange = LazyList.rangeExclusive(98, 88);
+        assertEquals(LazyList.empty().toList(), intRange.toList());
+    }
+
+    @Test
+    public void rangeLength_Creates_an_incrementing_range_of_integers_from_given_start_until_length_is_reached() {
+        LazyList<Integer> intRange = LazyList.rangeLength(-5, 10);
+        LazyList<Integer> expected = LazyList.of(-5, -4, -3, -2, -1, 0, 1, 2, 3, 4);
+        assertEquals(expected.toList(), intRange.toList());
+    }
+
+    @Test
+    public void rangeLength_Returns_singleton_list_if_length_0() {
+        LazyList<Integer> intRange = LazyList.rangeLength(-33, 0);
+        assertEquals(LazyList.empty().toList(), intRange.toList());
+    }
+
+    @Test
+    public void rangeLength_Returns_singleton_list_if_length_negative() {
+        LazyList<Integer> intRange = LazyList.rangeLength(9, -6);
+        assertEquals(LazyList.empty().toList(), intRange.toList());
+    }
+
+    @Test
+    public void infiniteIndices_Creates_an_infinite_range_of_incrementing_indices() {
+        LazyList<Integer> infiniteIndices = LazyList.infiniteIndices();
+        assertEquals(0, infiniteIndices.value.value().intValue());
+        assertEquals(1, infiniteIndices.tail.value().value.value().intValue());
+        assertEquals(2, infiniteIndices.tail.value().tail.value().value.value().intValue());
+        assertEquals(3, infiniteIndices.tail.value().tail.value().tail.value().value.value().intValue());
+        assertEquals(4, infiniteIndices.tail.value().tail.value().tail.value().tail.value().value.value().intValue());
+    }
+
+    /*@Test
+    public void withIndex_Creates_index_element_pairs_for_this_list() {
+        Pair<Integer, Person> pair1 = Pair.of(0, p1);
+        Pair<Integer, Person> pair2 = Pair.of(1, p2);
+        Pair<Integer, Person> pair3 = Pair.of(2, p3);
+        Pair<Integer, Person> pair4 = Pair.of(3, p4);
+        Pair<Integer, Person> pair5 = Pair.of(4, p5);
+        Pair<Integer, Person> pair6 = Pair.of(5, p6);
+        LazyList<Pair<Integer, Person>> expected = LazyList.of(pair1, pair2, pair3, pair4, pair5, pair6);
+        assertEquals(expected.toList(), personLazyList.withIndex().toList());
+    }*/
+
+    @Test
+    public void withIndex_Creates_index_element_pairs_for_this_list() {
+        IndexElement<Person> pair1 = IndexElement.of(0, p1);
+        IndexElement<Person> pair2 = IndexElement.of(1, p2);
+        IndexElement<Person> pair3 = IndexElement.of(2, p3);
+        IndexElement<Person> pair4 = IndexElement.of(3, p4);
+        IndexElement<Person> pair5 = IndexElement.of(4, p5);
+        IndexElement<Person> pair6 = IndexElement.of(5, p6);
+        LazyList<IndexElement<Person>> expected = LazyList.of(pair1, pair2, pair3, pair4, pair5, pair6);
+        assertEquals(expected.toList(), personLazyList.withIndex().toList());
+    }
 }

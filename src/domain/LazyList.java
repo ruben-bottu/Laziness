@@ -69,10 +69,11 @@ public abstract class LazyList<E> implements Iterable<E> {
         return findFirst(predicate);
     }
 
-    protected abstract int indexOfFirstHelper(int counter, Predicate<E> predicate);
-
     public int indexOfFirst(Predicate<E> predicate) {
-        return indexOfFirstHelper(0, predicate);
+        for(IndexElement<E> pair : withIndex()) {
+            if (predicate.test(pair.element)) return pair.index;
+        }
+        return -1;
     }
 
     public int indexOfFirst(E element) {
@@ -83,9 +84,9 @@ public abstract class LazyList<E> implements Iterable<E> {
         return size() - 1;
     }
 
-    /*public IdeaList<Integer> indices() {
+    public LazyList<Integer> indices() {
         return rangeInclusive(0, lastIndex());
-    }*/
+    }
 
     public abstract int size();
 
@@ -120,8 +121,7 @@ public abstract class LazyList<E> implements Iterable<E> {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         LazyList<?> lazyList = (LazyList<?>) o;
-        return Objects.equals(value, lazyList.value) &&
-                Objects.equals(tail, lazyList.tail);
+        return zipWith(lazyList).all(pair -> pair.first.equals(pair.second));
     }
 
     /*public boolean contains(E element) {
@@ -172,17 +172,17 @@ public abstract class LazyList<E> implements Iterable<E> {
 
     public abstract LazyList<E> insert(int index, LazyList<E> elements);
 
-    public LazyList<E> concat(Iterable<E> elements) {
+    public LazyList<E> concatWith(Iterable<E> elements) {
         return lazyConcat(lazyIterator(), LazyList.of(elements));
     }
 
-    public LazyList<E> concat(LazyList<E> elements) {
+    public LazyList<E> concatWith(LazyList<E> elements) {
         return lazyConcat(lazyIterator(), elements);
     }
 
     @SafeVarargs
     public final LazyList<E> add(E... elements) {
-        return concat(Arrays.asList(elements));
+        return concatWith(Arrays.asList(elements));
     }
 
     public LazyList<E> concatToBackOf(Iterable<E> elements) {
@@ -205,10 +205,8 @@ public abstract class LazyList<E> implements Iterable<E> {
     }
 
     public void forEachIndexed(BiConsumer<Integer, E> action) {
-        int index = 0;
-        for(E element : this) {
-            action.accept(index, element);
-            index++;
+        for(IndexElement<E> pair : withIndex()) {
+            action.accept(pair.index, pair.element);
         }
     }
 
@@ -237,10 +235,6 @@ public abstract class LazyList<E> implements Iterable<E> {
         return iterators.first.hasNext() && iterators.second.hasNext() && iterators.third.hasNext();
     }
 
-    /*private static <E, A, B> boolean allHaveNext(Triplet<Iterator<E>, Iterator<A>, Iterator<B>> iterators) {
-        return iterators.all((first, second, third) -> first.hasNext() && second.hasNext() && third.hasNext());
-    }*/
-
     private static <E, A, B> Triplet<E, A, B> next(Triplet<Iterator<E>, Iterator<A>, Iterator<B>> iterators) {
         return Triplet.of(iterators.first.next(), iterators.second.next(), iterators.third.next());
     }
@@ -257,12 +251,39 @@ public abstract class LazyList<E> implements Iterable<E> {
         return zipWithHelper( Triplet.of(iterator(), other.iterator(), other2.iterator()) );
     }
 
-    public <A> LazyList<Pair<E, A>> zipWith(Iterable<A> other) {
+    /*public <A> LazyList<Pair<E, A>> zipWith(Iterable<A> other) {
         return zipWithHelper( Triplet.of(iterator(), other.iterator(), nullIterator()) ).map(Triplet::toPair);
+    }*/
+
+    public <A> LazyList<Pair<E, A>> zipWith(Iterable<A> other) {
+        return zipWith(other, NullIterable.empty()).map(Triplet::toPair);
     }
 
 
     // Ranges =======================================================================================
+    public static LazyList<Integer> rangeInclusive(int from, int to) {
+        return (from > to) ? EndNode.empty() : NormalNode.of(Lazy.of(() -> from), Lazy.of(() -> rangeInclusive(from + 1, to)));
+    }
+
+    public static LazyList<Integer> rangeExclusive(int from, int upTo) {
+        return rangeInclusive(from, upTo - 1);
+    }
+
+    public static LazyList<Integer> rangeLength(int from, int length) {
+        return rangeExclusive(from, from + length);
+    }
+
+    public static LazyList<Integer> infiniteIndices() {
+        return rangeInclusive(0, Integer.MAX_VALUE);
+    }
+
+    /*public LazyList<Pair<Integer, E>> withIndex() {
+        return infiniteIndices().zipWith(this);
+    }*/
+
+    public LazyList<IndexElement<E>> withIndex() {
+        return infiniteIndices().zipWith(this).map(Pair::toIndexElement);
+    }
 
 
 
@@ -278,7 +299,7 @@ public abstract class LazyList<E> implements Iterable<E> {
             return new NormalNode<>(value, tail);
         }
 
-        private LazyList<E> create(UnaryOperator<LazyList<E>> function) {
+        private LazyList<E> constructTail(UnaryOperator<LazyList<E>> function) {
             return NormalNode.of(value, Lazy.of(() -> function.apply(tail.value())));
         }
 
@@ -306,11 +327,6 @@ public abstract class LazyList<E> implements Iterable<E> {
         }
 
         @Override
-        protected int indexOfFirstHelper(int counter, Predicate<E> predicate) {
-            return predicate.test(value.value()) ? counter : tail.value().indexOfFirstHelper(counter + 1, predicate);
-        }
-
-        @Override
         public int size() {
             return 1 + tail.value().size();
         }
@@ -327,7 +343,7 @@ public abstract class LazyList<E> implements Iterable<E> {
         private LazyList<E> insertHelper(int index, Iterable<E> elements, BiFunction<Iterable<E>, LazyList<E>, LazyList<E>> concat) {
             handleNegativeIndex(index);
             return index == 0 ? concat.apply(elements, this) :
-                    create(tail -> tail.insert(index - 1, elements));
+                    constructTail(tail -> tail.insert(index - 1, elements));
         }
 
         @Override
@@ -342,7 +358,7 @@ public abstract class LazyList<E> implements Iterable<E> {
 
         public LazyList<E> removeFirst(E element) {
             return value.value().equals(element) ? tail.value() :
-                    create(tail -> tail.removeFirst(element));
+                    constructTail(tail -> tail.removeFirst(element));
         }
 
 
@@ -363,7 +379,7 @@ public abstract class LazyList<E> implements Iterable<E> {
         @Override
         public LazyList<E> where(Predicate<E> predicate) {
             return predicate.test(value.value()) ?
-                    create(tail -> tail.where(predicate)) : tail.value().where(predicate);
+                    constructTail(tail -> tail.where(predicate)) : tail.value().where(predicate);
         }
 
 
@@ -390,11 +406,6 @@ public abstract class LazyList<E> implements Iterable<E> {
 
 
         // Getters ======================================================================================
-        /*@Override
-        public E get(int index) {
-            throw new IndexOutOfBoundsException("Index cannot be bigger than upper bound");
-        }*/
-
         @Override
         public E get(int index) {
             throw tooHighIndexException();
@@ -411,11 +422,6 @@ public abstract class LazyList<E> implements Iterable<E> {
         }
 
         @Override
-        protected int indexOfFirstHelper(int counter, Predicate<E> predicate) {
-            return -1;
-        }
-
-        @Override
         public int size() {
             return 0;
         }
@@ -429,30 +435,15 @@ public abstract class LazyList<E> implements Iterable<E> {
 
 
         // Modifiers ====================================================================================
-        /*@Override
-        public LazyList<E> insert(int index, Iterable<E> elements) {
-            throw new IndexOutOfBoundsException("Index cannot be bigger than size of list - 1");
-        }*/
-
         @Override
         public LazyList<E> insert(int index, Iterable<E> elements) {
             throw tooHighIndexException();
         }
 
-        /*@Override
-        public LazyList<E> insert(int index, LazyList<E> elements) {
-            throw new IndexOutOfBoundsException("Index cannot be bigger than size of list - 1");
-        }*/
-
         @Override
         public LazyList<E> insert(int index, LazyList<E> elements) {
             throw tooHighIndexException();
         }
-
-        /*@Override
-        public LazyList<E> concat(Iterable<E> elements) {
-            return LazyList.of(elements);
-        }*/
 
         public LazyList<E> removeFirst(E element) {
             return this;

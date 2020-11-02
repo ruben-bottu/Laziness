@@ -1,7 +1,6 @@
 package domain;
 
 import java.util.Objects;
-import java.util.function.Predicate;
 
 public class Triplet<A, B, C> {
     public final A first;
@@ -18,6 +17,14 @@ public class Triplet<A, B, C> {
         return new Triplet<>(first, second, third);
     }
 
+    public Pair<A, B> toPair() {
+        return Pair.of(first, second);
+    }
+
+    /*public IndexElement<B> toIndexElement() {
+        return IndexElement.of((int) first, second);
+    }*/
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -26,10 +33,6 @@ public class Triplet<A, B, C> {
         return Objects.equals(first, triplet.first) &&
                 Objects.equals(second, triplet.second) &&
                 Objects.equals(third, triplet.third);
-    }
-
-    public Pair<A, B> toPair() {
-        return Pair.of(first, second);
     }
 
     @Override

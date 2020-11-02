@@ -15,6 +15,15 @@ public class Pair<A, B> {
         return new Pair<>(first, second);
     }
 
+    public <C> Triplet<A, B, C> add(C element) {
+        return Triplet.of(first, second, element);
+    }
+
+    public IndexElement<B> toIndexElement() {
+        if (first instanceof Integer) return IndexElement.of((Integer) first, second);
+        throw new IllegalStateException("The first element of the pair should be an integer");
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
