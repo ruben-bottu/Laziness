@@ -69,11 +69,16 @@ public abstract class LazyList<E> implements Iterable<E> {
         return findFirst(predicate);
     }
 
+    private static <V, R> R or(V value, Function<V, R> transform, R alternative) {
+        return value == null ? alternative : transform.apply(value);
+    }
+
+    private static <E> int orIndex(IndexElement<E> pair, int alternative) {
+        return or(pair, duo -> duo.index, alternative);
+    }
+
     public int indexOfFirst(Predicate<E> predicate) {
-        for(IndexElement<E> pair : withIndex()) {
-            if (predicate.test(pair.element)) return pair.index;
-        }
-        return -1;
+        return orIndex( withIndex().findFirst(pair -> predicate.test(pair.element)), -1 );
     }
 
     public int indexOfFirst(E element) {
@@ -185,17 +190,17 @@ public abstract class LazyList<E> implements Iterable<E> {
         return concatWith(Arrays.asList(elements));
     }
 
-    public LazyList<E> concatToBackOf(Iterable<E> elements) {
+    public LazyList<E> linkToBackOf(Iterable<E> elements) {
         return concat(elements.iterator(), this);
     }
 
-    public LazyList<E> concatToBackOf(LazyList<E> elements) {
+    public LazyList<E> linkToBackOf(LazyList<E> elements) {
         return lazyConcat(elements.lazyIterator(), this);
     }
 
     @SafeVarargs
     public final LazyList<E> addToFront(E... elements) {
-        return concatToBackOf(Arrays.asList(elements));
+        return linkToBackOf(Arrays.asList(elements));
     }
 
     public abstract LazyList<E> removeFirst(E element);
@@ -204,22 +209,32 @@ public abstract class LazyList<E> implements Iterable<E> {
         return where(current -> !current.equals(element));
     }
 
-    public void forEachIndexed(BiConsumer<Integer, E> action) {
-        for(IndexElement<E> pair : withIndex()) {
-            action.accept(pair.index, pair.element);
-        }
-    }
-
     @Override
     public void forEach(Consumer<? super E> action) {
-        forEachIndexed((index, current) -> action.accept(current));
+        for (E element : this) action.accept(element);
+    }
+
+    public void forEachIndexed(BiConsumer<Integer, E> action) {
+        withIndex().forEach(pair -> action.accept(pair.index, pair.element));
     }
 
 
     // List operations ==============================================================================
-    //public abstract <A> A reduceIndexed(TriFunction<A, E, Integer, A> operation, A initialValue);
+    // First implement reduce and then reduce + withIndex = reduceIndexed
+    // PUT INDEX AT FRONT: TriFunction<Integer, A, E, A>
+    public <A> A reduceIndexed(TriFunction<A, E, Integer, A> operation, A initialValue) {
+        A accumulator = initialValue;
+        for(IndexElement<E> pair : withIndex()) {
+            accumulator = operation.apply(accumulator, pair.element, pair.index);
+        }
+        return accumulator;
+    }
 
     public abstract <R> LazyList<R> map(Function<E, R> transform);
+
+    public <R> LazyList<R> mapIndexed(BiFunction<Integer, E, R> transform) {
+        return withIndex().map(pair -> transform.apply(pair.index, pair.element));
+    }
 
     public <R> LazyList<R> select(Function<E, R> transform) {
         return map(transform);
@@ -227,7 +242,15 @@ public abstract class LazyList<E> implements Iterable<E> {
 
     public abstract LazyList<E> where(Predicate<E> predicate);
 
+    public LazyList<E> whereIndexed(BiPredicate<Integer, E> predicate) {
+        return withIndex().where(pair -> predicate.test(pair.index, pair.element)).select(pair -> pair.element);
+    }
+
     public LazyList<E> filter(Predicate<E> predicate) {
+        return where(predicate);
+    }
+
+    public LazyList<E> findAll(Predicate<E> predicate) {
         return where(predicate);
     }
 
@@ -250,10 +273,6 @@ public abstract class LazyList<E> implements Iterable<E> {
     public <A, B> LazyList<Triplet<E, A, B>> zipWith(Iterable<A> other, Iterable<B> other2) {
         return zipWithHelper( Triplet.of(iterator(), other.iterator(), other2.iterator()) );
     }
-
-    /*public <A> LazyList<Pair<E, A>> zipWith(Iterable<A> other) {
-        return zipWithHelper( Triplet.of(iterator(), other.iterator(), nullIterator()) ).map(Triplet::toPair);
-    }*/
 
     public <A> LazyList<Pair<E, A>> zipWith(Iterable<A> other) {
         return zipWith(other, NullIterable.empty()).map(Triplet::toPair);
@@ -356,6 +375,7 @@ public abstract class LazyList<E> implements Iterable<E> {
             return insertHelper(index, elements, (newElements, tail) -> lazyConcat(((LazyList<E>)newElements).lazyIterator(), tail));
         }
 
+        @Override
         public LazyList<E> removeFirst(E element) {
             return value.value().equals(element) ? tail.value() :
                     constructTail(tail -> tail.removeFirst(element));
@@ -381,6 +401,14 @@ public abstract class LazyList<E> implements Iterable<E> {
             return predicate.test(value.value()) ?
                     constructTail(tail -> tail.where(predicate)) : tail.value().where(predicate);
         }
+
+        /*@Override
+        public LazyList<E> where(Predicate<E> predicate) {
+            return NormalNode.of(
+                    Lazy.of(() -> predicate.test(value.value()) ? value : tail.value().where(predicate)),
+                    Lazy.of(() -> tail.value().where(predicate))
+            );
+        }*/
 
 
         // Ranges =======================================================================================
@@ -445,6 +473,7 @@ public abstract class LazyList<E> implements Iterable<E> {
             throw tooHighIndexException();
         }
 
+        @Override
         public LazyList<E> removeFirst(E element) {
             return this;
         }

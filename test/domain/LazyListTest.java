@@ -603,25 +603,25 @@ public class LazyListTest {
     }
 
     @Test
-    public void concatToBackOf_Concatenates_to_the_back_of_the_given_Iterable() {
+    public void linkToBackOf_Concatenates_to_the_back_of_the_given_Iterable() {
         Dog n1 = new Dog(11, "Lala");
         Dog n2 = new Dog(428, "Momo");
         Dog n3 = new Dog(0, "Giri");
         Set<Dog> dogs = new LinkedHashSet<>(Arrays.asList(n1, n2, n3));
 
         LazyList<Dog> expected = LazyList.of(n1, n2, n3, d1, d2, d3, d4, d5, d6);
-        assertEquals(expected.toList(), dogLazyList.concatToBackOf(dogs).toList());
+        assertEquals(expected.toList(), dogLazyList.linkToBackOf(dogs).toList());
     }
 
     @Test
-    public void concatToBackOf_Concatenates_to_the_back_of_the_given_LazyList() {
+    public void linkToBackOf_Concatenates_to_the_back_of_the_given_LazyList() {
         Dog n1 = new Dog(11, "Lala");
         Dog n2 = new Dog(428, "Momo");
         Dog n3 = new Dog(0, "Giri");
         LazyList<Dog> newDogs = LazyList.of(n1, n2, n3);
 
         LazyList<Dog> expected = LazyList.of(d1, d2, d3, d4, d5, d6, n1, n2, n3);
-        assertEquals(expected.toList(), newDogs.concatToBackOf(dogLazyList).toList());
+        assertEquals(expected.toList(), newDogs.linkToBackOf(dogLazyList).toList());
     }
 
     @Test
@@ -668,7 +668,7 @@ public class LazyListTest {
     @Test
     public void forEach_Performs_given_action_on_each_element() {
         List<Dog> dogs = new ArrayList<>();
-        dogLazyList.forEachIndexed((idx, cur) -> dogs.add(cur));
+        dogLazyList.forEach(dogs::add); // USE FOREACH NOT FOREACHINDEXED
 
         assertEquals(dogLazyList.toList(), dogs);
     }
@@ -676,9 +676,20 @@ public class LazyListTest {
 
     // List operations ==============================================================================
     @Test
+    public void reduceIndexed_Reduces_this_list_provided_with_index() {
+        LazyList<Integer> integers = LazyList.of(6, 7, 0, 4);
+    }
+
+    @Test
     public void map_Applies_given_transformation_on_each_element_in_LazyList() {
         List<String> expectedList = Arrays.asList("Turner", "Johnson", "Vanilla", "Allstar", "Targaryen", "Jefferson");
         assertEquals(expectedList, personLazyList.map(Person::getSecondName).toList());
+    }
+
+    @Test
+    public void mapIndexed_Applies_given_transformation_on_each_element_provided_with_its_index() {
+        List<String> expectedList = Arrays.asList("Turner0", "Johnson1", "Vanilla2", "Allstar3", "Targaryen4", "Jefferson5");
+        assertEquals(expectedList, personLazyList.mapIndexed((index, person) -> person.getSecondName() + index).toList());
     }
 
     @Test
@@ -688,15 +699,27 @@ public class LazyListTest {
     }
 
     @Test
-    public void where_Removes_elements_that_do_not_satisfy_given_predicate() {
+    public void where_Returns_all_elements_that_satisfy_given_predicate() {
         List<Animal> expectedList = Arrays.asList(d3, d5, d6);
         assertEquals(expectedList, animalLazyList.where(animal -> animal.getAge() > 5).toList());
     }
 
     @Test
-    public void filter_Removes_elements_that_do_not_satisfy_given_predicate() {
+    public void whereIndexed_Returns_all_elements_that_satisfy_given_predicate_provided_with_index() {
+        List<Animal> expectedList = Arrays.asList(d1, d3, d5);
+        assertEquals(expectedList, animalLazyList.whereIndexed((index, animal) -> (index % 2) == 0).toList());
+    }
+
+    @Test
+    public void filter_Returns_all_elements_that_satisfy_given_predicate() {
         List<Animal> expectedList = Arrays.asList(d3, d5, d6);
         assertEquals(expectedList, animalLazyList.filter(animal -> animal.getAge() > 5).toList());
+    }
+
+    @Test
+    public void findAll_Returns_all_elements_that_satisfy_given_predicate() {
+        List<Animal> expectedList = Arrays.asList(d3, d5, d6);
+        assertEquals(expectedList, animalLazyList.findAll(animal -> animal.getAge() > 5).toList());
     }
 
     @Test
