@@ -45,8 +45,13 @@ public abstract class LazyList<E> implements Iterable<E> {
         return LazyList.of();
     }
 
-    public static <E> LazyList<E> initialise(int length, Function<Integer, E> generator) {
+    public static <E> LazyList<E> initialiseWith(int length, Function<Integer, E> generator) {
+        if (length < 0) throw new IllegalArgumentException("Illegal capacity: " + length);
         return rangeLength(0, length).map(generator);
+    }
+
+    protected IndexOutOfBoundsException indexOutOfBoundsException(int index) {
+        return new IndexOutOfBoundsException("Index " + index + " out of bounds of this list");
     }
 
 
@@ -116,7 +121,7 @@ public abstract class LazyList<E> implements Iterable<E> {
     }
 
     private Iterator<E> nullIterator() {
-        return NullIterator.empty();
+        return InfiniteNullIterator.empty();
     }
 
 
@@ -130,7 +135,7 @@ public abstract class LazyList<E> implements Iterable<E> {
     }
 
     /*public boolean contains(E element) {
-        return indexOf(element) != -1;
+        return indexOfFirst(element) != -1;
     }*/
 
     public boolean contains(E element) {
@@ -211,9 +216,9 @@ public abstract class LazyList<E> implements Iterable<E> {
         return removeFirst(first());
     }*/
 
-    public LazyList<E> removeFirst() { // Checken ofdat het werkt met lege lijst
+    /*public LazyList<E> removeFirst() { // Checken ofdat het werkt met lege lijst
         return tail.value();
-    }
+    }*/
 
     public LazyList<E> removeAll(E element) {
         return where(current -> !current.equals(element));
@@ -290,7 +295,7 @@ public abstract class LazyList<E> implements Iterable<E> {
     }
 
     public <A> LazyList<Pair<E, A>> zipWith(Iterable<A> other) {
-        return zipWith(other, NullIterable.empty()).map(Triplet::toPair);
+        return zipWith(other, InfiniteNullIterable.empty()).map(Triplet::toPair);
     }
 
 
@@ -338,7 +343,7 @@ public abstract class LazyList<E> implements Iterable<E> {
         }
 
         private void handleNegativeIndex(int index) {
-            if (index < 0) throw new IndexOutOfBoundsException("Index is negative");
+            if (index < 0) throw indexOutOfBoundsException(index);
         }
 
 
@@ -453,30 +458,30 @@ public abstract class LazyList<E> implements Iterable<E> {
             return new EndNode<>(null, null);
         }
 
-        private IndexOutOfBoundsException tooHighIndexException() {
-            return new IndexOutOfBoundsException("Index is bigger than upper bound");
+        private NoSuchElementException listIsEmptyException() {
+            return new NoSuchElementException("List is empty");
         }
 
 
         // Getters ======================================================================================
         @Override
         public E get(int index) {
-            throw tooHighIndexException();
+            throw indexOutOfBoundsException(index);
         }
 
         @Override
         public E first() {
-            throw new NoSuchElementException("List is empty");
+            throw listIsEmptyException();
         }
 
         @Override
         public E single() {
-            throw new NoSuchElementException("List is empty");
+            throw listIsEmptyException();
         }
 
         @Override
         public E last() {
-            throw new NoSuchElementException("List is empty");
+            throw listIsEmptyException();
         }
 
         @Override
@@ -505,12 +510,12 @@ public abstract class LazyList<E> implements Iterable<E> {
         // Modifiers ====================================================================================
         @Override
         public LazyList<E> insert(int index, Iterable<E> elements) {
-            throw tooHighIndexException();
+            throw indexOutOfBoundsException(index);
         }
 
         @Override
         public LazyList<E> insert(int index, LazyList<E> elements) {
-            throw tooHighIndexException();
+            throw indexOutOfBoundsException(index);
         }
 
         @Override

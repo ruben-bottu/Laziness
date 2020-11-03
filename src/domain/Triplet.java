@@ -21,10 +21,6 @@ public class Triplet<A, B, C> {
         return Pair.of(first, second);
     }
 
-    /*public IndexElement<B> toIndexElement() {
-        return IndexElement.of((int) first, second);
-    }*/
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

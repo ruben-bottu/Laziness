@@ -21,7 +21,7 @@ public class Pair<A, B> {
 
     public IndexElement<B> toIndexElement() {
         if (first instanceof Integer) return IndexElement.of((Integer) first, second);
-        throw new IllegalStateException("The first element of the pair should be an integer");
+        throw new IllegalArgumentException("First element of Pair is not an Integer");
     }
 
     @Override

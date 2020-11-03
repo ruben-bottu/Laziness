@@ -2,12 +2,13 @@ package domain;
 
 import java.util.Iterator;
 
-public class NullIterator<E> implements Iterator<E> {
+public class InfiniteNullIterator<E> implements Iterator<E> {
 
-    private NullIterator() {}
+    private InfiniteNullIterator() {}
 
+    //TODO Rename this method
     public static <E> Iterator<E> empty() {
-        return new NullIterator<>();
+        return new InfiniteNullIterator<>();
     }
 
     @Override
