@@ -962,33 +962,53 @@ public class LazyListTest {
 
     // List operations ==============================================================================
     @Test
+    public void reduce_Returns_initialValue_if_this_list_does_not_contain_elements() {
+        assertEquals(0, LazyList.<Integer>empty().reduce(0, (acc, integer) -> 10).intValue());
+    }
+
+    @Test
     public void reduce_Accumulates_this_list_into_a_single_value_by_applying_given_operation_to_each_element_with_accumulator() {
         LazyList<Integer> integers = LazyList.of(6, 7, 0, -1, 4, 5, -8);
         assertEquals(13, integers.reduce(0, Integer::sum).intValue());
     }
 
     @Test
-    public void reduce_Returns_0_if_this_list_does_not_contain_elements() {
-        LazyList<Integer> integers = LazyList.empty();
-        assertEquals(0, integers.reduce(0, Integer::sum).intValue());
-    }
-
-    @Test
-    public void reduce_Accumulates_this_list_into_a_single_value_by_applying_given_operation_to_each_element_with_accumulator_3() {
+    public void reduce_Accumulates_this_list_into_a_single_value_by_applying_given_operation_to_each_element_with_accumulator_2() {
         LazyList<LocalDate> expected = LazyList.of(l7, l6, l5, l4, l3, l2, l1);
         assertEquals(expected, localDateLazyList.reduce(LazyList.empty(), LazyList::addToFront));
     }
 
     @Test
-    public void reduceIndexed_Accumulates_this_list_into_a_single_value_by_applying_given_operation_to_each_element_with_accumulator_provided_with_index() {
-        String expected = "0Zoe1Alex2Patricia3Jeffie4Daenerys5John";
-        assertEquals(expected, personLazyList.select(Person::getFirstName).reduceIndexed("", (index, acc, current) -> acc + index + current));
+    public void reduceIndexed_Returns_initialValue_if_this_list_does_not_contain_elements() {
+        assertEquals(0, LazyList.<Integer>empty().reduceIndexed(0, (index, acc, integer) -> 10).intValue());
     }
 
     @Test
-    public void map_Applies_given_transformation_on_each_element_in_LazyList() {
-        List<String> expectedList = Arrays.asList("Turner", "Johnson", "Vanilla", "Allstar", "Targaryen", "Jefferson");
-        assertEquals(expectedList, personLazyList.map(Person::getSecondName).toList());
+    public void reduceIndexed_Accumulates_this_list_into_a_single_value_by_applying_given_operation_to_each_element_provided_with_accumulator_and_index() {
+        LazyList<Integer> integers = LazyList.of(6, 7, 0, -1, 4, 5, -8);
+        assertEquals(34, integers.reduceIndexed(0, (index, acc, integer) -> acc + index + integer).intValue());
+    }
+
+    @Test
+    public void reduceIndexed_Accumulates_this_list_into_a_single_value_by_applying_given_operation_to_each_element_provided_with_accumulator_and_index_2() {
+        String expected = "0Zoe1Alex2Patricia3Jeffie4Daenerys5John";
+        assertEquals(expected, personLazyList.select(Person::getFirstName).reduceIndexed("", (index, acc, firstName) -> acc + index + firstName));
+    }
+
+    @Test
+    public void map_Returns_an_empty_list_if_this_list_is_empty() {
+        assertEquals(LazyList.empty(), LazyList.<Person>empty().map(Person::getSecondName));
+    }
+
+    @Test
+    public void map_Applies_given_transformation_on_each_element_in_list() {
+        LazyList<String> expected = LazyList.of("Turner", "Johnson", "Vanilla", "Allstar", "Targaryen", "Jefferson");
+        assertEquals(expected, personLazyList.map(Person::getSecondName));
+    }
+
+    @Test
+    public void mapIndexed_Returns_an_empty_list_if_this_list_is_empty() {
+        assertEquals(LazyList.empty(), LazyList.<Person>empty().mapIndexed((index, person) -> person.getSecondName()));
     }
 
     @Test
@@ -998,33 +1018,121 @@ public class LazyListTest {
     }
 
     @Test
-    public void select_Applies_given_transformation_on_each_element_in_LazyList() {
-        List<String> expectedList = Arrays.asList("Turner", "Johnson", "Vanilla", "Allstar", "Targaryen", "Jefferson");
-        assertEquals(expectedList, personLazyList.select(Person::getSecondName).toList());
+    public void select_Returns_an_empty_list_if_this_list_is_empty() {
+        assertEquals(LazyList.empty(), LazyList.<Person>empty().select(Person::getSecondName));
+    }
+
+    @Test
+    public void select_Applies_given_transformation_on_each_element_in_list() {
+        LazyList<String> expected = LazyList.of("Turner", "Johnson", "Vanilla", "Allstar", "Targaryen", "Jefferson");
+        assertEquals(expected, personLazyList.select(Person::getSecondName));
+    }
+
+    @Test
+    public void selectIndexed_Returns_an_empty_list_if_this_list_is_empty() {
+        assertEquals(LazyList.empty(), LazyList.<Person>empty().selectIndexed((index, person) -> person.getSecondName()));
+    }
+
+    @Test
+    public void selectIndexed_Applies_given_transformation_on_each_element_provided_with_its_index() {
+        List<String> expectedList = Arrays.asList("Turner0", "Johnson1", "Vanilla2", "Allstar3", "Targaryen4", "Jefferson5");
+        assertEquals(expectedList, personLazyList.selectIndexed((index, person) -> person.getSecondName() + index).toList());
+    }
+
+    @Test
+    public void where_Returns_an_empty_list_if_this_list_is_empty() {
+        assertEquals(LazyList.empty(), LazyList.<Animal>empty().where(animal -> true));
     }
 
     @Test
     public void where_Returns_all_elements_that_satisfy_given_predicate() {
-        List<Animal> expectedList = Arrays.asList(d3, d5, d6);
-        assertEquals(expectedList, animalLazyList.where(animal -> animal.getAge() > 5).toList());
+        LazyList<Animal> expectedList = LazyList.of(d3, d5, d6);
+        assertEquals(expectedList, animalLazyList.where(animal -> animal.getAge() > 5));
+    }
+
+    @Test
+    public void whereIndexed_Returns_an_empty_list_if_this_list_is_empty() {
+        assertEquals(LazyList.empty(), LazyList.<Animal>empty().whereIndexed((index, animal) -> true));
     }
 
     @Test
     public void whereIndexed_Returns_all_elements_that_satisfy_given_predicate_provided_with_index() {
-        List<Animal> expectedList = Arrays.asList(d1, d3, d5);
-        assertEquals(expectedList, animalLazyList.whereIndexed((index, animal) -> (index % 2) == 0).toList());
+        LazyList<Animal> expectedList = LazyList.of(d1, d3, d5);
+        assertEquals(expectedList, animalLazyList.whereIndexed((index, animal) -> (index % 2) == 0));
+    }
+
+    @Test
+    public void filter_Returns_an_empty_list_if_this_list_is_empty() {
+        assertEquals(LazyList.empty(), LazyList.<Animal>empty().filter(animal -> true));
     }
 
     @Test
     public void filter_Returns_all_elements_that_satisfy_given_predicate() {
-        List<Animal> expectedList = Arrays.asList(d3, d5, d6);
-        assertEquals(expectedList, animalLazyList.filter(animal -> animal.getAge() > 5).toList());
+        LazyList<Animal> expectedList = LazyList.of(d3, d5, d6);
+        assertEquals(expectedList, animalLazyList.filter(animal -> animal.getAge() > 5));
+    }
+
+    @Test
+    public void filterIndexed_Returns_an_empty_list_if_this_list_is_empty() {
+        assertEquals(LazyList.empty(), LazyList.<Animal>empty().filterIndexed((index, animal) -> true));
+    }
+
+    @Test
+    public void filterIndexed_Returns_all_elements_that_satisfy_given_predicate_provided_with_index() {
+        LazyList<Animal> expectedList = LazyList.of(d1, d3, d5);
+        assertEquals(expectedList, animalLazyList.filterIndexed((index, animal) -> (index % 2) == 0));
+    }
+
+    @Test
+    public void findAll_Returns_an_empty_list_if_this_list_is_empty() {
+        assertEquals(LazyList.empty(), LazyList.<Animal>empty().findAll(animal -> true));
     }
 
     @Test
     public void findAll_Returns_all_elements_that_satisfy_given_predicate() {
-        List<Animal> expectedList = Arrays.asList(d3, d5, d6);
-        assertEquals(expectedList, animalLazyList.findAll(animal -> animal.getAge() > 5).toList());
+        LazyList<Animal> expectedList = LazyList.of(d3, d5, d6);
+        assertEquals(expectedList, animalLazyList.findAll(animal -> animal.getAge() > 5));
+    }
+
+    @Test
+    public void findAllIndexed_Returns_an_empty_list_if_this_list_is_empty() {
+        assertEquals(LazyList.empty(), LazyList.<Animal>empty().findAllIndexed((index, animal) -> true));
+    }
+
+    @Test
+    public void findAllIndexed_Returns_all_elements_that_satisfy_given_predicate_provided_with_index() {
+        LazyList<Animal> expectedList = LazyList.of(d1, d3, d5);
+        assertEquals(expectedList, animalLazyList.findAllIndexed((index, animal) -> (index % 2) == 0));
+    }
+
+    @Test
+    public void zipWith_Triplet_Returns_empty_list_if_this_list_is_empty() {
+        LocalDate ld1 = LocalDate.of(1993, 6, 1);
+        LocalDate ld2 = LocalDate.of(40, 2, 8);
+
+        Queue<LocalDate> dates = new LinkedList<>(Arrays.asList(ld1, ld2));
+        Set<Integer> ints = new LinkedHashSet<>(Arrays.asList(-22, 3, 7, 1025, 0));
+
+        assertEquals(LazyList.empty(), LazyList.empty().zipWith(dates, ints));
+    }
+
+    @Test
+    public void zipWith_Triplet_Returns_empty_list_if_first_given_list_is_empty() {
+        LazyList<Dog> dogs = LazyList.of(d1, d2, d3, d4);
+        Set<Integer> ints = new LinkedHashSet<>(Arrays.asList(-22, 3, 7, 1025, 0));
+
+        assertEquals(LazyList.empty(), dogs.zipWith(LazyList.empty(), ints));
+    }
+
+    @Test
+    public void zipWith_Triplet_Returns_empty_list_if_second_given_list_is_empty() {
+        LocalDate ld1 = LocalDate.of(1993, 6, 1);
+        LocalDate ld2 = LocalDate.of(40, 2, 8);
+
+        LazyList<Dog> dogs = LazyList.of(d1, d2, d3, d4);
+        Queue<LocalDate> dates = new LinkedList<>(Arrays.asList(ld1, ld2));
+
+        assertEquals(LazyList.empty(), dogs.zipWith(dates, LazyList.empty()));
     }
 
     @Test

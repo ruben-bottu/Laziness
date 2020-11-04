@@ -82,6 +82,10 @@ public abstract class LazyList<E> implements Iterable<E> {
         return or(pair, duo -> duo.index, alternative);
     }
 
+    private static <E> int orMinusOne(IndexElement<E> pair) {
+        return pair == null ? -1 : pair.index;
+    }
+
     public int indexOfFirst(Predicate<E> predicate) {
         return orIndex( withIndex().findFirst(pair -> predicate.test(pair.element)), -1 );
     }
@@ -260,6 +264,10 @@ public abstract class LazyList<E> implements Iterable<E> {
         return map(transform);
     }
 
+    public <R> LazyList<R> selectIndexed(BiFunction<Integer, E, R> transform) {
+        return mapIndexed(transform);
+    }
+
     public abstract LazyList<E> where(Predicate<E> predicate);
 
     public LazyList<E> whereIndexed(BiPredicate<Integer, E> predicate) {
@@ -270,8 +278,16 @@ public abstract class LazyList<E> implements Iterable<E> {
         return where(predicate);
     }
 
+    public LazyList<E> filterIndexed(BiPredicate<Integer, E> predicate) {
+        return whereIndexed(predicate);
+    }
+
     public LazyList<E> findAll(Predicate<E> predicate) {
         return where(predicate);
+    }
+
+    public LazyList<E> findAllIndexed(BiPredicate<Integer, E> predicate) {
+        return whereIndexed(predicate);
     }
 
     private static <E, A, B> boolean allHaveNext(Triplet<Iterator<E>, Iterator<A>, Iterator<B>> iterators) {
