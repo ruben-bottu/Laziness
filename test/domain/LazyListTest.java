@@ -699,7 +699,7 @@ public class LazyListTest {
         LocalDate local1 = LocalDate.of(1002, 7, 1);
         LocalDate local2 = LocalDate.of(4014, 6, 9);
         LazyList<LocalDate> expected = LazyList.of(l1, l2, l3, local1, local2, l4, l5, l6, l7);
-        assertEquals(expected.toList(), localDateLazyList.insert(3, Arrays.asList(local1, local2)).toList());
+        assertEquals(expected, localDateLazyList.insert(3, Arrays.asList(local1, local2)));
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
@@ -737,7 +737,7 @@ public class LazyListTest {
         LocalDate local1 = LocalDate.of(1002, 7, 1);
         LocalDate local2 = LocalDate.of(4014, 6, 9);
         LazyList<LocalDate> expected = LazyList.of(l1, l2, l3, local1, local2, l4, l5, l6, l7);
-        assertEquals(expected.toList(), localDateLazyList.insert(3, LazyList.of(local1, local2)).toList());
+        assertEquals(expected, localDateLazyList.insert(3, LazyList.of(local1, local2)));
     }
 
     @Test
@@ -835,7 +835,7 @@ public class LazyListTest {
         Set<Dog> dogs = new LinkedHashSet<>(Arrays.asList(n1, n2, n3));
 
         LazyList<Dog> expected = LazyList.of(n1, n2, n3, d1, d2, d3, d4, d5, d6);
-        assertEquals(expected.toList(), dogLazyList.linkToBackOf(dogs).toList());
+        assertEquals(expected, dogLazyList.linkToBackOf(dogs));
     }
 
     @Test
@@ -856,7 +856,7 @@ public class LazyListTest {
         LazyList<Dog> newDogs = LazyList.of(n1, n2, n3);
 
         LazyList<Dog> expected = LazyList.of(d1, d2, d3, d4, d5, d6, n1, n2, n3);
-        assertEquals(expected.toList(), newDogs.linkToBackOf(dogLazyList).toList());
+        assertEquals(expected, newDogs.linkToBackOf(dogLazyList));
     }
 
     @Test
@@ -892,7 +892,7 @@ public class LazyListTest {
         Dog n3 = new Dog(0, "Giri");
 
         LazyList<Dog> expected = LazyList.of(n1, n2, n3, d1, d2, d3, d4, d5, d6);
-        assertEquals(expected.toList(), dogLazyList.addToFront(n1, n2, n3).toList());
+        assertEquals(expected, dogLazyList.addToFront(n1, n2, n3));
     }
 
     @Test
@@ -1013,8 +1013,8 @@ public class LazyListTest {
 
     @Test
     public void mapIndexed_Applies_given_transformation_on_each_element_provided_with_its_index() {
-        List<String> expectedList = Arrays.asList("Turner0", "Johnson1", "Vanilla2", "Allstar3", "Targaryen4", "Jefferson5");
-        assertEquals(expectedList, personLazyList.mapIndexed((index, person) -> person.getSecondName() + index).toList());
+        LazyList<String> expectedList = LazyList.of("Turner0", "Johnson1", "Vanilla2", "Allstar3", "Targaryen4", "Jefferson5");
+        assertEquals(expectedList, personLazyList.mapIndexed((index, person) -> person.getSecondName() + index));
     }
 
     @Test
@@ -1035,8 +1035,8 @@ public class LazyListTest {
 
     @Test
     public void selectIndexed_Applies_given_transformation_on_each_element_provided_with_its_index() {
-        List<String> expectedList = Arrays.asList("Turner0", "Johnson1", "Vanilla2", "Allstar3", "Targaryen4", "Jefferson5");
-        assertEquals(expectedList, personLazyList.selectIndexed((index, person) -> person.getSecondName() + index).toList());
+        LazyList<String> expectedList = LazyList.of("Turner0", "Johnson1", "Vanilla2", "Allstar3", "Targaryen4", "Jefferson5");
+        assertEquals(expectedList, personLazyList.selectIndexed((index, person) -> person.getSecondName() + index));
     }
 
     @Test
@@ -1148,7 +1148,19 @@ public class LazyListTest {
                 Triplet.of(d1, ld1, -22),
                 Triplet.of(d2, ld2, 3)
         );
-        assertEquals(expected.toList(), dogs.zipWith(dates, ints).toList());
+        assertEquals(expected, dogs.zipWith(dates, ints));
+    }
+
+    @Test
+    public void zipWith_Pair_Returns_empty_list_if_this_list_is_empty() {
+        Queue<Person> people = new LinkedList<>(Arrays.asList(p5, p6, p2));
+        assertEquals(LazyList.empty(), LazyList.empty().zipWith(people));
+    }
+
+    @Test
+    public void zipWith_Pair_Returns_empty_list_if_given_list_is_empty() {
+        LazyList<Dog> dogs = LazyList.of(d1, d2, d3, d4);
+        assertEquals(LazyList.empty(), dogs.zipWith(LazyList.empty()));
     }
 
     @Test
@@ -1161,72 +1173,84 @@ public class LazyListTest {
                 Pair.of(d2, p6),
                 Pair.of(d3, p2)
         );
-        assertEquals(expected.toList(), dogs.zipWith(people).toList());
+        assertEquals(expected, dogs.zipWith(people));
     }
 
 
     // Ranges =======================================================================================
     @Test
-    public void rangeInclusive_Creates_a_range_of_integers_from_given_start_until_end_inclusive() {
-        LazyList<Integer> intRange = LazyList.rangeInclusive(-3, 4);
-        LazyList<Integer> expected = LazyList.of(-3, -2, -1, 0, 1, 2, 3, 4);
-        assertEquals(expected.toList(), intRange.toList());
+    public void rangeInclusive_Returns_empty_list_if_from_bigger_than_to() {
+        LazyList<Integer> intRange = LazyList.rangeInclusive(50, 3);
+        assertEquals(LazyList.empty(), intRange);
+    }
+
+    @Test
+    public void rangeInclusive_Returns_empty_list_if_from_just_bigger_than_to() {
+        LazyList<Integer> intRange = LazyList.rangeInclusive(4, 3);
+        assertEquals(LazyList.empty(), intRange);
     }
 
     @Test
     public void rangeInclusive_Returns_singleton_list_if_from_equals_to() {
         LazyList<Integer> intRange = LazyList.rangeInclusive(741, 741);
-        assertEquals(LazyList.of(741).toList(), intRange.toList());
+        assertEquals(LazyList.of(741), intRange);
     }
 
     @Test
-    public void rangeInclusive_Returns_empty_list_if_from_bigger_than_to() {
-        LazyList<Integer> intRange = LazyList.rangeInclusive(50, 3);
-        assertEquals(LazyList.empty().toList(), intRange.toList());
+    public void rangeInclusive_Creates_a_range_of_integers_from_given_start_until_end_inclusive() {
+        LazyList<Integer> expected = LazyList.of(-3, -2, -1, 0, 1, 2, 3, 4);
+        LazyList<Integer> intRange = LazyList.rangeInclusive(-3, 4);
+        assertEquals(expected, intRange);
+    }
+
+    @Test
+    public void rangeExclusive_Returns_empty_list_if_from_bigger_than_to() {
+        LazyList<Integer> intRange = LazyList.rangeExclusive(98, 88);
+        assertEquals(LazyList.empty(), intRange);
+    }
+
+    @Test
+    public void rangeExclusive_Returns_empty_list_if_from_just_bigger_than_to() {
+        LazyList<Integer> intRange = LazyList.rangeExclusive(4, 3);
+        assertEquals(LazyList.empty(), intRange);
+    }
+
+    @Test
+    public void rangeExclusive_Returns_empty_list_if_from_equals_to() {
+        LazyList<Integer> intRange = LazyList.rangeExclusive(42, 42);
+        assertEquals(LazyList.empty(), intRange);
+    }
+
+    @Test
+    public void rangeExclusive_Returns_singleton_list_if_from_just_smaller_than_to() {
+        LazyList<Integer> intRange = LazyList.rangeExclusive(121, 122);
+        assertEquals(LazyList.of(121), intRange);
     }
 
     @Test
     public void rangeExclusive_Creates_a_range_of_integers_from_given_start_until_end_exclusive() {
         LazyList<Integer> intRange = LazyList.rangeExclusive(-2, 5);
         LazyList<Integer> expected = LazyList.of(-2, -1, 0, 1, 2, 3, 4);
-        assertEquals(expected.toList(), intRange.toList());
+        assertEquals(expected, intRange);
     }
 
     @Test
-    public void rangeExclusive_Returns_singleton_list_if_from_just_smaller_than_to() {
-        LazyList<Integer> intRange = LazyList.rangeExclusive(121, 122);
-        assertEquals(LazyList.of(121).toList(), intRange.toList());
+    public void rangeLength_Returns_empty_list_if_given_length_negative() {
+        LazyList<Integer> intRange = LazyList.rangeLength(9, -6);
+        assertEquals(LazyList.empty(), intRange);
     }
 
     @Test
-    public void rangeExclusive_Returns_empty_list_if_from_equals_to() {
-        LazyList<Integer> intRange = LazyList.rangeExclusive(42, 42);
-        assertEquals(LazyList.empty().toList(), intRange.toList());
+    public void rangeLength_Returns_empty_list_if_given_length_0() {
+        LazyList<Integer> intRange = LazyList.rangeLength(-33, 0);
+        assertEquals(LazyList.empty(), intRange);
     }
 
     @Test
-    public void rangeExclusive_Returns_empty_list_if_from_bigger_than_to() {
-        LazyList<Integer> intRange = LazyList.rangeExclusive(98, 88);
-        assertEquals(LazyList.empty().toList(), intRange.toList());
-    }
-
-    @Test
-    public void rangeLength_Creates_an_incrementing_range_of_integers_from_given_start_until_length_is_reached() {
+    public void rangeLength_Creates_an_incrementing_range_of_integers_from_given_start_with_given_length() {
         LazyList<Integer> intRange = LazyList.rangeLength(-5, 10);
         LazyList<Integer> expected = LazyList.of(-5, -4, -3, -2, -1, 0, 1, 2, 3, 4);
-        assertEquals(expected.toList(), intRange.toList());
-    }
-
-    @Test
-    public void rangeLength_Returns_singleton_list_if_length_0() {
-        LazyList<Integer> intRange = LazyList.rangeLength(-33, 0);
-        assertEquals(LazyList.empty().toList(), intRange.toList());
-    }
-
-    @Test
-    public void rangeLength_Returns_singleton_list_if_length_negative() {
-        LazyList<Integer> intRange = LazyList.rangeLength(9, -6);
-        assertEquals(LazyList.empty().toList(), intRange.toList());
+        assertEquals(expected, intRange);
     }
 
     @Test
@@ -1239,20 +1263,13 @@ public class LazyListTest {
         assertEquals(4, infiniteIndices.tail.value().tail.value().tail.value().tail.value().value.value().intValue());
     }
 
-    /*@Test
-    public void withIndex_Creates_index_element_pairs_for_this_list() {
-        Pair<Integer, Person> pair1 = Pair.of(0, p1);
-        Pair<Integer, Person> pair2 = Pair.of(1, p2);
-        Pair<Integer, Person> pair3 = Pair.of(2, p3);
-        Pair<Integer, Person> pair4 = Pair.of(3, p4);
-        Pair<Integer, Person> pair5 = Pair.of(4, p5);
-        Pair<Integer, Person> pair6 = Pair.of(5, p6);
-        LazyList<Pair<Integer, Person>> expected = LazyList.of(pair1, pair2, pair3, pair4, pair5, pair6);
-        assertEquals(expected.toList(), personLazyList.withIndex().toList());
-    }*/
+    @Test
+    public void withIndex_Returns_an_empty_list_if_this_list_is_empty() {
+        assertEquals(LazyList.empty(), LazyList.empty().withIndex());
+    }
 
     @Test
-    public void withIndex_Creates_index_element_pairs_for_this_list() {
+    public void withIndex_Returns_a_list_of_IndexElement_pairs_where_each_element_is_bundled_together_with_its_index() {
         IndexElement<Person> pair1 = IndexElement.of(0, p1);
         IndexElement<Person> pair2 = IndexElement.of(1, p2);
         IndexElement<Person> pair3 = IndexElement.of(2, p3);
@@ -1260,6 +1277,6 @@ public class LazyListTest {
         IndexElement<Person> pair5 = IndexElement.of(4, p5);
         IndexElement<Person> pair6 = IndexElement.of(5, p6);
         LazyList<IndexElement<Person>> expected = LazyList.of(pair1, pair2, pair3, pair4, pair5, pair6);
-        assertEquals(expected.toList(), personLazyList.withIndex().toList());
+        assertEquals(expected, personLazyList.withIndex());
     }
 }
