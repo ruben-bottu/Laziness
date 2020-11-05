@@ -117,15 +117,11 @@ public abstract class LazyList<E> implements Iterable<E> {
 
     @Override
     public Iterator<E> iterator() {
-        return LazyListIterator.of(Lazy.of(() -> this));
+        return Enumerator.of(Lazy.of(() -> this));
     }
 
     private Iterator<Lazy<E>> lazyIterator() {
-        return LazyIterator.of(Lazy.of(() -> this));
-    }
-
-    private Iterator<E> nullIterator() {
-        return InfiniteNullIterator.empty();
+        return Enumerator.lazyOf(Lazy.of(() -> this));
     }
 
 
@@ -137,10 +133,6 @@ public abstract class LazyList<E> implements Iterable<E> {
         LazyList<?> lazyList = (LazyList<?>) o;
         return zipWith(lazyList).all(pair -> pair.first.equals(pair.second));
     }
-
-    /*public boolean contains(E element) {
-        return indexOfFirst(element) != -1;
-    }*/
 
     public boolean contains(E element) {
         return findFirst(current -> current.equals(element)) != null;
@@ -157,10 +149,6 @@ public abstract class LazyList<E> implements Iterable<E> {
     public boolean isEmpty() {
         return none();
     }
-
-    /*public boolean isNested() {
-        return value.value() instanceof Iterable;
-    }*/
 
     public abstract boolean isNested();
 
@@ -216,14 +204,6 @@ public abstract class LazyList<E> implements Iterable<E> {
 
     public abstract LazyList<E> removeFirst(E element);
 
-    /*public LazyList<E> removeFirst() { // Gooit exception als lijst leeg is
-        return removeFirst(first());
-    }*/
-
-    /*public LazyList<E> removeFirst() { // Checken ofdat het werkt met lege lijst
-        return tail.value();
-    }*/
-
     public LazyList<E> removeAll(E element) {
         return where(current -> !current.equals(element));
     }
@@ -249,10 +229,13 @@ public abstract class LazyList<E> implements Iterable<E> {
         return withIndex().reduce(initialValue, (acc, pair) -> operation.apply(pair.index, acc, pair.element));
     }
 
-    /*public E reduce(BinaryOperator<E> operation) {
+    public E reduce(BinaryOperator<E> operation) {
         E accumulator = first();
-        for (E element : removeFirst())
-    }*/
+        for (E element : tail.value()) {
+            accumulator = operation.apply(accumulator, element);
+        }
+        return accumulator;
+    }
 
     public abstract <R> LazyList<R> map(Function<E, R> transform);
 
@@ -311,7 +294,7 @@ public abstract class LazyList<E> implements Iterable<E> {
     }
 
     public <A> LazyList<Pair<E, A>> zipWith(Iterable<A> other) {
-        return zipWith(other, InfiniteNullIterable.empty()).map(Triplet::toPair);
+        return zipWith(other, Enumerable.infiniteNulls()).map(Triplet::toPair);
     }
 
 
