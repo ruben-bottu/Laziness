@@ -907,6 +907,39 @@ public class LazyListTest {
         assertEquals(expected, inputList.removeFirst(p5));
     }
 
+    @Test(expected = IndexOutOfBoundsException.class)
+    public void removeAt_Throws_exception_if_list_is_empty() {
+        LazyList.<String>empty().removeAt(0);
+    }
+
+    @Test(expected = IndexOutOfBoundsException.class)
+    public void removeAt_Throws_Exception_if_index_just_negative() {
+        dogLazyList.removeAt(-1);
+    }
+
+    @Test(expected = IndexOutOfBoundsException.class)
+    public void removeAt_Throws_Exception_if_index_negative() {
+        dogLazyList.removeAt(-23);
+    }
+
+    @Test(expected = IndexOutOfBoundsException.class)
+    public void removeAt_Throws_Exception_if_index_just_bigger_than_upper_bound() {
+        dogLazyList.removeAt(6).toList();
+    }
+
+    @Test(expected = IndexOutOfBoundsException.class)
+    public void removeAt_Throws_Exception_if_index_bigger_than_upper_bound() {
+        dogLazyList.removeAt(56).toList();
+    }
+
+    @Test
+    public void removeAt_Removes_the_element_at_specified_position() {
+        assertEquals(LazyList.of(d2, d3, d4, d5, d6), dogLazyList.removeAt(0));
+        assertEquals(LazyList.of(d1, d3, d4, d5, d6), dogLazyList.removeAt(1));
+        assertEquals(LazyList.of(d1, d2, d4, d5, d6), dogLazyList.removeAt(2));
+        assertEquals(LazyList.of(d1, d2, d3, d4, d5), dogLazyList.removeAt(5));
+    }
+
     @Test
     public void removeAll_Returns_empty_list_if_this_list_is_empty() {
         assertEquals(LazyList.empty(), LazyList.empty().removeAll(p1));
@@ -962,37 +995,72 @@ public class LazyListTest {
 
     // List operations ==============================================================================
     @Test
-    public void reduce_Returns_initialValue_if_this_list_does_not_contain_elements() {
+    public void reduce_initialValue_Returns_initialValue_if_this_list_does_not_contain_elements() {
         assertEquals(0, LazyList.<Integer>empty().reduce(0, (acc, integer) -> 10).intValue());
     }
 
     @Test
-    public void reduce_Accumulates_this_list_into_a_single_value_by_applying_given_operation_to_each_element_with_accumulator() {
+    public void reduce_initialValue_Accumulates_this_list_into_a_single_value_by_applying_given_operation_to_each_element_with_accumulator() {
         LazyList<Integer> integers = LazyList.of(6, 7, 0, -1, 4, 5, -8);
         assertEquals(13, integers.reduce(0, Integer::sum).intValue());
     }
 
     @Test
-    public void reduce_Accumulates_this_list_into_a_single_value_by_applying_given_operation_to_each_element_with_accumulator_2() {
+    public void reduce_initialValue_Accumulates_this_list_into_a_single_value_by_applying_given_operation_to_each_element_with_accumulator_2() {
         LazyList<LocalDate> expected = LazyList.of(l7, l6, l5, l4, l3, l2, l1);
         assertEquals(expected, localDateLazyList.reduce(LazyList.empty(), LazyList::addToFront));
     }
 
     @Test
-    public void reduceIndexed_Returns_initialValue_if_this_list_does_not_contain_elements() {
+    public void reduceIndexed_initialValue_Returns_initialValue_if_this_list_does_not_contain_elements() {
         assertEquals(0, LazyList.<Integer>empty().reduceIndexed(0, (index, acc, integer) -> 10).intValue());
     }
 
     @Test
-    public void reduceIndexed_Accumulates_this_list_into_a_single_value_by_applying_given_operation_to_each_element_provided_with_accumulator_and_index() {
+    public void reduceIndexed_initialValue_Accumulates_this_list_into_a_single_value_by_applying_given_operation_to_each_element_provided_with_accumulator_and_index() {
         LazyList<Integer> integers = LazyList.of(6, 7, 0, -1, 4, 5, -8);
         assertEquals(34, integers.reduceIndexed(0, (index, acc, integer) -> acc + index + integer).intValue());
     }
 
     @Test
-    public void reduceIndexed_Accumulates_this_list_into_a_single_value_by_applying_given_operation_to_each_element_provided_with_accumulator_and_index_2() {
+    public void reduceIndexed_initialValue_Accumulates_this_list_into_a_single_value_by_applying_given_operation_to_each_element_provided_with_accumulator_and_index_2() {
         String expected = "0Zoe1Alex2Patricia3Jeffie4Daenerys5John";
         assertEquals(expected, personLazyList.select(Person::getFirstName).reduceIndexed("", (index, acc, firstName) -> acc + index + firstName));
+    }
+
+    @Test(expected = UnsupportedOperationException.class)
+    public void reduce_Throws_exception_if_this_list_does_not_contain_elements() {
+        LazyList.<Integer>empty().reduce((acc, integer) -> 10);
+    }
+
+    @Test
+    public void reduce_Accumulates_this_list_into_a_single_value_by_applying_given_operation_to_each_element_with_accumulator() {
+        LazyList<Integer> integers = LazyList.of(6, 7, 0, -1, 4, 5, -8);
+        assertEquals(13, integers.reduce(Integer::sum).intValue());
+    }
+
+    @Test
+    public void reduce_Accumulates_this_list_into_a_single_value_by_applying_given_operation_to_each_element_with_accumulator_2() {
+        LazyList<String> given = LazyList.of("I", "would", "like", "to", "merge", "this", "list", "into", "one");
+        String expected = "Iwouldliketomergethislistintoone";
+        assertEquals(expected, given.reduce((acc, string) -> acc + string));
+    }
+
+    @Test(expected = UnsupportedOperationException.class)
+    public void reduceIndexed_Throws_exception_if_this_list_does_not_contain_elements() {
+        LazyList.<Integer>empty().reduceIndexed((index, acc, integer) -> 10);
+    }
+
+    @Test
+    public void reduceIndexed_Accumulates_this_list_into_a_single_value_by_applying_given_operation_to_each_element_provided_with_accumulator_and_index() {
+        LazyList<Integer> integers = LazyList.of(6, 7, 0, -1, 4, 5, -8);
+        assertEquals(34, integers.reduceIndexed((index, acc, integer) -> acc + index + integer).intValue());
+    }
+
+    @Test
+    public void reduceIndexed_Accumulates_this_list_into_a_single_value_by_applying_given_operation_to_each_element_provided_with_accumulator_and_index_2() {
+        String expected = "Zoe1Alex2Patricia3Jeffie4Daenerys5John";
+        assertEquals(expected, personLazyList.select(Person::getFirstName).reduceIndexed((index, acc, firstName) -> acc + index + firstName));
     }
 
     @Test

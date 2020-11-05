@@ -204,6 +204,12 @@ public abstract class LazyList<E> implements Iterable<E> {
 
     public abstract LazyList<E> removeFirst(E element);
 
+    /*public LazyList<E> removeAt(int index) {
+        return whereIndexed((idx, current) -> idx != index);
+    }*/
+
+    public abstract LazyList<E> removeAt(int index);
+
     public LazyList<E> removeAll(E element) {
         return where(current -> !current.equals(element));
     }
@@ -219,22 +225,20 @@ public abstract class LazyList<E> implements Iterable<E> {
 
 
     // List operations ==============================================================================
-    public <A> A reduce(A initialValue, BiFunction<A, E, A> operation) {
-        A accumulator = initialValue;
-        for (E element : this) accumulator = operation.apply(accumulator, element);
-        return accumulator;
-    }
+    public abstract <A> A reduce(A initialValue, BiFunction<A, E, A> operation);
 
     public <A> A reduceIndexed(A initialValue, TriFunction<Integer, A, E, A> operation) {
         return withIndex().reduce(initialValue, (acc, pair) -> operation.apply(pair.index, acc, pair.element));
     }
 
-    public E reduce(BinaryOperator<E> operation) {
-        E accumulator = first();
-        for (E element : tail.value()) {
-            accumulator = operation.apply(accumulator, element);
-        }
-        return accumulator;
+    public abstract E reduce(BinaryOperator<E> operation);
+
+    /*public E reduceIndexed(TriFunction<Integer, E, E, E> operation) {
+        return withIndex().reduce((acc, pair) -> operation.apply(pair.index, acc, pair.element));
+    }*/
+
+    public E reduceIndexed(TriFunction<Integer, E, E, E> operation) {
+        return withIndex().reduce((acc, pair) -> IndexElement.of(0, operation.apply(pair.index, acc.element, pair.element))).element;
     }
 
     public abstract <R> LazyList<R> map(Function<E, R> transform);
@@ -415,8 +419,30 @@ public abstract class LazyList<E> implements Iterable<E> {
                     constructTail(tail -> tail.removeFirst(element));
         }
 
+        @Override
+        public LazyList<E> removeAt(int index) {
+            handleNegativeIndex(index);
+            return (index == 0) ? tail.value() : constructTail(tail -> tail.removeAt(index - 1));
+        }
+
 
         // List operations ==============================================================================
+        private static <E, A> A reduceHelper(LazyList<E> list, A initialValue, BiFunction<A, E, A> operation) {
+            A accumulator = initialValue;
+            for (E element : list) accumulator = operation.apply(accumulator, element);
+            return accumulator;
+        }
+
+        @Override
+        public <A> A reduce(A initialValue, BiFunction<A, E, A> operation) {
+            return reduceHelper(this, initialValue, operation);
+        }
+
+        @Override
+        public E reduce(BinaryOperator<E> operation) {
+            return reduceHelper(tail.value(), first(), operation);
+        }
+
         @Override
         public <R> LazyList<R> map(Function<E, R> transform) {
             return NormalNode.of(
@@ -522,8 +548,23 @@ public abstract class LazyList<E> implements Iterable<E> {
             return this;
         }
 
+        @Override
+        public LazyList<E> removeAt(int index) {
+            throw indexOutOfBoundsException(index);
+        }
+
 
         // List operations ==============================================================================
+        @Override
+        public <A> A reduce(A initialValue, BiFunction<A, E, A> operation) {
+            return initialValue;
+        }
+
+        @Override
+        public E reduce(BinaryOperator<E> operation) {
+            throw new UnsupportedOperationException("Empty list can't be reduced");
+        }
+
         @Override
         public <R> LazyList<R> map(Function<E, R> transform) {
             return EndNode.empty();
