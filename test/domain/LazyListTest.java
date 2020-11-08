@@ -665,27 +665,27 @@ public class LazyListTest {
 
     // Modifiers ====================================================================================
     @Test(expected = IndexOutOfBoundsException.class)
-    public void insert_Iterable_Throws_Exception_if_this_list_is_empty() {
+    public void insert_Iterable_Throws_exception_if_this_list_is_empty() {
         LazyList.<Person>empty().insert(0, personSet);
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
-    public void insert_Iterable_Throws_Exception_if_index_just_negative() {
+    public void insert_Iterable_Throws_exception_if_index_just_negative() {
         personLazyList.insert(-1, Collections.emptyList());
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
-    public void insert_Iterable_Throws_Exception_if_index_negative() {
+    public void insert_Iterable_Throws_exception_if_index_negative() {
         personLazyList.insert(-23, Collections.emptyList());
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
-    public void insert_Iterable_Throws_Exception_if_index_just_bigger_than_upper_bound() {
+    public void insert_Iterable_Throws_exception_if_index_just_bigger_than_upper_bound() {
         personLazyList.insert(6, Collections.emptyList()).toList();
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
-    public void insert_Iterable_Throws_Exception_if_index_bigger_than_upper_bound() {
+    public void insert_Iterable_Throws_exception_if_index_bigger_than_upper_bound() {
         personLazyList.insert(47, Collections.emptyList()).toList();
     }
 
@@ -703,27 +703,27 @@ public class LazyListTest {
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
-    public void insert_LazyList_Throws_Exception_if_this_list_is_empty() {
+    public void insert_LazyList_Throws_exception_if_this_list_is_empty() {
         LazyList.<Person>empty().insert(0, personLazyList);
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
-    public void insert_LazyList_Throws_Exception_if_index_just_negative() {
+    public void insert_LazyList_Throws_exception_if_index_just_negative() {
         personLazyList.insert(-1, LazyList.empty());
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
-    public void insert_LazyList_Throws_Exception_if_index_negative() {
+    public void insert_LazyList_Throws_exception_if_index_negative() {
         personLazyList.insert(-23, LazyList.empty());
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
-    public void insert_LazyList_Throws_Exception_if_index_just_bigger_than_upper_bound() {
+    public void insert_LazyList_Throws_exception_if_index_just_bigger_than_upper_bound() {
         personLazyList.insert(6, LazyList.empty()).toList();
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
-    public void insert_LazyList_Throws_Exception_if_index_bigger_than_upper_bound() {
+    public void insert_LazyList_Throws_exception_if_index_bigger_than_upper_bound() {
         personLazyList.insert(47, LazyList.empty()).toList();
     }
 
@@ -913,22 +913,22 @@ public class LazyListTest {
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
-    public void removeAt_Throws_Exception_if_index_just_negative() {
+    public void removeAt_Throws_exception_if_index_just_negative() {
         dogLazyList.removeAt(-1);
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
-    public void removeAt_Throws_Exception_if_index_negative() {
+    public void removeAt_Throws_exception_if_index_negative() {
         dogLazyList.removeAt(-23);
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
-    public void removeAt_Throws_Exception_if_index_just_bigger_than_upper_bound() {
+    public void removeAt_Throws_exception_if_index_just_bigger_than_upper_bound() {
         dogLazyList.removeAt(6).toList();
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
-    public void removeAt_Throws_Exception_if_index_bigger_than_upper_bound() {
+    public void removeAt_Throws_exception_if_index_bigger_than_upper_bound() {
         dogLazyList.removeAt(56).toList();
     }
 
@@ -1171,6 +1171,57 @@ public class LazyListTest {
     public void findAllIndexed_Returns_all_elements_that_satisfy_given_predicate_provided_with_index() {
         LazyList<Animal> expectedList = LazyList.of(d1, d3, d5);
         assertEquals(expectedList, animalLazyList.findAllIndexed((index, animal) -> (index % 2) == 0));
+    }
+
+    @Test(expected = UnsupportedOperationException.class)
+    public void flatten_Throws_exception_if_list_is_empty() {
+        LazyList.empty().flatten();
+    }
+
+    @Test(expected = UnsupportedOperationException.class)
+    public void flatten_Throws_exception_if_list_is_already_flat() {
+        personLazyList.flatten();
+    }
+
+    @Test(expected = UnsupportedOperationException.class)
+    public void flatten_Throws_exception_if_list_contains_elements_that_are_not_Iterable() {
+        Map<String, Integer> map1 = new HashMap<>();
+        map1.put("a", 1); map1.put("b", 2);
+        Map<String, Integer> map2 = new HashMap<>();
+        map2.put("c", 3); map2.put("d", 4);
+        LazyList.of(map1, map2).flatten();
+    }
+
+    @Test
+    public void flatten_Concatenates_all_nested_LazyLists_into_one_list() {
+        LazyList<LazyList<String>> given = LazyList.of(
+                LazyList.of("one"),
+                LazyList.of("two", "three", "four"),
+                LazyList.of("five", "six", "seven", "eight")
+        );
+        LazyList<String> expected = LazyList.of("one", "two", "three", "four", "five", "six", "seven", "eight");
+        assertEquals(expected, given.flatten());
+    }
+
+    @Test
+    public void flatten_Concatenates_all_nested_Iterables_into_one_list() {
+        LazyList<Set<String>> given = LazyList.of(
+                new LinkedHashSet<>(Arrays.asList("one")),
+                new LinkedHashSet<>(Arrays.asList("two", "three", "four")),
+                new LinkedHashSet<>(Arrays.asList("five", "six", "seven", "eight"))
+        );
+        LazyList<String> expected = LazyList.of("one", "two", "three", "four", "five", "six", "seven", "eight");
+        assertEquals(expected, given.flatten());
+    }
+
+    @Test
+    public void flatten_Concatenates_all_nested_Iterables_into_one_list_2() {
+        LazyList<Queue<Person>> given = LazyList.of(
+                new LinkedList<>(Arrays.asList(p1, p2)),
+                new LinkedList<>(Arrays.asList(p3)),
+                new LinkedList<>(Arrays.asList(p4, p5, p6))
+        );
+        assertEquals(personLazyList, given.flatten());
     }
 
     @Test
