@@ -21,24 +21,16 @@ public abstract class LazyList<E> implements Iterable<E> {
         return new EndNode<>();
     }
 
-    private static <I, E> LazyList<E> concatHelper(Iterator<I> iterator, Function<I, Lazy<E>> makeLazy, LazyList<E> elements) {
+    private static <E> LazyList<E> concat(Iterator<E> iterator, LazyList<E> elements) {
         if (iterator.hasNext()) {
-            I element = iterator.next();
+            E element = iterator.next();
             return LazyList.create(
-                    makeLazy.apply(element),
-                    Lazy.of(() -> concatHelper(iterator, makeLazy, elements))
+                    Lazy.of(() -> element),
+                    Lazy.of(() -> concat(iterator, elements))
             );
         }
         return elements;
     }
-
-    private static <E> LazyList<E> concat(Iterator<E> iterator, LazyList<E> elements) {
-        return concatHelper(iterator, element -> Lazy.of(() -> element), elements);
-    }
-
-    /*private static <E> LazyList<E> lazyConcat(Iterator<Lazy<E>> iterator, LazyList<E> elements) {
-        return concatHelper(iterator, element -> element, elements);
-    }*/
 
     public static <E> LazyList<E> of(Iterable<E> elements) {
         return concat(elements.iterator(), LazyList.empty());
@@ -78,24 +70,12 @@ public abstract class LazyList<E> implements Iterable<E> {
         return findFirst(predicate);
     }
 
-    private static <V, R> R or(V value, Function<V, R> transform, R alternative) {
-        return value == null ? alternative : transform.apply(value);
-    }
-
-    private static <E> int orIndex(IndexElement<E> pair, int alternative) {
-        return or(pair, duo -> duo.index, alternative);
-    }
-
-    private static <E> int orMinusOne(IndexElement<E> pair) {
-        return pair == null ? -1 : pair.index;
-    }
-
     private static <E> int indexOrMinusOne(IndexElement<E> pair) {
         return pair == null ? -1 : pair.index;
     }
 
     public int indexOfFirst(Predicate<E> predicate) {
-        return orIndex(withIndex().findFirst(pair -> predicate.test(pair.element)), -1);
+        return indexOrMinusOne(withIndex().findFirst(pair -> predicate.test(pair.element)));
     }
 
     public int indexOfFirst(E element) {
@@ -133,10 +113,6 @@ public abstract class LazyList<E> implements Iterable<E> {
         return Enumerator.of(Lazy.of(() -> this));
     }
 
-    /*private Iterator<Lazy<E>> lazyIterator() {
-        return Enumerator.lazyOf(Lazy.of(() -> this));
-    }*/
-
 
     // Checks =======================================================================================
     @Override
@@ -148,28 +124,18 @@ public abstract class LazyList<E> implements Iterable<E> {
     }
 
     public boolean contains(E element) {
-        return findFirst(current -> current.equals(element)) != null;
+        return indexOfFirst(element) != -1;
     }
 
     public boolean containsAll(Iterable<E> elements) {
         return LazyList.of(elements).all(this::contains);
     }
 
-    /*public boolean containsAll(Iterable<E> elements) {
-        return containsAll(LazyList.of(elements));
-    }*/
-
-    /*public boolean containsAll(LazyList<E> elements) {
-        return elements.all(this::contains);
-    }*/
-
     public boolean isEmpty() {
         return none();
     }
 
     public abstract boolean isNested();
-
-    //protected abstract boolean containsLazyLists();
 
     public boolean all(Predicate<E> predicate) {
         return !map(predicate::test).contains(false);
@@ -193,16 +159,6 @@ public abstract class LazyList<E> implements Iterable<E> {
     // Modifiers ====================================================================================
     public abstract LazyList<E> insert(int index, Iterable<E> elements);
 
-    //public abstract LazyList<E> insert(int index, LazyList<E> elements);
-
-    /*public LazyList<E> concatWith(Iterable<E> elements) {
-        return concatWith(LazyList.of(elements));
-    }
-
-    public LazyList<E> concatWith(LazyList<E> elements) {
-        return lazyConcat(lazyIterator(), elements);
-    }*/
-
     public LazyList<E> concatWith(Iterable<E> elements) {
         return concat(iterator(), LazyList.of(elements));
     }
@@ -215,10 +171,6 @@ public abstract class LazyList<E> implements Iterable<E> {
     public LazyList<E> linkToBackOf(Iterable<E> elements) {
         return concat(elements.iterator(), this);
     }
-
-    /*public LazyList<E> linkToBackOf(LazyList<E> elements) {
-        return lazyConcat(elements.lazyIterator(), this);
-    }*/
 
     @SafeVarargs
     public final LazyList<E> addToFront(E... elements) {
@@ -259,8 +211,6 @@ public abstract class LazyList<E> implements Iterable<E> {
     public E reduceIndexed(TriFunction<Integer, E, E, E> operation) {
         return withIndex().reduce((acc, pair) -> IndexElement.of(0, operation.apply(pair.index, acc.element, pair.element))).element;
     }
-
-    //public abstract E reduceIndexed(TriFunction<Integer, E, E, E> operation);
 
     public abstract <R> LazyList<R> map(Function<E, R> transform);
 
@@ -338,7 +288,7 @@ public abstract class LazyList<E> implements Iterable<E> {
         Triplet<E, A, B> elements = next(iterators);
         return LazyList.create(
                 Lazy.of(() -> elements),
-                Lazy.of(() -> tail.value().zipWithHelper(iterators)) // remove tail.value() ??
+                Lazy.of(() -> zipWithHelper(iterators))
         );
     }
 
@@ -434,11 +384,6 @@ public abstract class LazyList<E> implements Iterable<E> {
             return value.value() instanceof Iterable;
         }
 
-        /*@Override
-        protected boolean containsLazyLists() {
-            return value.value() instanceof LazyList;
-        }*/
-
         @Override
         public boolean any() {
             return true;
@@ -456,11 +401,6 @@ public abstract class LazyList<E> implements Iterable<E> {
         public LazyList<E> insert(int index, Iterable<E> elements) {
             return insertHelper(index, elements, (newElements, tail) -> concat(newElements.iterator(), tail));
         }
-
-        /*@Override
-        public LazyList<E> insert(int index, LazyList<E> elements) {
-            return insertHelper(index, elements, (newElements, tail) -> lazyConcat(((LazyList<E>) newElements).lazyIterator(), tail));
-        }*/
 
         @Override
         public LazyList<E> removeFirst(E element) {
@@ -492,21 +432,6 @@ public abstract class LazyList<E> implements Iterable<E> {
             return reduceHelper(first(), tail.value(), operation);
         }
 
-        /*public E reduceIndexed(TriFunction<Integer, E, E, E> operation) {
-            if (isEmpty()) throw new UnsupportedOperationException();
-            return tail.value().withIndex().reduce(first(), (acc, pair) -> operation.apply(pair.index, acc, pair.element));
-        }*/
-
-        /*@Override
-        public E reduceIndexed(TriFunction<Integer, E, E, E> operation) {
-            return reduceHelper(first(), withIndex().tail.value(), (acc, pair) -> operation.apply(pair.index, acc, pair.element));
-        }*/
-
-        /*@Override
-        public E reduceIndexed(TriFunction<Integer, E, E, E> operation) {
-            return reduceHelper(first(), withIndex().tail.value().tail.value(), (acc, pair) -> operation.apply(pair.index, acc, pair.element));
-        }*/
-
         @Override
         public <R> LazyList<R> map(Function<E, R> transform) {
             return LazyList.create(
@@ -520,14 +445,6 @@ public abstract class LazyList<E> implements Iterable<E> {
             return predicate.test(value.value()) ?
                     constructTail(tail -> tail.where(predicate)) : tail.value().where(predicate);
         }
-
-        /*@Override
-        public LazyList<E> where(Predicate<E> predicate) {
-            return LazyList.create(
-                    Lazy.of(() -> predicate.test(value.value()) ? value : tail.value().where(predicate)),
-                    Lazy.of(() -> tail.value().where(predicate))
-            );
-        }*/
 
         /*@Override
         protected <R> LazyList<R> flattenNestedLazyLists() {
@@ -550,10 +467,6 @@ public abstract class LazyList<E> implements Iterable<E> {
 
         private static NoSuchElementException listIsEmptyException() {
             return new NoSuchElementException("List is empty");
-        }
-
-        private static UnsupportedOperationException reduceEmptyListException() {
-            return new UnsupportedOperationException("Empty list cannot be reduced");
         }
 
 
@@ -595,11 +508,6 @@ public abstract class LazyList<E> implements Iterable<E> {
             return false;
         }
 
-        /*@Override
-        protected boolean containsLazyLists() {
-            return false;
-        }*/
-
         @Override
         public boolean any() {
             return false;
@@ -611,11 +519,6 @@ public abstract class LazyList<E> implements Iterable<E> {
         public LazyList<E> insert(int index, Iterable<E> elements) {
             throw indexOutOfBoundsException(index);
         }
-
-        /*@Override
-        public LazyList<E> insert(int index, LazyList<E> elements) {
-            throw indexOutOfBoundsException(index);
-        }*/
 
         @Override
         public LazyList<E> removeFirst(E element) {
@@ -636,12 +539,7 @@ public abstract class LazyList<E> implements Iterable<E> {
 
         @Override
         public E reduce(BinaryOperator<E> operation) {
-            throw reduceEmptyListException();
-        }
-
-        @Override
-        public E reduceIndexed(TriFunction<Integer, E, E, E> operation) {
-            throw reduceEmptyListException();
+            throw new UnsupportedOperationException("Empty list cannot be reduced");
         }
 
         @Override

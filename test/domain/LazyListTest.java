@@ -1173,7 +1173,7 @@ public class LazyListTest {
         assertEquals(expectedList, animalLazyList.findAllIndexed((index, animal) -> (index % 2) == 0));
     }
 
-    @Test(expected = UnsupportedOperationException.class)
+    /*@Test(expected = UnsupportedOperationException.class)
     public void flatten_Throws_exception_if_list_is_empty() {
         LazyList.empty().flatten();
     }
@@ -1222,7 +1222,7 @@ public class LazyListTest {
                 new LinkedList<>(Arrays.asList(p4, p5, p6))
         );
         assertEquals(personLazyList, given.flatten());
-    }
+    }*/
 
     @Test
     public void zipWith_Triplet_Returns_empty_list_if_this_list_is_empty() {
