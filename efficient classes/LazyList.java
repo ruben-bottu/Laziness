@@ -36,9 +36,9 @@ public abstract class LazyList<E> implements Iterable<E> {
         return concatHelper(iterator, element -> Lazy.of(() -> element), elements);
     }
 
-    /*private static <E> LazyList<E> lazyConcat(Iterator<Lazy<E>> iterator, LazyList<E> elements) {
+    private static <E> LazyList<E> lazyConcat(Iterator<Lazy<E>> iterator, LazyList<E> elements) {
         return concatHelper(iterator, element -> element, elements);
-    }*/
+    }
 
     public static <E> LazyList<E> of(Iterable<E> elements) {
         return concat(elements.iterator(), LazyList.empty());
@@ -133,9 +133,9 @@ public abstract class LazyList<E> implements Iterable<E> {
         return Enumerator.of(Lazy.of(() -> this));
     }
 
-    /*private Iterator<Lazy<E>> lazyIterator() {
+    private Iterator<Lazy<E>> lazyIterator() {
         return Enumerator.lazyOf(Lazy.of(() -> this));
-    }*/
+    }
 
 
     // Checks =======================================================================================
@@ -152,16 +152,12 @@ public abstract class LazyList<E> implements Iterable<E> {
     }
 
     public boolean containsAll(Iterable<E> elements) {
-        return LazyList.of(elements).all(this::contains);
+        return containsAll(LazyList.of(elements));
     }
 
-    /*public boolean containsAll(Iterable<E> elements) {
-        return containsAll(LazyList.of(elements));
-    }*/
-
-    /*public boolean containsAll(LazyList<E> elements) {
+    public boolean containsAll(LazyList<E> elements) {
         return elements.all(this::contains);
-    }*/
+    }
 
     public boolean isEmpty() {
         return none();
@@ -169,7 +165,7 @@ public abstract class LazyList<E> implements Iterable<E> {
 
     public abstract boolean isNested();
 
-    //protected abstract boolean containsLazyLists();
+    protected abstract boolean containsLazyLists();
 
     public boolean all(Predicate<E> predicate) {
         return !map(predicate::test).contains(false);
@@ -193,18 +189,14 @@ public abstract class LazyList<E> implements Iterable<E> {
     // Modifiers ====================================================================================
     public abstract LazyList<E> insert(int index, Iterable<E> elements);
 
-    //public abstract LazyList<E> insert(int index, LazyList<E> elements);
+    public abstract LazyList<E> insert(int index, LazyList<E> elements);
 
-    /*public LazyList<E> concatWith(Iterable<E> elements) {
+    public LazyList<E> concatWith(Iterable<E> elements) {
         return concatWith(LazyList.of(elements));
     }
 
     public LazyList<E> concatWith(LazyList<E> elements) {
         return lazyConcat(lazyIterator(), elements);
-    }*/
-
-    public LazyList<E> concatWith(Iterable<E> elements) {
-        return concat(iterator(), LazyList.of(elements));
     }
 
     @SafeVarargs
@@ -216,9 +208,9 @@ public abstract class LazyList<E> implements Iterable<E> {
         return concat(elements.iterator(), this);
     }
 
-    /*public LazyList<E> linkToBackOf(LazyList<E> elements) {
+    public LazyList<E> linkToBackOf(LazyList<E> elements) {
         return lazyConcat(elements.lazyIterator(), this);
-    }*/
+    }
 
     @SafeVarargs
     public final LazyList<E> addToFront(E... elements) {
@@ -256,11 +248,11 @@ public abstract class LazyList<E> implements Iterable<E> {
         return withIndex().reduce((acc, pair) -> operation.apply(pair.index, acc, pair.element));
     }*/
 
-    public E reduceIndexed(TriFunction<Integer, E, E, E> operation) {
+    /*public E reduceIndexed(TriFunction<Integer, E, E, E> operation) {
         return withIndex().reduce((acc, pair) -> IndexElement.of(0, operation.apply(pair.index, acc.element, pair.element))).element;
-    }
+    }*/
 
-    //public abstract E reduceIndexed(TriFunction<Integer, E, E, E> operation);
+    public abstract E reduceIndexed(TriFunction<Integer, E, E, E> operation);
 
     public abstract <R> LazyList<R> map(Function<E, R> transform);
 
@@ -298,9 +290,9 @@ public abstract class LazyList<E> implements Iterable<E> {
         return whereIndexed(predicate);
     }
 
-    /*private <R> LazyList<R> flattenNestedIterables() {
+    private <R> LazyList<R> flattenNestedIterables() {
         return ((LazyList<Iterable<R>>) this).map(LazyList::of).flattenNestedLazyLists();
-    }*/
+    }
 
     /*private <R> LazyList<R> flattenNestedLazyLists() {
         return ((LazyList<LazyList<R>>) this).reduce(LazyList::concatWith);
@@ -313,17 +305,13 @@ public abstract class LazyList<E> implements Iterable<E> {
         );
     }*/
 
-    //protected abstract <R> LazyList<R> flattenNestedLazyLists();
-
-    /*private <R> LazyList<R> flattenNestedIterables() {
-        return ((LazyList<Iterable<R>>) this).map(LazyList::of).flattenNestedLazyLists();
-    }
+    protected abstract <R> LazyList<R> flattenNestedLazyLists();
 
     public <R> LazyList<R> flatten() {
-        //if (containsLazyLists()) return flattenNestedLazyLists();
-        if (isNested()) return flattenNestedIterables();
+        if (containsLazyLists()) return flattenNestedLazyLists();
+        else if (isNested()) return flattenNestedIterables();
         throw new UnsupportedOperationException("List contains elements that are not Iterable");
-    }*/
+    }
 
     private static <E, A, B> boolean allHaveNext(Triplet<Iterator<E>, Iterator<A>, Iterator<B>> iterators) {
         return iterators.first.hasNext() && iterators.second.hasNext() && iterators.third.hasNext();
@@ -335,9 +323,8 @@ public abstract class LazyList<E> implements Iterable<E> {
 
     private <A, B> LazyList<Triplet<E, A, B>> zipWithHelper(Triplet<Iterator<E>, Iterator<A>, Iterator<B>> iterators) {
         if (!allHaveNext(iterators)) return LazyList.empty();
-        Triplet<E, A, B> elements = next(iterators);
         return LazyList.create(
-                Lazy.of(() -> elements),
+                Lazy.of(() -> next(iterators)),
                 Lazy.of(() -> tail.value().zipWithHelper(iterators)) // remove tail.value() ??
         );
     }
@@ -434,10 +421,10 @@ public abstract class LazyList<E> implements Iterable<E> {
             return value.value() instanceof Iterable;
         }
 
-        /*@Override
+        @Override
         protected boolean containsLazyLists() {
             return value.value() instanceof LazyList;
-        }*/
+        }
 
         @Override
         public boolean any() {
@@ -457,10 +444,10 @@ public abstract class LazyList<E> implements Iterable<E> {
             return insertHelper(index, elements, (newElements, tail) -> concat(newElements.iterator(), tail));
         }
 
-        /*@Override
+        @Override
         public LazyList<E> insert(int index, LazyList<E> elements) {
             return insertHelper(index, elements, (newElements, tail) -> lazyConcat(((LazyList<E>) newElements).lazyIterator(), tail));
-        }*/
+        }
 
         @Override
         public LazyList<E> removeFirst(E element) {
@@ -502,10 +489,10 @@ public abstract class LazyList<E> implements Iterable<E> {
             return reduceHelper(first(), withIndex().tail.value(), (acc, pair) -> operation.apply(pair.index, acc, pair.element));
         }*/
 
-        /*@Override
+        @Override
         public E reduceIndexed(TriFunction<Integer, E, E, E> operation) {
             return reduceHelper(first(), withIndex().tail.value().tail.value(), (acc, pair) -> operation.apply(pair.index, acc, pair.element));
-        }*/
+        }
 
         @Override
         public <R> LazyList<R> map(Function<E, R> transform) {
@@ -529,11 +516,11 @@ public abstract class LazyList<E> implements Iterable<E> {
             );
         }*/
 
-        /*@Override
+        @Override
         protected <R> LazyList<R> flattenNestedLazyLists() {
             //return LazyList.create(Lazy.of(() -> ))
             return ((LazyList<R>) value.value()).concatWith(tail.value().flattenNestedLazyLists());
-        }*/
+        }
 
 
         // Ranges =======================================================================================
@@ -595,10 +582,10 @@ public abstract class LazyList<E> implements Iterable<E> {
             return false;
         }
 
-        /*@Override
+        @Override
         protected boolean containsLazyLists() {
             return false;
-        }*/
+        }
 
         @Override
         public boolean any() {
@@ -612,10 +599,10 @@ public abstract class LazyList<E> implements Iterable<E> {
             throw indexOutOfBoundsException(index);
         }
 
-        /*@Override
+        @Override
         public LazyList<E> insert(int index, LazyList<E> elements) {
             throw indexOutOfBoundsException(index);
-        }*/
+        }
 
         @Override
         public LazyList<E> removeFirst(E element) {
@@ -654,10 +641,10 @@ public abstract class LazyList<E> implements Iterable<E> {
             return this;
         }
 
-        /*@Override
+        @Override
         protected <R> LazyList<R> flattenNestedLazyLists() {
             return LazyList.empty();
-        }*/
+        }
 
         // Ranges =======================================================================================
     }
