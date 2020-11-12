@@ -110,6 +110,12 @@ public class LazyListTest {
     }
 
     @Test
+    public void LazyList_of_Gives_correct_tail_when_value_is_not_calculated() {
+        assertEquals(p2, personLazyList.tail.value().value.value());
+        assertEquals(p5, personLazyList.tail.value().tail.value().tail.value().tail.value().value.value());
+    }
+
+    @Test
     public void LazyList_of_elements_Creates_empty_LazyList_if_no_elements_are_given() {
         assertEquals(LazyList.empty(), LazyList.of());
     }
@@ -665,79 +671,79 @@ public class LazyListTest {
 
     // Modifiers ====================================================================================
     @Test(expected = IndexOutOfBoundsException.class)
-    public void insert_Iterable_Throws_exception_if_this_list_is_empty() {
-        LazyList.<Person>empty().insert(0, personSet);
+    public void insertAt_Iterable_Throws_exception_if_this_list_is_empty() {
+        LazyList.<Person>empty().insertAt(0, personSet);
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
-    public void insert_Iterable_Throws_exception_if_index_just_negative() {
-        personLazyList.insert(-1, Collections.emptyList());
+    public void insertAt_Iterable_Throws_exception_if_index_just_negative() {
+        personLazyList.insertAt(-1, Collections.emptyList());
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
-    public void insert_Iterable_Throws_exception_if_index_negative() {
-        personLazyList.insert(-23, Collections.emptyList());
+    public void insertAt_Iterable_Throws_exception_if_index_negative() {
+        personLazyList.insertAt(-23, Collections.emptyList());
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
-    public void insert_Iterable_Throws_exception_if_index_just_bigger_than_upper_bound() {
-        personLazyList.insert(6, Collections.emptyList()).toList();
+    public void insertAt_Iterable_Throws_exception_if_index_just_bigger_than_upper_bound() {
+        personLazyList.insertAt(6, Collections.emptyList()).toList();
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
-    public void insert_Iterable_Throws_exception_if_index_bigger_than_upper_bound() {
-        personLazyList.insert(47, Collections.emptyList()).toList();
+    public void insertAt_Iterable_Throws_exception_if_index_bigger_than_upper_bound() {
+        personLazyList.insertAt(47, Collections.emptyList()).toList();
     }
 
     @Test
-    public void insert_Iterable_Returns_list_if_given_list_is_empty() {
-        assertEquals(localDateLazyList, localDateLazyList.insert(3, new HashSet<>()));
+    public void insertAt_Iterable_Returns_list_if_given_list_is_empty() {
+        assertEquals(localDateLazyList, localDateLazyList.insertAt(3, new HashSet<>()));
     }
 
     @Test
-    public void insert_Iterable_Inserts_given_elements_at_specified_position() {
+    public void insertAt_Iterable_Inserts_given_elements_at_specified_position() {
         LocalDate local1 = LocalDate.of(1002, 7, 1);
         LocalDate local2 = LocalDate.of(4014, 6, 9);
         LazyList<LocalDate> expected = LazyList.of(l1, l2, l3, local1, local2, l4, l5, l6, l7);
-        assertEquals(expected, localDateLazyList.insert(3, Arrays.asList(local1, local2)));
+        assertEquals(expected, localDateLazyList.insertAt(3, Arrays.asList(local1, local2)));
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
-    public void insert_LazyList_Throws_exception_if_this_list_is_empty() {
-        LazyList.<Person>empty().insert(0, personLazyList);
+    public void insertAt_LazyList_Throws_exception_if_this_list_is_empty() {
+        LazyList.<Person>empty().insertAt(0, personLazyList);
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
-    public void insert_LazyList_Throws_exception_if_index_just_negative() {
-        personLazyList.insert(-1, LazyList.empty());
+    public void insertAt_LazyList_Throws_exception_if_index_just_negative() {
+        personLazyList.insertAt(-1, LazyList.empty());
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
-    public void insert_LazyList_Throws_exception_if_index_negative() {
-        personLazyList.insert(-23, LazyList.empty());
+    public void insertAt_LazyList_Throws_exception_if_index_negative() {
+        personLazyList.insertAt(-23, LazyList.empty());
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
-    public void insert_LazyList_Throws_exception_if_index_just_bigger_than_upper_bound() {
-        personLazyList.insert(6, LazyList.empty()).toList();
+    public void insertAt_LazyList_Throws_exception_if_index_just_bigger_than_upper_bound() {
+        personLazyList.insertAt(6, LazyList.empty()).toList();
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
-    public void insert_LazyList_Throws_exception_if_index_bigger_than_upper_bound() {
-        personLazyList.insert(47, LazyList.empty()).toList();
+    public void insertAt_LazyList_Throws_exception_if_index_bigger_than_upper_bound() {
+        personLazyList.insertAt(47, LazyList.empty()).toList();
     }
 
     @Test
-    public void insert_LazyList_Returns_list_if_given_list_is_empty() {
-        assertEquals(localDateLazyList, localDateLazyList.insert(3, LazyList.empty()));
+    public void insertAt_LazyList_Returns_list_if_given_list_is_empty() {
+        assertEquals(localDateLazyList, localDateLazyList.insertAt(3, LazyList.empty()));
     }
 
     @Test
-    public void insert_LazyList_Inserts_given_elements_at_specified_position() {
+    public void insertAt_LazyList_Inserts_given_elements_at_specified_position() {
         LocalDate local1 = LocalDate.of(1002, 7, 1);
         LocalDate local2 = LocalDate.of(4014, 6, 9);
         LazyList<LocalDate> expected = LazyList.of(l1, l2, l3, local1, local2, l4, l5, l6, l7);
-        assertEquals(expected, localDateLazyList.insert(3, LazyList.of(local1, local2)));
+        assertEquals(expected, localDateLazyList.insertAt(3, LazyList.of(local1, local2)));
     }
 
     @Test
@@ -1173,7 +1179,7 @@ public class LazyListTest {
         assertEquals(expectedList, animalLazyList.findAllIndexed((index, animal) -> (index % 2) == 0));
     }
 
-    /*@Test(expected = UnsupportedOperationException.class)
+    @Test(expected = UnsupportedOperationException.class)
     public void flatten_Throws_exception_if_list_is_empty() {
         LazyList.empty().flatten();
     }
@@ -1206,7 +1212,7 @@ public class LazyListTest {
     @Test
     public void flatten_Concatenates_all_nested_Iterables_into_one_list() {
         LazyList<Set<String>> given = LazyList.of(
-                new LinkedHashSet<>(Arrays.asList("one")),
+                new LinkedHashSet<>(Collections.singletonList("one")),
                 new LinkedHashSet<>(Arrays.asList("two", "three", "four")),
                 new LinkedHashSet<>(Arrays.asList("five", "six", "seven", "eight"))
         );
@@ -1218,11 +1224,18 @@ public class LazyListTest {
     public void flatten_Concatenates_all_nested_Iterables_into_one_list_2() {
         LazyList<Queue<Person>> given = LazyList.of(
                 new LinkedList<>(Arrays.asList(p1, p2)),
-                new LinkedList<>(Arrays.asList(p3)),
+                new LinkedList<>(Collections.singletonList(p3)),
                 new LinkedList<>(Arrays.asList(p4, p5, p6))
         );
         assertEquals(personLazyList, given.flatten());
-    }*/
+    }
+
+    @Test
+    public void zipWith_Triplet_Gives_correct_tail_when_value_is_not_calculated() {
+        LazyList<Triplet<Person, Integer, LocalDate>> given = personLazyList.zipWith(integerLazyList, localDateLazyList);
+        assertEquals(Triplet.of(p2, i2, l2), given.tail.value().value.value());
+        assertEquals(Triplet.of(p5, i5, l5), given.tail.value().tail.value().tail.value().tail.value().value.value());
+    }
 
     @Test
     public void zipWith_Triplet_Returns_empty_list_if_this_list_is_empty() {

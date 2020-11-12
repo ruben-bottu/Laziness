@@ -75,7 +75,7 @@ public abstract class LazyList<E> implements Iterable<E> {
     }
 
     public int indexOfFirst(Predicate<E> predicate) {
-        return indexOrMinusOne(withIndex().findFirst(pair -> predicate.test(pair.element)));
+        return indexOrMinusOne(withIndex().findFirst(currentPair -> predicate.test(currentPair.element)));
     }
 
     public int indexOfFirst(E element) {
@@ -120,7 +120,7 @@ public abstract class LazyList<E> implements Iterable<E> {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         LazyList<?> lazyList = (LazyList<?>) o;
-        return zipWith(lazyList).all(pair -> pair.first.equals(pair.second));
+        return zipWith(lazyList).all(currentPair -> currentPair.first.equals(currentPair.second));
     }
 
     public boolean contains(E element) {
@@ -157,7 +157,7 @@ public abstract class LazyList<E> implements Iterable<E> {
 
 
     // Modifiers ====================================================================================
-    public abstract LazyList<E> insert(int index, Iterable<E> elements);
+    public abstract LazyList<E> insertAt(int index, Iterable<E> elements);
 
     public LazyList<E> concatWith(Iterable<E> elements) {
         return concat(iterator(), LazyList.of(elements));
@@ -191,7 +191,7 @@ public abstract class LazyList<E> implements Iterable<E> {
     }
 
     public void forEachIndexed(BiConsumer<Integer, E> action) {
-        withIndex().forEach(pair -> action.accept(pair.index, pair.element));
+        withIndex().forEach(currentPair -> action.accept(currentPair.index, currentPair.element));
     }
 
 
@@ -199,23 +199,23 @@ public abstract class LazyList<E> implements Iterable<E> {
     public abstract <A> A reduce(A initialValue, BiFunction<A, E, A> operation);
 
     public <A> A reduceIndexed(A initialValue, TriFunction<Integer, A, E, A> operation) {
-        return withIndex().reduce(initialValue, (acc, pair) -> operation.apply(pair.index, acc, pair.element));
+        return withIndex().reduce(initialValue, (acc, currentPair) -> operation.apply(currentPair.index, acc, currentPair.element));
     }
 
     public abstract E reduce(BinaryOperator<E> operation);
 
     /*public E reduceIndexed(TriFunction<Integer, E, E, E> operation) {
-        return withIndex().reduce((acc, pair) -> operation.apply(pair.index, acc, pair.element));
+        return withIndex().reduce((acc, currentPair) -> operation.apply(currentPair.index, acc, currentPair.element));
     }*/
 
     public E reduceIndexed(TriFunction<Integer, E, E, E> operation) {
-        return withIndex().reduce((acc, pair) -> IndexElement.of(0, operation.apply(pair.index, acc.element, pair.element))).element;
+        return withIndex().reduce((acc, currentPair) -> IndexElement.of(0, operation.apply(currentPair.index, acc.element, currentPair.element))).element;
     }
 
     public abstract <R> LazyList<R> map(Function<E, R> transform);
 
     public <R> LazyList<R> mapIndexed(BiFunction<Integer, E, R> transform) {
-        return withIndex().map(pair -> transform.apply(pair.index, pair.element));
+        return withIndex().map(currentPair -> transform.apply(currentPair.index, currentPair.element));
     }
 
     public <R> LazyList<R> select(Function<E, R> transform) {
@@ -229,7 +229,7 @@ public abstract class LazyList<E> implements Iterable<E> {
     public abstract LazyList<E> where(Predicate<E> predicate);
 
     public LazyList<E> whereIndexed(BiPredicate<Integer, E> predicate) {
-        return withIndex().where(pair -> predicate.test(pair.index, pair.element)).select(pair -> pair.element);
+        return withIndex().where(currentPair -> predicate.test(currentPair.index, currentPair.element)).select(currentPair -> currentPair.element);
     }
 
     public LazyList<E> filter(Predicate<E> predicate) {
@@ -248,32 +248,12 @@ public abstract class LazyList<E> implements Iterable<E> {
         return whereIndexed(predicate);
     }
 
-    /*private <R> LazyList<R> flattenNestedIterables() {
-        return ((LazyList<Iterable<R>>) this).map(LazyList::of).flattenNestedLazyLists();
-    }*/
-
-    /*private <R> LazyList<R> flattenNestedLazyLists() {
-        return ((LazyList<LazyList<R>>) this).reduce(LazyList::concatWith);
-    }*/
-
-    /*private <R> LazyList<R> flattenNestedLazyLists() {
-        return LazyList.create(
-                Lazy.of(() -> ((LazyList<R>) value.value())),
-                Lazy.of(() -> tail.value().flattenNestedLazyLists())
-        );
-    }*/
-
-    //protected abstract <R> LazyList<R> flattenNestedLazyLists();
-
-    /*private <R> LazyList<R> flattenNestedIterables() {
-        return ((LazyList<Iterable<R>>) this).map(LazyList::of).flattenNestedLazyLists();
-    }
+    protected abstract <R> LazyList<R> concatenateNestedIterables();
 
     public <R> LazyList<R> flatten() {
-        //if (containsLazyLists()) return flattenNestedLazyLists();
-        if (isNested()) return flattenNestedIterables();
+        if (isNested()) return concatenateNestedIterables();
         throw new UnsupportedOperationException("List contains elements that are not Iterable");
-    }*/
+    }
 
     private static <E, A, B> boolean allHaveNext(Triplet<Iterator<E>, Iterator<A>, Iterator<B>> iterators) {
         return iterators.first.hasNext() && iterators.second.hasNext() && iterators.third.hasNext();
@@ -283,7 +263,7 @@ public abstract class LazyList<E> implements Iterable<E> {
         return Triplet.of(iterators.first.next(), iterators.second.next(), iterators.third.next());
     }
 
-    private <A, B> LazyList<Triplet<E, A, B>> zipWithHelper(Triplet<Iterator<E>, Iterator<A>, Iterator<B>> iterators) {
+    private static <E, A, B> LazyList<Triplet<E, A, B>> zipWithHelper(Triplet<Iterator<E>, Iterator<A>, Iterator<B>> iterators) {
         if (!allHaveNext(iterators)) return LazyList.empty();
         Triplet<E, A, B> elements = next(iterators);
         return LazyList.create(
@@ -335,7 +315,7 @@ public abstract class LazyList<E> implements Iterable<E> {
             super(value, tail);
         }
 
-        private LazyList<E> constructTail(UnaryOperator<LazyList<E>> function) {
+        private LazyList<E> createTail(UnaryOperator<LazyList<E>> function) {
             return LazyList.create(value, Lazy.of(() -> function.apply(tail.value())));
         }
 
@@ -391,27 +371,23 @@ public abstract class LazyList<E> implements Iterable<E> {
 
 
         // Modifiers ====================================================================================
-        private LazyList<E> insertHelper(int index, Iterable<E> elements, BiFunction<Iterable<E>, LazyList<E>, LazyList<E>> concat) {
-            handleNegativeIndex(index);
-            return index == 0 ? concat.apply(elements, this) :
-                    constructTail(tail -> tail.insert(index - 1, elements));
-        }
-
         @Override
-        public LazyList<E> insert(int index, Iterable<E> elements) {
-            return insertHelper(index, elements, (newElements, tail) -> concat(newElements.iterator(), tail));
+        public LazyList<E> insertAt(int index, Iterable<E> elements) {
+            handleNegativeIndex(index);
+            return index == 0 ? concat(elements.iterator(), this) :
+                    createTail(tail -> tail.insertAt(index - 1, elements));
         }
 
         @Override
         public LazyList<E> removeFirst(E element) {
             return value.value().equals(element) ? tail.value() :
-                    constructTail(tail -> tail.removeFirst(element));
+                    createTail(tail -> tail.removeFirst(element));
         }
 
         @Override
         public LazyList<E> removeAt(int index) {
             handleNegativeIndex(index);
-            return index == 0 ? tail.value() : constructTail(tail -> tail.removeAt(index - 1));
+            return index == 0 ? tail.value() : createTail(tail -> tail.removeAt(index - 1));
         }
 
 
@@ -443,15 +419,13 @@ public abstract class LazyList<E> implements Iterable<E> {
         @Override
         public LazyList<E> where(Predicate<E> predicate) {
             return predicate.test(value.value()) ?
-                    constructTail(tail -> tail.where(predicate)) : tail.value().where(predicate);
+                    createTail(tail -> tail.where(predicate)) : tail.value().where(predicate);
         }
 
-        /*@Override
-        protected <R> LazyList<R> flattenNestedLazyLists() {
-            //return LazyList.create(Lazy.of(() -> ))
-            return ((LazyList<R>) value.value()).concatWith(tail.value().flattenNestedLazyLists());
-        }*/
-
+        @Override
+        protected <R> LazyList<R> concatenateNestedIterables() {
+            return concat(((Iterable<R>) value.value()).iterator(), tail.value().concatenateNestedIterables());
+        }
 
         // Ranges =======================================================================================
     }
@@ -516,7 +490,7 @@ public abstract class LazyList<E> implements Iterable<E> {
 
         // Modifiers ====================================================================================
         @Override
-        public LazyList<E> insert(int index, Iterable<E> elements) {
+        public LazyList<E> insertAt(int index, Iterable<E> elements) {
             throw indexOutOfBoundsException(index);
         }
 
@@ -552,10 +526,11 @@ public abstract class LazyList<E> implements Iterable<E> {
             return this;
         }
 
-        /*@Override
-        protected <R> LazyList<R> flattenNestedLazyLists() {
+        @Override
+        protected <R> LazyList<R> concatenateNestedIterables() {
             return LazyList.empty();
-        }*/
+        }
+
 
         // Ranges =======================================================================================
     }
