@@ -86,9 +86,11 @@ public abstract class LazyList<E> implements Iterable<E> {
         return size() - 1;
     }
 
-    public LazyList<Integer> indices() {
+    /*public LazyList<Integer> indices() {
         return rangeInclusive(0, lastIndex());
-    }
+    }*/
+
+    public abstract LazyList<Integer> indices();
 
     public abstract int size();
 
@@ -120,6 +122,7 @@ public abstract class LazyList<E> implements Iterable<E> {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         LazyList<?> lazyList = (LazyList<?>) o;
+        if (size() != lazyList.size()) return false;
         return zipWith(lazyList).all(currentPair -> currentPair.first.equals(currentPair.second));
     }
 
@@ -199,17 +202,17 @@ public abstract class LazyList<E> implements Iterable<E> {
     public abstract <A> A reduce(A initialValue, BiFunction<A, E, A> operation);
 
     public <A> A reduceIndexed(A initialValue, TriFunction<Integer, A, E, A> operation) {
-        return withIndex().reduce(initialValue, (acc, currentPair) -> operation.apply(currentPair.index, acc, currentPair.element));
+        return withIndex().reduce(initialValue, (accumulator, currentPair) -> operation.apply(currentPair.index, accumulator, currentPair.element));
     }
 
     public abstract E reduce(BinaryOperator<E> operation);
 
     /*public E reduceIndexed(TriFunction<Integer, E, E, E> operation) {
-        return withIndex().reduce((acc, currentPair) -> operation.apply(currentPair.index, acc, currentPair.element));
+        return withIndex().reduce((accumulator, currentPair) -> operation.apply(currentPair.index, accumulator, currentPair.element));
     }*/
 
     public E reduceIndexed(TriFunction<Integer, E, E, E> operation) {
-        return withIndex().reduce((acc, currentPair) -> IndexElement.of(0, operation.apply(currentPair.index, acc.element, currentPair.element))).element;
+        return withIndex().reduce((accumulator, currentPair) -> IndexElement.of(0, operation.apply(currentPair.index, accumulator.element, currentPair.element))).element;
     }
 
     public abstract <R> LazyList<R> map(Function<E, R> transform);
@@ -282,20 +285,61 @@ public abstract class LazyList<E> implements Iterable<E> {
 
 
     // Ranges =======================================================================================
-    public static LazyList<Integer> rangeInclusive(int from, int to) {
+    /*public static LazyList<Integer> rangeInclusive(int from, int to) {
         return (from > to) ? LazyList.empty() : LazyList.create(Lazy.of(() -> from), Lazy.of(() -> rangeInclusive(from + 1, to)));
+    }*/
+
+    /*private static LazyList<Integer> incrementingRangeInclusive(int from, int to) {
+        return (from > to) ? LazyList.empty() : LazyList.create(Lazy.of(() -> from), Lazy.of(() -> incrementingRangeInclusive(from + 1, to)));
     }
 
-    public static LazyList<Integer> rangeExclusive(int from, int upTo) {
+    private static LazyList<Integer> decrementingRangeInclusive(int from, int downTo) {
+        return (from < downTo) ? LazyList.empty() : LazyList.create(Lazy.of(() -> from), Lazy.of(() -> decrementingRangeInclusive(from - 1, downTo)));
+    }
+
+    public static LazyList<Integer> rangeInclusive(int from, int to) {
+        if (from < to) return incrementingRangeInclusive(from, to);
+        else return decrementingRangeInclusive(from, to);
+    }*/
+
+    /*public static LazyList<Integer> rangeExclusive(int from, int upTo) {
         return rangeInclusive(from, upTo - 1);
+    }*/
+
+    /*public static LazyList<Integer> rangeExclusive(int from, int upTo) {
+        if (from == upTo) return LazyList.empty();
+        if (from < upTo) return rangeInclusive(from, upTo - 1);
+        else return rangeInclusive(from, upTo + 1);
+    }*/
+
+    private static LazyList<Integer> incrementingRangeExclusive(int from, int to) {
+        return (from >= to) ? LazyList.empty() : LazyList.create(Lazy.of(() -> from), Lazy.of(() -> incrementingRangeExclusive(from + 1, to)));
+    }
+
+    private static LazyList<Integer> decrementingRangeExclusive(int from, int downTo) {
+        return (from <= downTo) ? LazyList.empty() : LazyList.create(Lazy.of(() -> from), Lazy.of(() -> decrementingRangeExclusive(from - 1, downTo)));
+    }
+
+    public static LazyList<Integer> rangeExclusive(int from, int to) {
+        if (from < to) return incrementingRangeExclusive(from, to);
+        else return decrementingRangeExclusive(from, to);
+    }
+
+    public static LazyList<Integer> rangeInclusive(int from, int to) {
+        if (from < to) return rangeExclusive(from, to + 1);
+        else return rangeExclusive(from, to - 1);
     }
 
     public static LazyList<Integer> rangeLength(int from, int length) {
         return rangeExclusive(from, from + length);
     }
 
-    public static LazyList<Integer> infiniteIndices() {
+    /*public static LazyList<Integer> infiniteIndices() {
         return rangeInclusive(0, Integer.MAX_VALUE);
+    }*/
+
+    public static LazyList<Integer> infiniteIndices() {
+        return rangeExclusive(0, Integer.MAX_VALUE);
     }
 
     /*public LazyList<Pair<Integer, E>> withIndex() {
@@ -350,6 +394,11 @@ public abstract class LazyList<E> implements Iterable<E> {
         @Override
         public E findFirst(Predicate<E> predicate) {
             return predicate.test(value.value()) ? value.value() : tail.value().findFirst(predicate);
+        }
+
+        @Override
+        public LazyList<Integer> indices() {
+            return rangeInclusive(0, lastIndex());
         }
 
         @Override
@@ -427,6 +476,7 @@ public abstract class LazyList<E> implements Iterable<E> {
             return concat(((Iterable<R>) value.value()).iterator(), tail.value().concatenateNestedIterables());
         }
 
+
         // Ranges =======================================================================================
     }
 
@@ -468,6 +518,11 @@ public abstract class LazyList<E> implements Iterable<E> {
         @Override
         public E findFirst(Predicate<E> predicate) {
             return null;
+        }
+
+        @Override
+        public LazyList<Integer> indices() {
+            throw new UnsupportedOperationException("Empty list has no indices");
         }
 
         @Override

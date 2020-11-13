@@ -347,16 +347,13 @@ public class LazyListTest {
         assertEquals(6, localDateLazyList.lastIndex());
     }
 
-    @Test
-    public void indices_Returns_an_empty_list_if_this_list_is_empty() {
-        assertEquals(LazyList.empty(), LazyList.empty().indices());
-        assertEquals(LazyList.empty(), LazyList.empty().indices());
-        assertEquals(LazyList.empty(), LazyList.empty().indices());
-        assertEquals(LazyList.empty(), LazyList.empty().indices());
+    @Test(expected = UnsupportedOperationException.class)
+    public void indices_Throws_exception_if_list_is_empty() {
+        LazyList.empty().indices();
     }
 
     @Test
-    public void indices_Returns_a_range_of_all_indices_in_this_list() {
+    public void indices_Returns_all_indices_of_this_list() {
         assertEquals(LazyList.rangeInclusive(0, 7), integerLazyList.indices());
         assertEquals(LazyList.rangeInclusive(0, 5), personLazyList.indices());
         assertEquals(LazyList.rangeInclusive(0, 5), animalLazyList.indices());
@@ -435,6 +432,34 @@ public class LazyListTest {
     public void equals_Returns_false_if_only_one_of_the_lists_is_empty() {
         assertNotEquals(personLazyList, LazyList.empty());
         assertNotEquals(LazyList.empty(), personLazyList);
+    }
+
+    @Test
+    public void equals_Returns_false_if_this_list_is_longer_than_given_object() {
+        Person np1 = new Person("Zoe", "Turner");
+        Person np2 = new Person("Alex", "Johnson");
+        Person np3 = new Person("Patricia", "Vanilla");
+        Person np4 = new Person("Jeffie", "Allstar");
+        Person np5 = new Person("Daenerys", "Targaryen");
+        Person np6 = new Person("John", "Jefferson");
+        Person np7 = new Person("Morgan", "Freeman");
+        LazyList<Person> newPeople = LazyList.of(np1, np2, np3, np4, np5, np6, np7);
+
+        assertNotEquals(personLazyList, newPeople);
+        assertNotEquals(newPeople, personLazyList);
+    }
+
+    @Test
+    public void equals_Returns_false_if_this_list_is_shorter_than_given_object() {
+        Person np1 = new Person("Zoe", "Turner");
+        Person np2 = new Person("Alex", "Johnson");
+        Person np3 = new Person("Patricia", "Vanilla");
+        Person np4 = new Person("Jeffie", "Allstar");
+        Person np5 = new Person("Daenerys", "Targaryen");
+        LazyList<Person> newPeople = LazyList.of(np1, np2, np3, np4, np5);
+
+        assertNotEquals(personLazyList, newPeople);
+        assertNotEquals(newPeople, personLazyList);
     }
 
     @Test
@@ -1311,78 +1336,84 @@ public class LazyListTest {
 
     // Ranges =======================================================================================
     @Test
-    public void rangeInclusive_Returns_empty_list_if_from_bigger_than_to() {
-        LazyList<Integer> intRange = LazyList.rangeInclusive(50, 3);
-        assertEquals(LazyList.empty(), intRange);
+    public void rangeInclusive_Returns_decrementing_list_if_from_bigger_than_to() {
+        LazyList<Integer> expected = LazyList.of(7, 6, 5, 4, 3, 2, 1, 0, -1, -2);
+        assertEquals(expected, LazyList.rangeInclusive(7, -2));
     }
 
     @Test
-    public void rangeInclusive_Returns_empty_list_if_from_just_bigger_than_to() {
-        LazyList<Integer> intRange = LazyList.rangeInclusive(4, 3);
-        assertEquals(LazyList.empty(), intRange);
+    public void rangeInclusive_Returns_decrementing_list_if_from_just_bigger_than_to() {
+        assertEquals(LazyList.of(4, 3), LazyList.rangeInclusive(4, 3));
     }
 
     @Test
-    public void rangeInclusive_Returns_singleton_list_if_from_equals_to() {
-        LazyList<Integer> intRange = LazyList.rangeInclusive(741, 741);
-        assertEquals(LazyList.of(741), intRange);
+    public void rangeInclusive_Returns_singleton_list_if_from_equal_to_to() {
+        assertEquals(LazyList.of(741), LazyList.rangeInclusive(741, 741));
     }
 
     @Test
-    public void rangeInclusive_Creates_a_range_of_integers_from_given_start_until_end_inclusive() {
-        LazyList<Integer> expected = LazyList.of(-3, -2, -1, 0, 1, 2, 3, 4);
-        LazyList<Integer> intRange = LazyList.rangeInclusive(-3, 4);
-        assertEquals(expected, intRange);
+    public void rangeInclusive_Returns_incrementing_list_if_from_smaller_than_to() {
+        LazyList<Integer> expected = LazyList.of(-6, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8);
+        assertEquals(expected, LazyList.rangeInclusive(-6, 8));
     }
 
     @Test
-    public void rangeExclusive_Returns_empty_list_if_from_bigger_than_to() {
-        LazyList<Integer> intRange = LazyList.rangeExclusive(98, 88);
-        assertEquals(LazyList.empty(), intRange);
+    public void rangeInclusive_Returns_incrementing_list_if_from_just_smaller_than_to() {
+        assertEquals(LazyList.of(-894, -893), LazyList.rangeInclusive(-894, -893));
     }
 
     @Test
-    public void rangeExclusive_Returns_empty_list_if_from_just_bigger_than_to() {
-        LazyList<Integer> intRange = LazyList.rangeExclusive(4, 3);
-        assertEquals(LazyList.empty(), intRange);
+    public void rangeExclusive_Returns_decrementing_list_if_from_bigger_than_to() {
+        LazyList<Integer> expected = LazyList.of(7, 6, 5, 4, 3, 2, 1, 0, -1, -2, -3, -4);
+        assertEquals(expected, LazyList.rangeExclusive(7, -5));
     }
 
     @Test
-    public void rangeExclusive_Returns_empty_list_if_from_equals_to() {
-        LazyList<Integer> intRange = LazyList.rangeExclusive(42, 42);
-        assertEquals(LazyList.empty(), intRange);
+    public void rangeExclusive_Returns_singleton_list_if_from_just_bigger_than_to() {
+        assertEquals(LazyList.of(0), LazyList.rangeExclusive(0, -1));
     }
 
     @Test
-    public void rangeExclusive_Returns_singleton_list_if_from_just_smaller_than_to() {
-        LazyList<Integer> intRange = LazyList.rangeExclusive(121, 122);
-        assertEquals(LazyList.of(121), intRange);
+    public void rangeExclusive_Returns_empty_list_if_from_equal_to_to() {
+        assertEquals(LazyList.empty(), LazyList.rangeExclusive(741, 741));
     }
 
     @Test
-    public void rangeExclusive_Creates_a_range_of_integers_from_given_start_until_end_exclusive() {
-        LazyList<Integer> intRange = LazyList.rangeExclusive(-2, 5);
-        LazyList<Integer> expected = LazyList.of(-2, -1, 0, 1, 2, 3, 4);
-        assertEquals(expected, intRange);
+    public void rangeExclusive_Returns_incrementing_list_if_from_smaller_than_to() {
+        LazyList<Integer> expected = LazyList.of(-6, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7);
+        assertEquals(expected, LazyList.rangeExclusive(-6, 8));
     }
 
     @Test
-    public void rangeLength_Returns_empty_list_if_given_length_negative() {
-        LazyList<Integer> intRange = LazyList.rangeLength(9, -6);
-        assertEquals(LazyList.empty(), intRange);
+    public void rangeExclusive_Returns_singleton_list_if_from_just_smaller_than_to_2() {
+        assertEquals(LazyList.of(-894), LazyList.rangeExclusive(-894, -893));
+    }
+
+    @Test
+    public void rangeLength_Returns_decrementing_list_if_given_length_negative() {
+        LazyList<Integer> expected = LazyList.of(2, 1, 0, -1, -2, -3);
+        assertEquals(expected, LazyList.rangeLength(2, -6));
+    }
+
+    @Test
+    public void rangeLength_Returns_singleton_list_if_given_length_just_negative() {
+        assertEquals(LazyList.of(0), LazyList.rangeLength(0, -1));
     }
 
     @Test
     public void rangeLength_Returns_empty_list_if_given_length_0() {
-        LazyList<Integer> intRange = LazyList.rangeLength(-33, 0);
-        assertEquals(LazyList.empty(), intRange);
+        assertEquals(LazyList.empty(), LazyList.rangeLength(741, 0));
     }
 
     @Test
-    public void rangeLength_Creates_an_incrementing_range_of_integers_from_given_start_with_given_length() {
-        LazyList<Integer> intRange = LazyList.rangeLength(-5, 10);
+    public void rangeLength_Returns_incrementing_list_if_given_length_positive() {
         LazyList<Integer> expected = LazyList.of(-5, -4, -3, -2, -1, 0, 1, 2, 3, 4);
-        assertEquals(expected, intRange);
+        assertEquals(expected, LazyList.rangeLength(-5, 10));
+    }
+
+    @Test
+    public void rangeLength_Returns_singleton_list_if_given_length_just_positive() {
+        assertEquals(LazyList.of(-959), LazyList.rangeLength(-959, 1));
     }
 
     @Test
