@@ -13,7 +13,7 @@ public abstract class LazyList<E> implements Iterable<E> {
         this.tail = tail;
     }
 
-    private static <E> LazyList<E> create(Lazy<E> value, Lazy<LazyList<E>> tail) {
+    static <E> LazyList<E> create(Lazy<E> value, Lazy<LazyList<E>> tail) {
         return new NormalNode<>(value, tail);
     }
 
