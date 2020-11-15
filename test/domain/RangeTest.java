@@ -140,4 +140,14 @@ public class RangeTest {
     public void length_Returns_empty_list_if_from_plus_length_minus_1_is_larger_than_Integer_MAX_VALUE() {
         assertEquals(LazyList.empty(), Range.from(6).length(Integer.MAX_VALUE));
     }
+
+    @Test
+    public void infiniteIndices_Creates_an_infinite_incrementing_list_of_integers_starting_from_0() {
+        LazyList<Integer> infiniteIndices = Range.infiniteIndices();
+        assertEquals(0, infiniteIndices.value.value().intValue());
+        assertEquals(1, infiniteIndices.tail.value().value.value().intValue());
+        assertEquals(2, infiniteIndices.tail.value().tail.value().value.value().intValue());
+        assertEquals(3, infiniteIndices.tail.value().tail.value().tail.value().value.value().intValue());
+        assertEquals(4, infiniteIndices.tail.value().tail.value().tail.value().tail.value().value.value().intValue());
+    }
 }

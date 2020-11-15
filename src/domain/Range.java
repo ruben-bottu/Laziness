@@ -37,4 +37,8 @@ public class Range {
     public LazyList<Integer> length(int length) {
         return upTo(from + length);
     }
+
+    public static LazyList<Integer> infiniteIndices() {
+        return inclusiveRange(0, Integer.MAX_VALUE, Integer::equals, oldFrom -> oldFrom + 1);
+    }
 }

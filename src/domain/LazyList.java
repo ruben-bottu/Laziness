@@ -42,16 +42,12 @@ public abstract class LazyList<E> implements Iterable<E> {
     }
 
     public static <E> LazyList<E> initialiseWith(int length, Function<Integer, E> generator) {
-        handleNegativeLength(length);
-        return rangeLength(0, length).map(generator);
+        if (length < 0) throw new IllegalArgumentException("Length cannot be negative. Given: " + length);
+        return Range.from(0).length(length).map(generator);
     }
 
-    private static void handleNegativeLength(int length) {
-        if (length < 0) throw new IllegalArgumentException("Illegal capacity: " + length);
-    }
-
-    private static IndexOutOfBoundsException indexOutOfBoundsException(int index) {
-        return new IndexOutOfBoundsException("Index " + index + " out of bounds of this list");
+    private static IndexOutOfBoundsException negativeIndexException(int index) {
+        return new IndexOutOfBoundsException("Index cannot be negative. Given: " + index);
     }
 
 
@@ -259,7 +255,7 @@ public abstract class LazyList<E> implements Iterable<E> {
         return whereIndexed(predicate);
     }
 
-    protected abstract <R> LazyList<R> concatenateNestedIterables();
+    abstract <R> LazyList<R> concatenateNestedIterables();
 
     public <R> LazyList<R> flatten() {
         if (isNested()) return concatenateNestedIterables();
@@ -291,108 +287,13 @@ public abstract class LazyList<E> implements Iterable<E> {
         return zipWith(other, Enumerable.infiniteNulls()).map(Triplet::toPair);
     }
 
-
-    // Ranges =======================================================================================
-    /*public static LazyList<Integer> rangeInclusive(int from, int to) {
-        return (from > to) ? LazyList.empty() : LazyList.create(Lazy.of(() -> from), Lazy.of(() -> rangeInclusive(from + 1, to)));
-    }*/
-
-    private static LazyList<Integer> rangeInclusiveHelper(int from, int to, BiPredicate<Integer, Integer> predicate, IntUnaryOperator nextFrom) {
-        return predicate.test(from, to) ? LazyList.empty() : LazyList.create(Lazy.of(() -> from), Lazy.of(() -> rangeInclusiveHelper(nextFrom.applyAsInt(from), to, predicate, nextFrom)));
-    }
-
-    /*private static LazyList<Integer> incrementingRangeInclusive(int from, int to) {
-        return (from > to) ? LazyList.empty() : LazyList.create(Lazy.of(() -> from), Lazy.of(() -> incrementingRangeInclusive(from + 1, to)));
-    }
-
-    private static LazyList<Integer> decrementingRangeInclusive(int from, int downTo) {
-        return (from < downTo) ? LazyList.empty() : LazyList.create(Lazy.of(() -> from), Lazy.of(() -> decrementingRangeInclusive(from - 1, downTo)));
-    }*/
-
-    private static LazyList<Integer> incrementingRangeInclusive(int from, int to) {
-        return rangeInclusiveHelper(from, to, (curFrom, curTo) -> curFrom > curTo, oldFrom -> oldFrom + 1);
-    }
-
-    private static LazyList<Integer> decrementingRangeInclusive(int from, int downTo) {
-        return rangeInclusiveHelper(from, downTo, (curFrom, curDownTo) -> curFrom < curDownTo, oldFrom -> oldFrom - 1);
-    }
-
-    /*public static LazyList<Integer> rangeInclusive(int from, int to) {
-        if (from < to) return incrementingRangeInclusive(from, to);
-        else return decrementingRangeInclusive(from, to);
-    }*/
-
-    public static LazyList<Integer> rangeInclusive(int from, int to) {
-        return (from < to) ? incrementingRangeInclusive(from, to) : decrementingRangeInclusive(from, to);
-    }
-
-
-
-    /*public static LazyList<Integer> rangeExclusive(int from, int upTo) {
-        if (from == upTo) return LazyList.empty();
-        if (from < upTo) return rangeInclusive(from, upTo - 1);
-        else return rangeInclusive(from, upTo + 1);
-    }*/
-
-    /*function sign(n) {
-        return n / abs(n);
-        }*/
-
-    private static int signOf(int number) {
-        return number / Math.abs(number);
-    }
-
-    /*public static LazyList<Integer> rangeExclusive(int from, int upTo) {
-        if (from == upTo) return LazyList.empty();
-        return rangeInclusive(from, upTo + sign(from - upTo));
-    }*/
-
-    /*public static LazyList<Integer> rangeExclusive(int from, int upTo) {
-        return rangeInclusive(from, upTo - 1);
-    }*/
-
-    public static LazyList<Integer> rangeExclusive(int from, int upTo) {
-        return (from == upTo) ? LazyList.empty() : rangeInclusive(from, upTo + signOf(from - upTo));
-    }
-
-
-    /*private static LazyList<Integer> incrementingRangeExclusive(int from, int to) {
-        return (from >= to) ? LazyList.empty() : LazyList.create(Lazy.of(() -> from), Lazy.of(() -> incrementingRangeExclusive(from + 1, to)));
-    }
-
-    private static LazyList<Integer> decrementingRangeExclusive(int from, int downTo) {
-        return (from <= downTo) ? LazyList.empty() : LazyList.create(Lazy.of(() -> from), Lazy.of(() -> decrementingRangeExclusive(from - 1, downTo)));
-    }
-
-    public static LazyList<Integer> rangeExclusive(int from, int to) {
-        if (from < to) return incrementingRangeExclusive(from, to);
-        else return decrementingRangeExclusive(from, to);
-    }
-
-    public static LazyList<Integer> rangeInclusive(int from, int to) {
-        if (from < to) return rangeExclusive(from, to + 1);
-        else return rangeExclusive(from, to - 1);
-    }*/
-
-    public static LazyList<Integer> rangeLength(int from, int length) {
-        handleNegativeLength(length);
-        return rangeExclusive(from, from + length);
-    }
-
-    public static LazyList<Integer> infiniteIndices() {
-        return rangeInclusive(0, Integer.MAX_VALUE);
-    }
-
-    /*public static LazyList<Integer> infiniteIndices() {
-        return rangeExclusive(0, Integer.MAX_VALUE);
-    }*/
-
-    /*public LazyList<Pair<Integer, E>> withIndex() {
-        return infiniteIndices().zipWith(this);
-    }*/
-
     public LazyList<IndexElement<E>> withIndex() {
-        return infiniteIndices().zipWith(this).map(Pair::toIndexElement);
+        return Range.infiniteIndices().zipWith(this).map(Pair::toIndexElement);
+    }
+
+    public LazyList<E> step(int size) {
+        if (size < 1) throw new IllegalArgumentException("Size cannot be negative. Given: " + size);
+        return whereIndexed((index, current) -> index % size == 0);
     }
 
 
@@ -409,7 +310,7 @@ public abstract class LazyList<E> implements Iterable<E> {
         }
 
         private static void handleNegativeIndex(int index) {
-            if (index < 0) throw indexOutOfBoundsException(index);
+            if (index < 0) throw negativeIndexException(index);
         }
 
 
@@ -443,7 +344,7 @@ public abstract class LazyList<E> implements Iterable<E> {
 
         @Override
         public LazyList<Integer> indices() {
-            return rangeInclusive(0, lastIndex());
+            return Range.from(0).upToAndIncluding(lastIndex());
         }
 
         @Override
@@ -506,12 +407,25 @@ public abstract class LazyList<E> implements Iterable<E> {
         }
 
         @Override
-        protected <R> LazyList<R> concatenateNestedIterables() {
+        <R> LazyList<R> concatenateNestedIterables() {
             return concat(((Iterable<R>) value.value()).iterator(), tail.value().concatenateNestedIterables());
         }
 
-
-        // Ranges =======================================================================================
+        /*@Override
+        <R> LazyList<R> concatenateNestedIterables() {
+            Iterator<E> iterator = iterator();
+            if (iterator.hasNext()) {
+                Iterable<R> iterable = (Iterable<R>) iterator.next();
+                Iterator<R> innerIterator = iterable.iterator();
+                if (iterator.hasNext()) {
+                    R element = innerIterator.next();
+                    return LazyList.create(
+                            Lazy.of(() -> element),
+                            Lazy.of(() -> tail.value().concatenateNestedIterables())
+                    );
+                }
+            }
+        }*/
     }
 
 
@@ -527,11 +441,15 @@ public abstract class LazyList<E> implements Iterable<E> {
             return new NoSuchElementException("List is empty");
         }
 
+        private static IndexOutOfBoundsException indexTooBigException(int index) {
+            return new IndexOutOfBoundsException("Index " + index + "too big for this list");
+        }
+
 
         // Getters ======================================================================================
         @Override
         public E get(int index) {
-            throw indexOutOfBoundsException(index);
+            throw indexTooBigException(index);
         }
 
         @Override
@@ -580,7 +498,7 @@ public abstract class LazyList<E> implements Iterable<E> {
         // Modifiers ====================================================================================
         @Override
         public LazyList<E> insertAt(int index, Iterable<E> elements) {
-            throw indexOutOfBoundsException(index);
+            throw indexTooBigException(index);
         }
 
         @Override
@@ -590,7 +508,7 @@ public abstract class LazyList<E> implements Iterable<E> {
 
         @Override
         public LazyList<E> removeAt(int index) {
-            throw indexOutOfBoundsException(index);
+            throw indexTooBigException(index);
         }
 
 
@@ -611,11 +529,8 @@ public abstract class LazyList<E> implements Iterable<E> {
         }
 
         @Override
-        protected <R> LazyList<R> concatenateNestedIterables() {
+        <R> LazyList<R> concatenateNestedIterables() {
             return LazyList.empty();
         }
-
-
-        // Ranges =======================================================================================
     }
 }
