@@ -142,7 +142,7 @@ public class LazyListTest {
 
     @Test
     public void empty_Returns_an_empty_LazyList() {
-        assertEquals(0, LazyList.empty().size());
+        assertEquals(0, LazyList.empty().length());
     }
 
     @Test
@@ -352,14 +352,6 @@ public class LazyListTest {
         LazyList.empty().indices();
     }
 
-    /*@Test
-    public void indices_Returns_all_indices_of_this_list() {
-        assertEquals(LazyList.rangeInclusive(0, 7), integerLazyList.indices());
-        assertEquals(LazyList.rangeInclusive(0, 5), personLazyList.indices());
-        assertEquals(LazyList.rangeInclusive(0, 5), animalLazyList.indices());
-        assertEquals(LazyList.rangeInclusive(0, 6), localDateLazyList.indices());
-    }*/
-
     @Test
     public void indices_Returns_all_indices_of_this_list() {
         assertEquals(Range.from(0).upToAndIncluding(7), integerLazyList.indices());
@@ -369,16 +361,16 @@ public class LazyListTest {
     }
 
     @Test
-    public void size_Returns_0_if_list_is_empty() {
-        assertEquals(0, LazyList.empty().size());
+    public void length_Returns_0_if_list_is_empty() {
+        assertEquals(0, LazyList.empty().length());
     }
 
     @Test
-    public void size_Returns_the_size_of_this_list() {
-        assertEquals(8, integerLazyList.size());
-        assertEquals(6, personLazyList.size());
-        assertEquals(6, animalLazyList.size());
-        assertEquals(7, localDateLazyList.size());
+    public void length_Returns_the_length_of_this_list() {
+        assertEquals(8, integerLazyList.length());
+        assertEquals(6, personLazyList.length());
+        assertEquals(6, animalLazyList.length());
+        assertEquals(7, localDateLazyList.length());
     }
 
     @Test
@@ -1359,17 +1351,17 @@ public class LazyListTest {
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void step_Throws_exception_if_given_size_negative() {
+    public void step_Throws_exception_if_given_length_negative() {
         LazyList.empty().step(-17);
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void step_Throws_exception_if_given_size_just_negative() {
+    public void step_Throws_exception_if_given_length_just_negative() {
         LazyList.empty().step(-1);
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void step_Throws_exception_if_given_size_0() {
+    public void step_Throws_exception_if_given_length_0() {
         LazyList.empty().step(0);
     }
 
@@ -1379,7 +1371,7 @@ public class LazyListTest {
     }
 
     @Test
-    public void step_Returns_singleton_list_if_given_size_is_bigger_than_size_of_this_list() {
+    public void step_Returns_singleton_list_if_given_length_is_bigger_than_length_of_this_list() {
         assertEquals(LazyList.of(p1), LazyList.of(p1, p2, p3).step(4));
     }
 

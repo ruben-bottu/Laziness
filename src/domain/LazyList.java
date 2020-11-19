@@ -13,7 +13,7 @@ public abstract class LazyList<E> implements Iterable<E> {
         this.tail = tail;
     }
 
-    static <E> LazyList<E> create(Lazy<E> value, Lazy<LazyList<E>> tail) {
+    private static <E> LazyList<E> create(Lazy<E> value, Lazy<LazyList<E>> tail) {
         return new NormalNode<>(value, tail);
     }
 
@@ -41,9 +41,13 @@ public abstract class LazyList<E> implements Iterable<E> {
         return LazyList.of(Arrays.asList(elements));
     }
 
-    public static <E> LazyList<E> initialiseWith(int length, Function<Integer, E> generator) {
-        if (length < 0) throw new IllegalArgumentException("Length cannot be negative. Given: " + length);
-        return Range.from(0).length(length).map(generator);
+    private static LazyList<Integer> rangeLength(int from, int length) {
+        return from == length ? LazyList.empty() : LazyList.create(Lazy.of(() -> from), Lazy.of(() -> rangeLength(from + 1, length)));
+    }
+
+    public static <E> LazyList<E> initialiseWith(int length, Function<Integer, E> indexToElement) {
+        if (length < 0) throw new IllegalArgumentException("Cannot initialise list with length " + length);
+        return rangeLength(0, length).map(indexToElement);
     }
 
     private static IndexOutOfBoundsException negativeIndexException(int index) {
@@ -61,7 +65,7 @@ public abstract class LazyList<E> implements Iterable<E> {
     public abstract E last();
 
     public E random() {
-        return get(new Random().nextInt(size()));
+        return get(new Random().nextInt(length()));
     }
 
     public abstract E findFirst(Predicate<E> predicate);
@@ -83,12 +87,12 @@ public abstract class LazyList<E> implements Iterable<E> {
     }
 
     public int lastIndex() {
-        return size() - 1;
+        return length() - 1;
     }
 
     public abstract LazyList<Integer> indices();
 
-    public abstract int size();
+    public abstract int length();
 
     public List<E> toList() {
         List<E> list = new ArrayList<>();
@@ -108,7 +112,7 @@ public abstract class LazyList<E> implements Iterable<E> {
 
     @Override
     public Iterator<E> iterator() {
-        return Enumerator.of(Lazy.of(() -> this));
+        return Enumerator.of(this);
     }
 
 
@@ -118,8 +122,7 @@ public abstract class LazyList<E> implements Iterable<E> {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         LazyList<?> lazyList = (LazyList<?>) o;
-        if (size() != lazyList.size()) return false;
-        return zipWith(lazyList).all(currentPair -> currentPair.first.equals(currentPair.second));
+        return length() == lazyList.length() && zipWith(lazyList).all(currentPair -> currentPair.first.equals(currentPair.second));
     }
 
     public boolean contains(E element) {
@@ -291,9 +294,9 @@ public abstract class LazyList<E> implements Iterable<E> {
         return Range.infiniteIndices().zipWith(this).map(Pair::toIndexElement);
     }
 
-    public LazyList<E> step(int size) {
-        if (size < 1) throw new IllegalArgumentException("Size cannot be negative. Given: " + size);
-        return whereIndexed((index, current) -> index % size == 0);
+    public LazyList<E> step(int length) {
+        if (length < 1) throw new IllegalArgumentException("Length cannot be negative. Given: " + length);
+        return whereIndexed((index, current) -> index % length == 0);
     }
 
 
@@ -348,8 +351,8 @@ public abstract class LazyList<E> implements Iterable<E> {
         }
 
         @Override
-        public int size() {
-            return 1 + tail.value().size();
+        public int length() {
+            return 1 + tail.value().length();
         }
 
 
@@ -478,7 +481,7 @@ public abstract class LazyList<E> implements Iterable<E> {
         }
 
         @Override
-        public int size() {
+        public int length() {
             return 0;
         }
 

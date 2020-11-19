@@ -1,6 +1,5 @@
 package domain;
 
-import java.util.function.BiPredicate;
 import java.util.function.IntUnaryOperator;
 
 public class Range {
@@ -14,31 +13,32 @@ public class Range {
         return new Range(start);
     }
 
-    private static LazyList<Integer> inclusiveRange(int from, int to, BiPredicate<Integer, Integer> predicate, IntUnaryOperator nextFrom) {
-        return predicate.test(from, to) ? LazyList.empty() : LazyList.create(Lazy.of(() -> from), Lazy.of(() -> inclusiveRange(nextFrom.applyAsInt(from), to, predicate, nextFrom)));
-    }
-
-    public LazyList<Integer> upToAndIncluding(int end) {
-        return inclusiveRange(from, end, (currentFrom, currentTo) -> currentFrom > currentTo, oldFrom -> oldFrom + 1);
-    }
-
-    public LazyList<Integer> downToAndIncluding(int end) {
-        return inclusiveRange(from, end, (currentFrom, currentDownTo) -> currentFrom < currentDownTo, oldFrom -> oldFrom - 1);
-    }
-
-    public LazyList<Integer> upTo(int end) {
-        return upToAndIncluding(end - 1);
-    }
-
-    public LazyList<Integer> downTo(int end) {
-        return downToAndIncluding(end + 1);
+    private static LazyList<Integer> createRange(int length, IntUnaryOperator indexToElement) {
+        return (length < 0) ? LazyList.empty() : LazyList.initialiseWith(length, indexToElement::applyAsInt);
     }
 
     public LazyList<Integer> length(int length) {
-        return upTo(from + length);
+        if (((long) from + length - 1) > Integer.MAX_VALUE) throw new IllegalArgumentException("From " + from + " + length " + length + " - 1 will cause integer overflow");
+        return createRange(length, index -> from + index);
+    }
+
+    public LazyList<Integer> upToAndIncluding(int end) {
+        return upTo(end + 1);
+    }
+
+    public LazyList<Integer> downToAndIncluding(int end) {
+        return downTo(end - 1);
+    }
+
+    public LazyList<Integer> upTo(int end) {
+        return length(end - from);
+    }
+
+    public LazyList<Integer> downTo(int end) {
+        return createRange(from - end, index -> from - index);
     }
 
     public static LazyList<Integer> infiniteIndices() {
-        return inclusiveRange(0, Integer.MAX_VALUE, Integer::equals, oldFrom -> oldFrom + 1);
+        return createRange(Integer.MAX_VALUE, index -> index);
     }
 }
