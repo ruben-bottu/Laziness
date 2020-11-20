@@ -13,7 +13,7 @@ public abstract class LazyList<E> implements Iterable<E> {
         this.tail = tail;
     }
 
-    private static <E> LazyList<E> create(Lazy<E> value, Lazy<LazyList<E>> tail) {
+    public static <E> LazyList<E> create(Lazy<E> value, Lazy<LazyList<E>> tail) {
         return new NormalNode<>(value, tail);
     }
 
@@ -42,7 +42,7 @@ public abstract class LazyList<E> implements Iterable<E> {
     }
 
     private static LazyList<Integer> rangeLength(int from, int length) {
-        return from == length ? LazyList.empty() : LazyList.create(Lazy.of(() -> from), Lazy.of(() -> rangeLength(from + 1, length)));
+        return length == 0 ? LazyList.empty() : LazyList.create(Lazy.of(() -> from), Lazy.of(() -> rangeLength(from + 1, length - 1)));
     }
 
     public static <E> LazyList<E> initialiseWith(int length, Function<Integer, E> indexToElement) {
