@@ -6,8 +6,6 @@ META-INF/
 
 # For prototypes
 ui/
-IdeaList.java
 
 # For testing and helper classes
-Main.java
 LazyList UML.xml

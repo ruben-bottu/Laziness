@@ -19,10 +19,9 @@ public abstract class Enumerator {
         };
     }
 
-    public static <E> Iterator<E> of(LazyList<E> elements) {
+    public static <E> Iterator<E> of(IdeaList<E> elements) {
         return new Iterator<E>() {
-
-            private LazyList<E> innerList = elements;
+            private IdeaList<E> innerList = elements;
 
             @Override
             public boolean hasNext() {
