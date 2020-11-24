@@ -122,7 +122,17 @@ public abstract class IdeaList<E> implements Iterable<E> {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         IdeaList<?> ideaList = (IdeaList<?>) o;
-        return length() == ideaList.length() && zipWith(ideaList).all(currentPair -> currentPair.first.equals(currentPair.second));
+        return equals(ideaList);
+    }
+
+    public boolean equals(IdeaList<?> elements) {
+        Iterator<E> it1 = iterator();
+        Iterator<?> it2 = elements.iterator();
+        while (true) {
+            if (it1.hasNext() && !it2.hasNext() || !it1.hasNext() && it2.hasNext()) return false;
+            if (!it1.hasNext()) return true;
+            if (!Objects.equals(it1.next(), it2.next())) return false;
+        }
     }
 
     public boolean contains(E element) {
@@ -160,6 +170,11 @@ public abstract class IdeaList<E> implements Iterable<E> {
 
     // Modifiers ====================================================================================
     public abstract IdeaList<E> insertAt(int index, Iterable<E> elements);
+
+    @SafeVarargs
+    public final IdeaList<E> insertAt(int index, E... elements) {
+        return insertAt(index, Arrays.asList(elements));
+    }
 
     public IdeaList<E> concatWith(Iterable<E> elements) {
         return concat(iterator(), IdeaList.of(elements));
@@ -295,7 +310,7 @@ public abstract class IdeaList<E> implements Iterable<E> {
     }
 
     public IdeaList<E> step(int length) {
-        if (length < 1) throw new IllegalArgumentException("Length cannot be negative. Given: " + length);
+        if (length < 1) throw new IllegalArgumentException("Length cannot be smaller than 1. Given: " + length);
         return whereIndexed((index, current) -> index % length == 0);
     }
 
@@ -405,8 +420,7 @@ public abstract class IdeaList<E> implements Iterable<E> {
 
         @Override
         public IdeaList<E> where(Predicate<E> predicate) {
-            return predicate.test(value.value()) ?
-                    createTail(tail -> tail.where(predicate)) : tail.value().where(predicate);
+            return predicate.test(value.value()) ? createTail(tail -> tail.where(predicate)) : tail.value().where(predicate);
         }
 
         @Override
@@ -440,7 +454,7 @@ public abstract class IdeaList<E> implements Iterable<E> {
             super(null, null);
         }
 
-        private static NoSuchElementException listIsEmptyException() {
+        private static NoSuchElementException noSuchElementException() {
             return new NoSuchElementException("List is empty");
         }
 
@@ -457,17 +471,17 @@ public abstract class IdeaList<E> implements Iterable<E> {
 
         @Override
         public E first() {
-            throw listIsEmptyException();
+            throw noSuchElementException();
         }
 
         @Override
         public E single() {
-            throw listIsEmptyException();
+            throw noSuchElementException();
         }
 
         @Override
         public E last() {
-            throw listIsEmptyException();
+            throw noSuchElementException();
         }
 
         @Override
