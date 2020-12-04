@@ -14,18 +14,12 @@ public class IdeaListTest {
     private Dog d1, d2, d3, d4, d5, d6;
     private LocalDate l1, l2, l3, l4, l5, l6, l7;
 
-    private Set<Person> personSet;
-
-    private List<Integer> integerList;
-    private List<Person> personList;
-    private List<Animal> animalList;
-    private List<LocalDate> localDateList;
-
     private IdeaList<Integer> integerIdeaList;
     private IdeaList<Person> personIdeaList;
-    private IdeaList<Animal> animalIdeaList;
     private IdeaList<Dog> dogIdeaList;
     private IdeaList<LocalDate> localDateIdeaList;
+
+    private Set<Person> personSet;
 
     @Before
     public void setUp() {
@@ -34,8 +28,7 @@ public class IdeaListTest {
         initialiseDogs();
         initialiseLocalDates();
 
-        initialiseCollections();
-        initialiseIdeaLists();
+        initialiseIterables();
     }
 
     private void initialiseIntegers() {
@@ -77,51 +70,48 @@ public class IdeaListTest {
         l7 = LocalDate.of(1974, 12, 25);
     }
 
-    private void initialiseCollections() {
-        integerList = Arrays.asList(i1, i2, i3, i4, i5, i6, i7, i8);
-        personList = Arrays.asList(p1, p2, p3, p4, p5, p6);
-        animalList = Arrays.asList(d1, d2, d3, d4, d5, d6);
-        localDateList = Arrays.asList(l1, l2, l3, l4, l5, l6, l7);
-        personSet = new LinkedHashSet<>(personList);
-    }
-
-    private void initialiseIdeaLists() {
+    private void initialiseIterables() {
         integerIdeaList = IdeaList.of(i1, i2, i3, i4, i5, i6, i7, i8);
         personIdeaList = IdeaList.of(p1, p2, p3, p4, p5, p6);
-        animalIdeaList = IdeaList.of(d1, d2, d3, d4, d5, d6);
         dogIdeaList = IdeaList.of(d1, d2, d3, d4, d5, d6);
         localDateIdeaList = IdeaList.of(l1, l2, l3, l4, l5, l6, l7);
+        personSet = new LinkedHashSet<>(personIdeaList.toList());
     }
 
 
     // Constructors and factory methods =============================================================
     @Test
-    public void IdeaList_of_Iterable_Creates_empty_IdeaList_if_given_Iterable_is_empty() {
-        assertEquals(IdeaList.empty(), IdeaList.of(new HashSet<>()));
+    public void empty_Returns_an_empty_IdeaList() {
+        assertEquals(0, IdeaList.empty().length());
     }
 
     @Test
-    public void IdeaList_of_Iterable_Creates_IdeaList_of_given_Iterable() {
+    public void of_Iterable_Creates_empty_IdeaList_if_given_Iterable_is_empty() {
+        assertEquals(IdeaList.empty(), IdeaList.of(new PriorityQueue<>()));
+    }
+
+    @Test
+    public void of_Iterable_Creates_IdeaList_of_given_Iterable() {
         IdeaList<Person> currentNode = IdeaList.of(personSet);
-        for (Person p : personSet) {
-            assertEquals(p, currentNode.value.value());
+        for (Person person : personSet) {
+            assertEquals(person, currentNode.value.value());
             currentNode = currentNode.tail.value();
         }
     }
 
     @Test
-    public void IdeaList_of_Gives_correct_tail_when_value_is_not_calculated() {
+    public void of_Gives_correct_tail_when_value_is_not_calculated() {
         assertEquals(p2, personIdeaList.tail.value().value.value());
         assertEquals(p5, personIdeaList.tail.value().tail.value().tail.value().tail.value().value.value());
     }
 
     @Test
-    public void IdeaList_of_elements_Creates_empty_IdeaList_if_no_elements_are_given() {
+    public void of_elements_Creates_empty_IdeaList_if_no_elements_are_given() {
         assertEquals(IdeaList.empty(), IdeaList.of());
     }
 
     @Test //TODO make covariant
-    public void IdeaList_of_elements_Creates_IdeaList_of_given_covariant_Iterable() { // Not covariance. Needs to be an Iterable, not separate elements
+    public void of_elements_Creates_IdeaList_of_given_covariant_Iterable() { // Not covariance. Needs to be an Iterable, not separate elements
         IdeaList<Object> objects = IdeaList.of("bla", "foo", "zaza");
         assertEquals("bla", objects.value.value());
         assertEquals("foo", objects.tail.value().value.value());
@@ -129,7 +119,7 @@ public class IdeaListTest {
     }
 
     @Test
-    public void IdeaList_of_elements_Creates_IdeaList_of_given_objects_with_same_type_or_subtype_of_list() {
+    public void of_elements_Creates_IdeaList_of_given_objects_with_same_type_or_subtype_of_list() {
         IdeaList<Animal> animals = IdeaList.of(d1, d2, d3, d4, d5, d6);
         assertEquals(d1, animals.value.value());
         assertEquals(d2, animals.tail.value().value.value());
@@ -141,27 +131,22 @@ public class IdeaListTest {
     }
 
     @Test
-    public void empty_Returns_an_empty_IdeaList() {
-        assertEquals(0, IdeaList.empty().length());
-    }
-
-    @Test
     public void initialiseWith_Returns_an_empty_list_if_given_length_0() {
-        assertEquals(IdeaList.empty(), IdeaList.initialiseWith(0, index -> new Dog(index, "Momo")));
+        assertEquals(IdeaList.empty(), IdeaList.initialiseWith(0, index -> index));
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void initialiseWith_Throws_exception_if_given_length_just_negative() {
-        assertEquals(IdeaList.empty(), IdeaList.initialiseWith(-1, index -> new Dog(index, "Momo")));
+        assertEquals(IdeaList.empty(), IdeaList.initialiseWith(-1, index -> index));
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void initialiseWith_Throws_exception_if_given_length_negative() {
-        assertEquals(IdeaList.empty(), IdeaList.initialiseWith(-24, index -> new Dog(index, "Momo")));
+        assertEquals(IdeaList.empty(), IdeaList.initialiseWith(-24, index -> index));
     }
 
     @Test
-    public void initialiseWith_Initialises_IdeaList_with_given_length_by_applying_generator_to_each_index() {
+    public void initialiseWith_Initialises_IdeaList_with_given_length_by_applying_function_to_each_index() {
         IdeaList<Dog> dogs = IdeaList.initialiseWith(3, index -> new Dog(index, "Lassy"));
         IdeaList<Dog> expected = IdeaList.of(new Dog(0, "Lassy"), new Dog(1, "Lassy"), new Dog(2, "Lassy"));
         assertEquals(expected, dogs);
@@ -180,21 +165,21 @@ public class IdeaListTest {
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
-    public void get_Throws_IndexOutOfBoundsException_if_index_bigger_than_last_valid_index() {
-        animalIdeaList.get(21);
-    }
-
-    @Test(expected = IndexOutOfBoundsException.class)
     public void get_Throws_IndexOutOfBoundsException_if_index_just_bigger_than_last_valid_index() {
         personIdeaList.get(6);
     }
 
+    @Test(expected = IndexOutOfBoundsException.class)
+    public void get_Throws_IndexOutOfBoundsException_if_index_bigger_than_last_valid_index() {
+        dogIdeaList.get(21);
+    }
+
     @Test
     public void get_Returns_element_at_given_index_if_index_valid() {
-        assertEquals(d1, animalIdeaList.get(0));
-        assertEquals(d3, animalIdeaList.get(2));
         assertEquals(p4, personIdeaList.get(3));
         assertEquals(p6, personIdeaList.get(5));
+        assertEquals(d1, dogIdeaList.get(0));
+        assertEquals(d3, dogIdeaList.get(2));
     }
 
     @Test(expected = NoSuchElementException.class)
@@ -203,10 +188,10 @@ public class IdeaListTest {
     }
 
     @Test
-    public void first_Returns_first_element_of_list() {
+    public void first_Returns_first_element_of_this_list() {
         assertEquals(i1, integerIdeaList.first().intValue());
         assertEquals(p1, personIdeaList.first());
-        assertEquals(d1, animalIdeaList.first());
+        assertEquals(d1, dogIdeaList.first());
         assertEquals(l1, localDateIdeaList.first());
     }
 
@@ -221,10 +206,10 @@ public class IdeaListTest {
     }
 
     @Test
-    public void single_Returns_only_element_in_IdeaList() {
-        assertEquals(l5, IdeaList.of(l5).single());
-        assertEquals(d2, IdeaList.of(d2).single());
+    public void single_Returns_the_only_element_in_this_list() {
         assertEquals(p4, IdeaList.of(p4).single());
+        assertEquals(d2, IdeaList.of(d2).single());
+        assertEquals(l5, IdeaList.of(l5).single());
     }
 
     @Test(expected = NoSuchElementException.class)
@@ -233,10 +218,10 @@ public class IdeaListTest {
     }
 
     @Test
-    public void last_Returns_last_element_of_IdeaList() {
+    public void last_Returns_last_element_of_this_list() {
         assertEquals(i8, integerIdeaList.last().intValue());
         assertEquals(p6, personIdeaList.last());
-        assertEquals(d6, animalIdeaList.last());
+        assertEquals(d6, dogIdeaList.last());
         assertEquals(l7, localDateIdeaList.last());
     }
 
@@ -249,7 +234,7 @@ public class IdeaListTest {
     public void random_Returns_random_element_from_this_list() {
         assertTrue(integerIdeaList.contains(integerIdeaList.random()));
         assertTrue(personIdeaList.contains(personIdeaList.random()));
-        assertTrue(animalIdeaList.contains(animalIdeaList.random()));
+        assertTrue(dogIdeaList.contains(dogIdeaList.random()));
         assertTrue(localDateIdeaList.contains(localDateIdeaList.random()));
     }
 
@@ -261,14 +246,14 @@ public class IdeaListTest {
     @Test
     public void findFirst_Returns_null_if_no_element_matches_given_predicate() {
         assertNull(integerIdeaList.findFirst(integer -> integer > 75 && integer < 100));
-        assertNull(animalIdeaList.findFirst(animal -> animal.getAge() > 13));
+        assertNull(dogIdeaList.findFirst(animal -> animal.getAge() > 13));
     }
 
     @Test
     public void findFirst_Returns_first_element_matching_given_predicate() {
-        assertEquals(l4, localDateIdeaList.findFirst(localDate -> localDate.getMonthValue() < 3));
-        assertEquals(p3, personIdeaList.findFirst(person -> person.getFirstName().contains("t")));
         assertEquals(i8, integerIdeaList.findFirst(integer -> integer > 100).intValue());
+        assertEquals(p3, personIdeaList.findFirst(person -> person.getFirstName().contains("t")));
+        assertEquals(l4, localDateIdeaList.findFirst(localDate -> localDate.getMonthValue() < 3));
     }
 
     @Test
@@ -279,14 +264,14 @@ public class IdeaListTest {
     @Test
     public void first_Returns_null_if_no_element_matches_given_predicate() {
         assertNull(integerIdeaList.first(integer -> integer > 75 && integer < 100));
-        assertNull(animalIdeaList.first(animal -> animal.getAge() > 13));
+        assertNull(dogIdeaList.first(animal -> animal.getAge() > 13));
     }
 
     @Test
     public void first_Returns_first_element_matching_given_predicate() {
-        assertEquals(l4, localDateIdeaList.first(localDate -> localDate.getMonthValue() < 3));
-        assertEquals(p3, personIdeaList.first(person -> person.getFirstName().contains("t")));
         assertEquals(i8, integerIdeaList.first(integer -> integer > 100).intValue());
+        assertEquals(p3, personIdeaList.first(person -> person.getFirstName().contains("t")));
+        assertEquals(l4, localDateIdeaList.first(localDate -> localDate.getMonthValue() < 3));
     }
 
     @Test
@@ -297,17 +282,17 @@ public class IdeaListTest {
     @Test
     public void indexOfFirst_predicate_Returns_minus_one_if_no_element_matches_given_predicate() {
         assertEquals(-1, integerIdeaList.indexOfFirst(integer -> integer == 2));
-        assertEquals(-1, animalIdeaList.indexOfFirst(animal -> animal.getAge() > 13));
         assertEquals(-1, personIdeaList.indexOfFirst(person -> person.getFirstName().contains("b") || person.getSecondName().contains("b")));
+        assertEquals(-1, dogIdeaList.indexOfFirst(animal -> animal.getAge() > 13));
         assertEquals(-1, localDateIdeaList.indexOfFirst(localDate -> localDate.getYear() > 2020 && localDate.getYear() < 4058));
     }
 
     @Test
     public void indexOfFirst_predicate_Returns_index_of_first_element_that_matches_given_predicate() {
-        assertEquals(0, localDateIdeaList.indexOfFirst(localDate -> true));
-        assertEquals(1, personIdeaList.indexOfFirst(person -> person.getSecondName().contains("h")));
-        assertEquals(4, animalIdeaList.indexOfFirst(animal -> animal.getAge() > 6));
         assertEquals(7, integerIdeaList.indexOfFirst(integer -> integer > 75));
+        assertEquals(1, personIdeaList.indexOfFirst(person -> person.getSecondName().contains("h")));
+        assertEquals(4, dogIdeaList.indexOfFirst(animal -> animal.getAge() > 6));
+        assertEquals(0, localDateIdeaList.indexOfFirst(localDate -> true));
     }
 
     @Test
@@ -318,16 +303,16 @@ public class IdeaListTest {
     @Test
     public void indexOfFirst_element_Returns_minus_one_if_list_does_not_contain_given_element() {
         assertEquals(-1, integerIdeaList.indexOfFirst(101));
-        assertEquals(-1, animalIdeaList.indexOfFirst(new Animal(2)));
         assertEquals(-1, personIdeaList.indexOfFirst(new Person("James", "Walker")));
+        assertEquals(-1, dogIdeaList.indexOfFirst(new Dog(2, "Bolt")));
         assertEquals(-1, localDateIdeaList.indexOfFirst(LocalDate.of(441, 3, 11)));
     }
 
     @Test
-    public void indexOfFirst_element_Returns_index_of_first_occurrence_of_given_element_in_IdeaList() {
+    public void indexOfFirst_element_Returns_index_of_first_occurrence_of_given_element_in_this_list() {
         assertEquals(0, integerIdeaList.indexOfFirst(i1));
         assertEquals(4, personIdeaList.indexOfFirst(p5));
-        assertEquals(2, animalIdeaList.indexOfFirst(d3));
+        assertEquals(2, dogIdeaList.indexOfFirst(d3));
         assertEquals(6, localDateIdeaList.indexOfFirst(l7));
     }
 
@@ -343,7 +328,7 @@ public class IdeaListTest {
     public void lastIndex_Returns_index_of_last_element() {
         assertEquals(7, integerIdeaList.lastIndex());
         assertEquals(5, personIdeaList.lastIndex());
-        assertEquals(5, animalIdeaList.lastIndex());
+        assertEquals(5, dogIdeaList.lastIndex());
         assertEquals(6, localDateIdeaList.lastIndex());
     }
 
@@ -356,7 +341,7 @@ public class IdeaListTest {
     public void indices_Returns_all_indices_of_this_list() {
         assertEquals(Range.from(0).upToAndIncluding(7), integerIdeaList.indices());
         assertEquals(Range.from(0).upToAndIncluding(5), personIdeaList.indices());
-        assertEquals(Range.from(0).upToAndIncluding(5), animalIdeaList.indices());
+        assertEquals(Range.from(0).upToAndIncluding(5), dogIdeaList.indices());
         assertEquals(Range.from(0).upToAndIncluding(6), localDateIdeaList.indices());
     }
 
@@ -369,7 +354,7 @@ public class IdeaListTest {
     public void length_Returns_the_length_of_this_list() {
         assertEquals(8, integerIdeaList.length());
         assertEquals(6, personIdeaList.length());
-        assertEquals(6, animalIdeaList.length());
+        assertEquals(6, dogIdeaList.length());
         assertEquals(7, localDateIdeaList.length());
     }
 
@@ -380,8 +365,11 @@ public class IdeaListTest {
 
     @Test
     public void toList_Transforms_IdeaList_into_List() {
+        List<Person> personList = Arrays.asList(p1, p2, p3, p4, p5, p6);
+        List<Dog> dogList = Arrays.asList(d1, d2, d3, d4, d5, d6);
+
         assertEquals(personList, IdeaList.of(personList).toList());
-        assertEquals(animalList, IdeaList.of(animalList).toList());
+        assertEquals(dogList, IdeaList.of(dogList).toList());
     }
 
     @Test
@@ -403,7 +391,7 @@ public class IdeaListTest {
     }
 
     @Test
-    public void iterator_Returns_Iterator_that_loops_through_this_list_extensive() {
+    public void iterator_Returns_Iterator_that_loops_through_this_list_2() {
         Iterator<Integer> it = IdeaList.of(6, 0, 1, 7, 5, 4).iterator();
         assertTrue(it.hasNext());
         assertEquals(6, it.next().intValue());
@@ -435,7 +423,7 @@ public class IdeaListTest {
     }
 
     @Test
-    public void equals_Returns_false_if_this_list_is_longer_than_given_object() {
+    public void equals_Returns_false_if_this_list_is_longer_than_given_list() {
         Person np1 = new Person("Zoe", "Turner");
         Person np2 = new Person("Alex", "Johnson");
         Person np3 = new Person("Patricia", "Vanilla");
@@ -450,7 +438,7 @@ public class IdeaListTest {
     }
 
     @Test
-    public void equals_Returns_false_if_this_list_is_shorter_than_given_object() {
+    public void equals_Returns_false_if_this_list_is_shorter_than_given_list() {
         Person np1 = new Person("Zoe", "Turner");
         Person np2 = new Person("Alex", "Johnson");
         Person np3 = new Person("Patricia", "Vanilla");
@@ -463,7 +451,7 @@ public class IdeaListTest {
     }
 
     @Test
-    public void equals_Returns_false_if_this_list_is_not_equal_to_given_object() {
+    public void equals_Returns_false_if_this_list_is_not_equal_to_given_list() {
         Person np1 = new Person("Zoe", "Turner");
         Person np2 = new Person("Alex", "Johnson");
         Person np3 = new Person("Patricia", "Vanilla");
@@ -482,7 +470,7 @@ public class IdeaListTest {
     }
 
     @Test
-    public void equals_Returns_true_if_this_list_is_equal_to_given_object() {
+    public void equals_Returns_true_if_this_list_is_equal_to_given_list() {
         Person np1 = new Person("Zoe", "Turner");
         Person np2 = new Person("Alex", "Johnson");
         Person np3 = new Person("Patricia", "Vanilla");
@@ -504,7 +492,7 @@ public class IdeaListTest {
     public void contains_Returns_false_if_this_list_does_not_contain_given_element() {
         assertFalse(integerIdeaList.contains(9));
         assertFalse(personIdeaList.contains(new Person("Magdalena", "Yves")));
-        assertFalse(animalList.contains(new Dog(4, "Shibaa")));
+        assertFalse(dogIdeaList.contains(new Dog(4, "Shibaa")));
         assertFalse(localDateIdeaList.contains(LocalDate.of(1974, 12, 24)));
     }
 
@@ -512,7 +500,7 @@ public class IdeaListTest {
     public void contains_Returns_true_if_this_list_contains_given_element() {
         assertTrue(integerIdeaList.contains(5));
         assertTrue(personIdeaList.contains(new Person("Alex", "Johnson")));
-        assertTrue(animalList.contains(new Dog(5, "Shiba")));
+        assertTrue(dogIdeaList.contains(new Dog(5, "Shiba")));
         assertTrue(localDateIdeaList.contains(LocalDate.of(1974, 12, 25)));
     }
 
@@ -580,8 +568,18 @@ public class IdeaListTest {
     public void isNested_Returns_false_if_IdeaList_is_not_nested() {
         assertFalse(integerIdeaList.isNested());
         assertFalse(personIdeaList.isNested());
-        assertFalse(animalIdeaList.isNested());
+        assertFalse(dogIdeaList.isNested());
         assertFalse(localDateIdeaList.isNested());
+    }
+
+    @Test
+    public void isNested_Returns_true_if_IdeaList_is_nested_with_Iterables() {
+        IdeaList<Set<Integer>> nestedIdeaList = IdeaList.of(
+                new HashSet<>(Arrays.asList(111, -25, 2)),
+                new HashSet<>(Arrays.asList(1, 88)),
+                new HashSet<>(Arrays.asList(-44, 270, 31, 73, 500))
+        );
+        assertTrue(nestedIdeaList.isNested());
     }
 
     @Test
@@ -595,20 +593,10 @@ public class IdeaListTest {
     }
 
     @Test
-    public void isNested_Returns_true_if_IdeaList_is_nested_with_Iterables() {
-        Set<Integer> set1 = new HashSet<>(Arrays.asList(111, -25, 2));
-        Set<Integer> set2 = new HashSet<>(Arrays.asList(1, 88));
-        Set<Integer> set3 = new HashSet<>(Arrays.asList(-44, 270, 31, 73, 500));
-
-        IdeaList<Set<Integer>> nestedIdeaList = IdeaList.of(set1, set2, set3);
-        assertTrue(nestedIdeaList.isNested());
-    }
-
-    @Test
     public void all_Returns_false_if_one_or_more_elements_do_not_match_given_predicate() {
         assertFalse(integerIdeaList.all(integer -> integer > 10));
         assertFalse(personIdeaList.all(person -> !person.getFirstName().contains("tr")));
-        assertFalse(animalIdeaList.all(animal -> animal.getAge() != 4));
+        assertFalse(dogIdeaList.all(animal -> animal.getAge() != 4));
         assertFalse(localDateIdeaList.all(localDate -> localDate.getYear() < 1000 || localDate.getYear() > 2000));
     }
 
@@ -621,7 +609,7 @@ public class IdeaListTest {
     public void all_Returns_true_if_all_elements_match_given_predicate() {
         assertTrue(integerIdeaList.all(integer -> integer > -257));
         assertTrue(personIdeaList.all(person -> person.getFirstName().length() > 2));
-        assertTrue(animalIdeaList.all(animal -> animal.getAge() != 10));
+        assertTrue(dogIdeaList.all(animal -> animal.getAge() != 10));
         assertTrue(localDateIdeaList.all(localDate -> localDate.getYear() != 1861));
     }
 
@@ -632,8 +620,8 @@ public class IdeaListTest {
 
     @Test
     public void any_Returns_true_if_list_contains_elements() {
-        assertTrue(localDateIdeaList.any());
         assertTrue(integerIdeaList.any());
+        assertTrue(localDateIdeaList.any());
         assertTrue(IdeaList.of("bla").any());
     }
 
@@ -646,7 +634,7 @@ public class IdeaListTest {
     public void any_predicate_Returns_false_if_no_element_matches_predicate() {
         assertFalse(integerIdeaList.any(integer -> integer == 3));
         assertFalse(personIdeaList.any(person -> person.getFirstName().charAt(2) == 'a'));
-        assertFalse(animalIdeaList.any(animal -> animal.getAge() == 8));
+        assertFalse(dogIdeaList.any(animal -> animal.getAge() == 8));
         assertFalse(localDateIdeaList.any(localDate -> localDate.getDayOfMonth() == 2));
         assertFalse(localDateIdeaList.any(localDate -> localDate.getDayOfMonth() == 3));
     }
@@ -655,7 +643,7 @@ public class IdeaListTest {
     public void any_predicate_Returns_true_if_at_least_one_element_matches_predicate() {
         assertTrue(integerIdeaList.any(integer -> integer < 10));
         assertTrue(personIdeaList.any(person -> person.getSecondName().contains("o")));
-        assertTrue(animalIdeaList.any(animal -> animal.getAge() > 5));
+        assertTrue(dogIdeaList.any(animal -> animal.getAge() > 5));
         assertTrue(localDateIdeaList.any(localDate -> localDate.getDayOfMonth() > 15 && localDate.getDayOfMonth() < 30));
     }
 
@@ -667,7 +655,7 @@ public class IdeaListTest {
     @Test
     public void none_Returns_false_if_list_contains_elements() {
         assertFalse(personIdeaList.none());
-        assertFalse(animalIdeaList.none());
+        assertFalse(dogIdeaList.none());
         assertFalse(IdeaList.of("bla").none());
     }
 
@@ -680,7 +668,7 @@ public class IdeaListTest {
     public void none_predicate_Returns_false_if_at_least_one_element_matches_predicate() {
         assertFalse(integerIdeaList.none(integer -> integer < 10));
         assertFalse(personIdeaList.none(person -> person.getSecondName().contains("o")));
-        assertFalse(animalIdeaList.none(animal -> animal.getAge() > 5));
+        assertFalse(dogIdeaList.none(animal -> animal.getAge() > 5));
         assertFalse(localDateIdeaList.none(localDate -> localDate.getDayOfMonth() > 15 && localDate.getDayOfMonth() < 30));
     }
 
@@ -688,7 +676,7 @@ public class IdeaListTest {
     public void none_predicate_Returns_true_if_no_element_matches_predicate() {
         assertTrue(integerIdeaList.none(integer -> integer == 3));
         assertTrue(personIdeaList.none(person -> person.getFirstName().charAt(2) == 'a'));
-        assertTrue(animalIdeaList.none(animal -> animal.getAge() == 8));
+        assertTrue(dogIdeaList.none(animal -> animal.getAge() == 8));
         assertTrue(localDateIdeaList.none(localDate -> localDate.getDayOfMonth() == 2));
         assertTrue(localDateIdeaList.none(localDate -> localDate.getDayOfMonth() == 3));
     }
@@ -731,6 +719,44 @@ public class IdeaListTest {
         LocalDate local2 = LocalDate.of(4014, 6, 9);
         IdeaList<LocalDate> expected = IdeaList.of(l1, l2, l3, local1, local2, l4, l5, l6, l7);
         assertEquals(expected, localDateIdeaList.insertAt(3, Arrays.asList(local1, local2)));
+    }
+
+    @Test(expected = IndexOutOfBoundsException.class)
+    public void insertAt_elements_Throws_exception_if_this_list_is_empty() {
+        IdeaList.<Person>empty().insertAt(0, p1);
+    }
+
+    @Test(expected = IndexOutOfBoundsException.class)
+    public void insertAt_elements_Throws_exception_if_index_just_negative() {
+        personIdeaList.insertAt(-1, p1);
+    }
+
+    @Test(expected = IndexOutOfBoundsException.class)
+    public void insertAt_elements_Throws_exception_if_index_negative() {
+        personIdeaList.insertAt(-23, p1);
+    }
+
+    @Test(expected = IndexOutOfBoundsException.class)
+    public void insertAt_elements_Throws_exception_if_index_just_bigger_than_upper_bound() {
+        personIdeaList.insertAt(6, p1).toList();
+    }
+
+    @Test(expected = IndexOutOfBoundsException.class)
+    public void insertAt_elements_Throws_exception_if_index_bigger_than_upper_bound() {
+        personIdeaList.insertAt(47, p1).toList();
+    }
+
+    @Test
+    public void insertAt_elements_Returns_list_if_no_elements_are_given() {
+        assertEquals(localDateIdeaList, localDateIdeaList.insertAt(3));
+    }
+
+    @Test
+    public void insertAt_elements_Inserts_given_elements_at_specified_position() {
+        LocalDate local1 = LocalDate.of(1002, 7, 1);
+        LocalDate local2 = LocalDate.of(4014, 6, 9);
+        IdeaList<LocalDate> expected = IdeaList.of(l1, l2, l3, local1, local2, l4, l5, l6, l7);
+        assertEquals(expected, localDateIdeaList.insertAt(3, local1, local2));
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
@@ -782,10 +808,10 @@ public class IdeaListTest {
     }
 
     @Test
-    public void concatWith_Iterable_Concatenates_IdeaList_with_given_Iterable() {
-        Person e1 = new Person("Jan", "Janssens");
-        Person e2 = new Person("Eveline", "Roberts");
-        assertEquals(IdeaList.of(e1, e2, p1, p2, p3, p4, p5, p6), IdeaList.of(e1, e2).concatWith(personSet));
+    public void concatWith_Iterable_Concatenates_this_list_with_given_Iterable() {
+        Person np1 = new Person("Jan", "Janssens");
+        Person np2 = new Person("Eveline", "Roberts");
+        assertEquals(IdeaList.of(np1, np2, p1, p2, p3, p4, p5, p6), IdeaList.of(np1, np2).concatWith(personSet));
     }
 
     @Test
@@ -806,7 +832,7 @@ public class IdeaListTest {
     }*/
 
     @Test
-    public void concatWith_IdeaList_Concatenates_IdeaList_with_given_IdeaList() {
+    public void concatWith_IdeaList_Concatenates_this_list_with_given_IdeaList() {
         Person e1 = new Person("Jan", "Janssens");
         Person e2 = new Person("Eveline", "Roberts");
         assertEquals(IdeaList.of(e1, e2, p1, p2, p3, p4, p5, p6), IdeaList.of(e1, e2).concatWith(personIdeaList));
@@ -996,7 +1022,7 @@ public class IdeaListTest {
     }
 
     @Test
-    public void forEachIndexed_Performs_given_action_on_each_element_provided_with_its_index() {
+    public void forEachIndexed_Performs_given_action_on_each_element_of_this_list_provided_with_its_index() {
         List<Dog> dogs = new ArrayList<>();
         List<Integer> indices = new ArrayList<>();
         dogIdeaList.forEachIndexed((idx, cur) -> {
@@ -1146,7 +1172,7 @@ public class IdeaListTest {
     @Test
     public void where_Returns_all_elements_that_satisfy_given_predicate() {
         IdeaList<Animal> expectedList = IdeaList.of(d3, d5, d6);
-        assertEquals(expectedList, animalIdeaList.where(animal -> animal.getAge() > 5));
+        assertEquals(expectedList, dogIdeaList.where(animal -> animal.getAge() > 5));
     }
 
     @Test
@@ -1157,7 +1183,7 @@ public class IdeaListTest {
     @Test
     public void whereIndexed_Returns_all_elements_that_satisfy_given_predicate_provided_with_index() {
         IdeaList<Animal> expectedList = IdeaList.of(d1, d3, d5);
-        assertEquals(expectedList, animalIdeaList.whereIndexed((index, animal) -> (index % 2) == 0));
+        assertEquals(expectedList, dogIdeaList.whereIndexed((index, animal) -> (index % 2) == 0));
     }
 
     @Test
@@ -1168,7 +1194,7 @@ public class IdeaListTest {
     @Test
     public void filter_Returns_all_elements_that_satisfy_given_predicate() {
         IdeaList<Animal> expectedList = IdeaList.of(d3, d5, d6);
-        assertEquals(expectedList, animalIdeaList.filter(animal -> animal.getAge() > 5));
+        assertEquals(expectedList, dogIdeaList.filter(animal -> animal.getAge() > 5));
     }
 
     @Test
@@ -1179,7 +1205,7 @@ public class IdeaListTest {
     @Test
     public void filterIndexed_Returns_all_elements_that_satisfy_given_predicate_provided_with_index() {
         IdeaList<Animal> expectedList = IdeaList.of(d1, d3, d5);
-        assertEquals(expectedList, animalIdeaList.filterIndexed((index, animal) -> (index % 2) == 0));
+        assertEquals(expectedList, dogIdeaList.filterIndexed((index, animal) -> (index % 2) == 0));
     }
 
     @Test
@@ -1190,7 +1216,7 @@ public class IdeaListTest {
     @Test
     public void findAll_Returns_all_elements_that_satisfy_given_predicate() {
         IdeaList<Animal> expectedList = IdeaList.of(d3, d5, d6);
-        assertEquals(expectedList, animalIdeaList.findAll(animal -> animal.getAge() > 5));
+        assertEquals(expectedList, dogIdeaList.findAll(animal -> animal.getAge() > 5));
     }
 
     @Test
@@ -1201,7 +1227,7 @@ public class IdeaListTest {
     @Test
     public void findAllIndexed_Returns_all_elements_that_satisfy_given_predicate_provided_with_index() {
         IdeaList<Animal> expectedList = IdeaList.of(d1, d3, d5);
-        assertEquals(expectedList, animalIdeaList.findAllIndexed((index, animal) -> (index % 2) == 0));
+        assertEquals(expectedList, dogIdeaList.findAllIndexed((index, animal) -> (index % 2) == 0));
     }
 
     @Test(expected = UnsupportedOperationException.class)
@@ -1224,17 +1250,6 @@ public class IdeaListTest {
     }
 
     @Test
-    public void flatten_Concatenates_all_nested_IdeaLists_into_one_list() {
-        IdeaList<IdeaList<String>> given = IdeaList.of(
-                IdeaList.of("one"),
-                IdeaList.of("two", "three", "four"),
-                IdeaList.of("five", "six", "seven", "eight")
-        );
-        IdeaList<String> expected = IdeaList.of("one", "two", "three", "four", "five", "six", "seven", "eight");
-        assertEquals(expected, given.flatten());
-    }
-
-    @Test
     public void flatten_Concatenates_all_nested_Iterables_into_one_list() {
         IdeaList<Set<String>> given = IdeaList.of(
                 new LinkedHashSet<>(Collections.singletonList("one")),
@@ -1253,6 +1268,17 @@ public class IdeaListTest {
                 new LinkedList<>(Arrays.asList(p4, p5, p6))
         );
         assertEquals(personIdeaList, given.flatten());
+    }
+
+    @Test
+    public void flatten_Concatenates_all_nested_IdeaLists_into_one_list() {
+        IdeaList<IdeaList<String>> given = IdeaList.of(
+                IdeaList.of("one"),
+                IdeaList.of("two", "three", "four"),
+                IdeaList.of("five", "six", "seven", "eight")
+        );
+        IdeaList<String> expected = IdeaList.of("one", "two", "three", "four", "five", "six", "seven", "eight");
+        assertEquals(expected, given.flatten());
     }
 
     @Test
@@ -1376,12 +1402,12 @@ public class IdeaListTest {
     }
 
     @Test
-    public void step_Returns_a_list_containing_every_2nd_element_of_this_list() {
+    public void step_Returns_a_list_containing_every_2nd_element_of_this_list_if_given_length_is_2() {
         assertEquals(IdeaList.of(p1, p3, p5), personIdeaList.step(2));
     }
 
     @Test
-    public void step_Returns_a_list_containing_every_3rd_element_of_this_list() {
+    public void step_Returns_a_list_containing_every_3rd_element_of_this_list_if_given_length_is_3() {
         assertEquals(IdeaList.of(p1, p4), personIdeaList.step(3));
     }
 }

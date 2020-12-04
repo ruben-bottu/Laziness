@@ -37,14 +37,6 @@ public class Range {
         return downTo(end - 1);
     }
 
-    public IdeaList<Integer> upToInfinity() {
-        return length(Integer.MAX_VALUE);
-    }
-
-    public IdeaList<Integer> downToNegativeInfinity() {
-        return IdeaList.initialiseWith(Integer.MAX_VALUE, index -> from - index);
-    }
-
     public static IdeaList<Integer> infiniteIndices() {
         return IdeaList.initialiseWith(Integer.MAX_VALUE, index -> index);
     }

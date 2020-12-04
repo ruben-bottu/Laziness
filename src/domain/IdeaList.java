@@ -125,7 +125,7 @@ public abstract class IdeaList<E> implements Iterable<E> {
         return equals(ideaList);
     }
 
-    public boolean equals(IdeaList<?> elements) {
+    private boolean equals(IdeaList<?> elements) {
         Iterator<E> it1 = iterator();
         Iterator<?> it2 = elements.iterator();
         while (true) {
