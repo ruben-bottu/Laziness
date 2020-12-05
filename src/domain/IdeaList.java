@@ -273,10 +273,10 @@ public abstract class IdeaList<E> implements Iterable<E> {
         return whereIndexed(predicate);
     }
 
-    abstract <R> IdeaList<R> concatenateNestedIterables();
+    abstract <R> IdeaList<R> concatNestedIterables();
 
     public <R> IdeaList<R> flatten() {
-        if (isNested()) return concatenateNestedIterables();
+        if (isNested()) return concatNestedIterables();
         throw new UnsupportedOperationException("List contains elements that are not Iterable");
     }
 
@@ -393,8 +393,7 @@ public abstract class IdeaList<E> implements Iterable<E> {
 
         @Override
         public IdeaList<E> removeFirst(E element) {
-            return value.value().equals(element) ? tail.value() :
-                    createTail(tail -> tail.removeFirst(element));
+            return value.value().equals(element) ? tail.value() : createTail(tail -> tail.removeFirst(element));
         }
 
         @Override
@@ -420,12 +419,13 @@ public abstract class IdeaList<E> implements Iterable<E> {
 
         @Override
         public IdeaList<E> where(Predicate<E> predicate) {
-            return predicate.test(value.value()) ? createTail(tail -> tail.where(predicate)) : tail.value().where(predicate);
+            return predicate.test(value.value()) ?
+                    createTail(tail -> tail.where(predicate)) : tail.value().where(predicate);
         }
 
         @Override
-        <R> IdeaList<R> concatenateNestedIterables() {
-            return concat(((Iterable<R>) value.value()).iterator(), tail.value().concatenateNestedIterables());
+        <R> IdeaList<R> concatNestedIterables() {
+            return concat(((Iterable<R>) value.value()).iterator(), tail.value().concatNestedIterables());
         }
 
         /*@Override
@@ -546,7 +546,7 @@ public abstract class IdeaList<E> implements Iterable<E> {
         }
 
         @Override
-        <R> IdeaList<R> concatenateNestedIterables() {
+        <R> IdeaList<R> concatNestedIterables() {
             return IdeaList.empty();
         }
     }

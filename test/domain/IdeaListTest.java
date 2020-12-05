@@ -27,7 +27,6 @@ public class IdeaListTest {
         initialisePeople();
         initialiseDogs();
         initialiseLocalDates();
-
         initialiseIterables();
     }
 
@@ -85,24 +84,46 @@ public class IdeaListTest {
         assertEquals(0, IdeaList.empty().length());
     }
 
+    @Test(expected = NullPointerException.class)
+    public void of_Iterable_Throws_exception_if_Iterable_null() {
+        IdeaList.of((Iterable<Object>) null);
+    }
+
     @Test
     public void of_Iterable_Creates_empty_IdeaList_if_given_Iterable_is_empty() {
         assertEquals(IdeaList.empty(), IdeaList.of(new PriorityQueue<>()));
     }
 
     @Test
+    public void of_Iterable_Creates_IdeaList_of_given_Iterable_containing_null() {
+        Set<Dog> dogSet = new LinkedHashSet<>(Arrays.asList(d2, d6, d1, null, d1, null));
+        /*IdeaList<Dog> currentNode = IdeaList.of(dogSet);
+        for (Dog dog : dogSet) {
+            assertEquals(dog, currentNode.value.value());
+            currentNode = currentNode.tail.value();
+        }*/
+        assertTrue(Enumerable.isContentEqual(dogSet, IdeaList.of(dogSet)));
+    }
+
+    @Test
     public void of_Iterable_Creates_IdeaList_of_given_Iterable() {
-        IdeaList<Person> currentNode = IdeaList.of(personSet);
+        /*IdeaList<Person> currentNode = IdeaList.of(personSet);
         for (Person person : personSet) {
             assertEquals(person, currentNode.value.value());
             currentNode = currentNode.tail.value();
-        }
+        }*/
+        assertTrue(Enumerable.isContentEqual(personSet, IdeaList.of(personSet)));
     }
 
     @Test
     public void of_Gives_correct_tail_when_value_is_not_calculated() {
         assertEquals(p2, personIdeaList.tail.value().value.value());
         assertEquals(p5, personIdeaList.tail.value().tail.value().tail.value().tail.value().value.value());
+    }
+
+    @Test
+    public void of_elements_Creates_singleton_IdeaList_containing_null_if_given_elements_null() {
+        assertNull(IdeaList.of((Object) null).single());
     }
 
     @Test
@@ -116,6 +137,16 @@ public class IdeaListTest {
         assertEquals("bla", objects.value.value());
         assertEquals("foo", objects.tail.value().value.value());
         assertEquals("zaza", objects.tail.value().tail.value().value.value());
+    }
+
+    @Test
+    public void of_elements_Creates_IdeaList_of_given_Iterable_containing_null() {
+        Set<Dog> dogSet = new LinkedHashSet<>(Arrays.asList(null, d3, d4, d1, null, d1, null));
+        IdeaList<Dog> currentNode = IdeaList.of(null, d3, d4, d1, null, d1, null);
+        for (Dog dog : dogSet) {
+            assertEquals(dog, currentNode.value.value());
+            currentNode = currentNode.tail.value();
+        }
     }
 
     @Test
