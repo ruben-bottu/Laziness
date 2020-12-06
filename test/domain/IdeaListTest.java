@@ -84,6 +84,7 @@ public class IdeaListTest {
         assertEquals(0, IdeaList.empty().length());
     }
 
+    @SuppressWarnings("all") // To avoid @NotNull warning when calling IdeaList.of(null)
     @Test(expected = NullPointerException.class)
     public void of_Iterable_Throws_exception_if_Iterable_null() {
         IdeaList.of((Iterable<Object>) null);
@@ -140,13 +141,15 @@ public class IdeaListTest {
     }
 
     @Test
-    public void of_elements_Creates_IdeaList_of_given_Iterable_containing_null() {
-        Set<Dog> dogSet = new LinkedHashSet<>(Arrays.asList(null, d3, d4, d1, null, d1, null));
-        IdeaList<Dog> currentNode = IdeaList.of(null, d3, d4, d1, null, d1, null);
-        for (Dog dog : dogSet) {
+    public void of_elements_Creates_IdeaList_of_given_elements_containing_null() {
+        List<Dog> dogList = Arrays.asList(null, d3, d4, d1, null, d1, null);
+        //List<Dog> dogSet = Arrays.asList(null, d3, d4, d1, null, d1, null);
+        //IdeaList<Dog> currentNode = IdeaList.of(null, d3, d4, d1, null, d1, null);
+        /*for (Dog dog : dogSet) {
             assertEquals(dog, currentNode.value.value());
             currentNode = currentNode.tail.value();
-        }
+        }*/
+        assertTrue(Enumerable.isContentEqual(dogList, IdeaList.of(null, d3, d4, d1, null, d1, null)));
     }
 
     @Test
@@ -160,6 +163,11 @@ public class IdeaListTest {
         assertEquals(d6, animals.tail.value().tail.value().tail.value().tail.value().tail.value().value.value());
         assertNull(animals.tail.value().tail.value().tail.value().tail.value().tail.value().tail.value().value);
     }
+
+    /*@Test(expected = NullPointerException.class)
+    public void initialiseWith_Throws_exception_if_given_indexToElement_null() {
+        IdeaList.initialiseWith(6, null);
+    }*/
 
     @Test
     public void initialiseWith_Returns_an_empty_list_if_given_length_0() {
@@ -324,6 +332,11 @@ public class IdeaListTest {
         assertEquals(1, personIdeaList.indexOfFirst(person -> person.getSecondName().contains("h")));
         assertEquals(4, dogIdeaList.indexOfFirst(animal -> animal.getAge() > 6));
         assertEquals(0, localDateIdeaList.indexOfFirst(localDate -> true));
+    }
+
+    @Test
+    public void indexOfFirst_element_Returns_minus_one_if_given_element_is_null() {
+        assertEquals(-1, localDateIdeaList.indexOfFirst((LocalDate) null));
     }
 
     @Test
@@ -501,7 +514,7 @@ public class IdeaListTest {
     }
 
     @Test
-    public void equals_Returns_true_if_this_list_is_equal_to_given_list() {
+    public void equals_Returns_true_if_given_list_has_same_type_as_this_list_and_all_elements_are_equal() {
         Person np1 = new Person("Zoe", "Turner");
         Person np2 = new Person("Alex", "Johnson");
         Person np3 = new Person("Patricia", "Vanilla");
@@ -512,6 +525,11 @@ public class IdeaListTest {
 
         assertEquals(personIdeaList, newPeople);
         assertEquals(newPeople, personIdeaList);
+    }
+
+    @Test
+    public void contains_Returns_false_if_this_list_does_not_contain_given_null_element() {
+        assertFalse(personIdeaList.contains(null));
     }
 
     @Test
@@ -528,11 +546,22 @@ public class IdeaListTest {
     }
 
     @Test
+    public void contains_Returns_true_if_this_list_contains_given_null_element() {
+        assertTrue(IdeaList.of(i7, i1, null).contains(null));
+        assertTrue(IdeaList.of(null, l5, l1, l3, null, l1).contains(null));
+    }
+
+    @Test
     public void contains_Returns_true_if_this_list_contains_given_element() {
         assertTrue(integerIdeaList.contains(5));
         assertTrue(personIdeaList.contains(new Person("Alex", "Johnson")));
         assertTrue(dogIdeaList.contains(new Dog(5, "Shiba")));
         assertTrue(localDateIdeaList.contains(LocalDate.of(1974, 12, 25)));
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void containsAll_Iterable_Throws_exception_if_given_elements_null() {
+        assertFalse(localDateIdeaList.containsAll(null));
     }
 
     @Test
@@ -714,6 +743,11 @@ public class IdeaListTest {
 
 
     // Modifiers ====================================================================================
+    @Test(expected = NullPointerException.class)
+    public void insertAt_Iterable_Throws_exception_if_given_Iterable_null() {
+        personIdeaList.insertAt(0, (Iterable<Person>) null);
+    }
+
     @Test(expected = IndexOutOfBoundsException.class)
     public void insertAt_Iterable_Throws_exception_if_this_list_is_empty() {
         IdeaList.<Person>empty().insertAt(0, personSet);
@@ -746,6 +780,13 @@ public class IdeaListTest {
 
     @Test
     public void insertAt_Iterable_Inserts_given_elements_at_specified_position() {
+        LocalDate local = LocalDate.of(4014, 6, 9);
+        IdeaList<LocalDate> expected = IdeaList.of(null, l4, null, null, local, l5);
+        assertEquals(expected, IdeaList.of(null, l4, null, l5).insertAt(3, Arrays.asList(null, local)));
+    }
+
+    @Test
+    public void insertAt_Iterable_Inserts_given_elements_at_specified_position_2() {
         LocalDate local1 = LocalDate.of(1002, 7, 1);
         LocalDate local2 = LocalDate.of(4014, 6, 9);
         IdeaList<LocalDate> expected = IdeaList.of(l1, l2, l3, local1, local2, l4, l5, l6, l7);
@@ -784,6 +825,12 @@ public class IdeaListTest {
 
     @Test
     public void insertAt_elements_Inserts_given_elements_at_specified_position() {
+        IdeaList<Person> expected = IdeaList.of(p1, p2, p3, p4, p5, null, p6);
+        assertEquals(expected, personIdeaList.insertAt(5, (Person) null));
+    }
+
+    @Test
+    public void insertAt_elements_Inserts_given_elements_at_specified_position_2() {
         LocalDate local1 = LocalDate.of(1002, 7, 1);
         LocalDate local2 = LocalDate.of(4014, 6, 9);
         IdeaList<LocalDate> expected = IdeaList.of(l1, l2, l3, local1, local2, l4, l5, l6, l7);
@@ -842,7 +889,17 @@ public class IdeaListTest {
     public void concatWith_Iterable_Concatenates_this_list_with_given_Iterable() {
         Person np1 = new Person("Jan", "Janssens");
         Person np2 = new Person("Eveline", "Roberts");
-        assertEquals(IdeaList.of(np1, np2, p1, p2, p3, p4, p5, p6), IdeaList.of(np1, np2).concatWith(personSet));
+        IdeaList<Person> expected = IdeaList.of(np1, np2, null, p2, p3, p4, p5, null);
+        IdeaList<Person> input = IdeaList.of(null, p2, p3, p4, p5, null);
+        assertEquals(expected, IdeaList.of(np1, np2).concatWith(input));
+    }
+
+    @Test
+    public void concatWith_Iterable_Concatenates_this_list_with_given_Iterable_2() {
+        Person np1 = new Person("Jan", "Janssens");
+        Person np2 = new Person("Eveline", "Roberts");
+        IdeaList<Person> expected = IdeaList.of(np1, np2, p1, p2, p3, p4, p5, p6);
+        assertEquals(expected, IdeaList.of(np1, np2).concatWith(personSet));
     }
 
     @Test

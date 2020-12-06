@@ -82,8 +82,12 @@ public abstract class IdeaList<E> implements Iterable<E> {
         return indexOrMinusOne(withIndex().findFirst(currentPair -> predicate.test(currentPair.element)));
     }
 
-    public int indexOfFirst(E element) {
+    /*public int indexOfFirst(E element) {
         return indexOfFirst(current -> current.equals(element));
+    }*/
+
+    public int indexOfFirst(E element) {
+        return indexOfFirst(current -> Objects.equals(current, element));
     }
 
     public int lastIndex() {
@@ -122,18 +126,17 @@ public abstract class IdeaList<E> implements Iterable<E> {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         IdeaList<?> ideaList = (IdeaList<?>) o;
-        return equals(ideaList);
+        return Enumerable.isContentEqual(this, ideaList);
     }
 
-    private boolean equals(IdeaList<?> elements) {
-        Iterator<E> it1 = iterator();
-        Iterator<?> it2 = elements.iterator();
-        while (true) {
-            if (it1.hasNext() && !it2.hasNext() || !it1.hasNext() && it2.hasNext()) return false;
-            if (!it1.hasNext()) return true;
-            if (!Objects.equals(it1.next(), it2.next())) return false;
-        }
-    }
+    /*@Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        IdeaList<?> ideaList = (IdeaList<?>) o;
+        return Objects.equals(value, ideaList.value) &&
+                Objects.equals(tail, ideaList.tail);
+    }*/
 
     public boolean contains(E element) {
         return indexOfFirst(element) != -1;
