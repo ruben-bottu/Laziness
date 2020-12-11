@@ -84,7 +84,7 @@ public class IdeaListTest {
         assertEquals(0, IdeaList.empty().length());
     }
 
-    @SuppressWarnings("all") // To avoid @NotNull warning when calling IdeaList.of(null)
+    @SuppressWarnings("all") // To avoid @NotNull warning when calling method with null
     @Test(expected = NullPointerException.class)
     public void of_Iterable_Throws_exception_if_Iterable_null() {
         IdeaList.of((Iterable<Object>) null);
@@ -215,6 +215,15 @@ public class IdeaListTest {
 
     @Test
     public void get_Returns_element_at_given_index_if_index_valid() {
+        IdeaList<Dog> input = IdeaList.of(d2, null, d3, d1, d2, null);
+        assertEquals(d2, input.get(0));
+        assertNull(input.get(1));
+        assertEquals(d2, input.get(4));
+        assertNull(input.get(5));
+    }
+
+    @Test
+    public void get_Returns_element_at_given_index_if_index_valid_2() {
         assertEquals(p4, personIdeaList.get(3));
         assertEquals(p6, personIdeaList.get(5));
         assertEquals(d1, dogIdeaList.get(0));
@@ -228,6 +237,12 @@ public class IdeaListTest {
 
     @Test
     public void first_Returns_first_element_of_this_list() {
+        IdeaList<Person> input = IdeaList.of(null, p6, p5, null, null, p1, p1, p1);
+        assertNull(input.first());
+    }
+
+    @Test
+    public void first_Returns_first_element_of_this_list_2() {
         assertEquals(i1, integerIdeaList.first().intValue());
         assertEquals(p1, personIdeaList.first());
         assertEquals(d1, dogIdeaList.first());
@@ -246,6 +261,11 @@ public class IdeaListTest {
 
     @Test
     public void single_Returns_the_only_element_in_this_list() {
+        assertNull(IdeaList.of((Object) null).single());
+    }
+
+    @Test
+    public void single_Returns_the_only_element_in_this_list_2() {
         assertEquals(p4, IdeaList.of(p4).single());
         assertEquals(d2, IdeaList.of(d2).single());
         assertEquals(l5, IdeaList.of(l5).single());
@@ -258,6 +278,12 @@ public class IdeaListTest {
 
     @Test
     public void last_Returns_last_element_of_this_list() {
+        IdeaList<Person> input = IdeaList.of(null, p6, p5, null, null, p1, p1, p1, null);
+        assertNull(input.last());
+    }
+
+    @Test
+    public void last_Returns_last_element_of_this_list_2() {
         assertEquals(i8, integerIdeaList.last().intValue());
         assertEquals(p6, personIdeaList.last());
         assertEquals(d6, dogIdeaList.last());
@@ -267,6 +293,14 @@ public class IdeaListTest {
     @Test(expected = IllegalArgumentException.class)
     public void random_Throws_exception_if_list_is_empty() {
         IdeaList.empty().random();
+    }
+
+    @Test
+    public void random_Returns_random_element_from_this_list_containing_null() {
+        IdeaList<LocalDate> input = IdeaList.of(null, null, null, null, null);
+        assertNull(input.random());
+        assertNull(input.random());
+        assertNull(input.random());
     }
 
     @Test
@@ -290,6 +324,12 @@ public class IdeaListTest {
 
     @Test
     public void findFirst_Returns_first_element_matching_given_predicate() {
+        IdeaList<Person> input = IdeaList.of(p1, p1, p2, null, p3, p3, null);
+        assertNull(input.findFirst(Objects::isNull));
+    }
+
+    @Test
+    public void findFirst_Returns_first_element_matching_given_predicate_2() {
         assertEquals(i8, integerIdeaList.findFirst(integer -> integer > 100).intValue());
         assertEquals(p3, personIdeaList.findFirst(person -> person.getFirstName().contains("t")));
         assertEquals(l4, localDateIdeaList.findFirst(localDate -> localDate.getMonthValue() < 3));
@@ -308,6 +348,12 @@ public class IdeaListTest {
 
     @Test
     public void first_Returns_first_element_matching_given_predicate() {
+        IdeaList<Person> input = IdeaList.of(p1, p1, p2, null, p3, p3, null);
+        assertNull(input.first(Objects::isNull));
+    }
+
+    @Test
+    public void first_Returns_first_element_matching_given_predicate_2() {
         assertEquals(i8, integerIdeaList.first(integer -> integer > 100).intValue());
         assertEquals(p3, personIdeaList.first(person -> person.getFirstName().contains("t")));
         assertEquals(l4, localDateIdeaList.first(localDate -> localDate.getMonthValue() < 3));
@@ -328,15 +374,16 @@ public class IdeaListTest {
 
     @Test
     public void indexOfFirst_predicate_Returns_index_of_first_element_that_matches_given_predicate() {
+        IdeaList<Person> input = IdeaList.of(p1, p1, p2, null, p3, p3, null);
+        assertEquals(3, input.indexOfFirst(Objects::isNull));
+    }
+
+    @Test
+    public void indexOfFirst_predicate_Returns_index_of_first_element_that_matches_given_predicate_2() {
         assertEquals(7, integerIdeaList.indexOfFirst(integer -> integer > 75));
         assertEquals(1, personIdeaList.indexOfFirst(person -> person.getSecondName().contains("h")));
         assertEquals(4, dogIdeaList.indexOfFirst(animal -> animal.getAge() > 6));
         assertEquals(0, localDateIdeaList.indexOfFirst(localDate -> true));
-    }
-
-    @Test
-    public void indexOfFirst_element_Returns_minus_one_if_given_element_is_null() {
-        assertEquals(-1, localDateIdeaList.indexOfFirst((LocalDate) null));
     }
 
     @Test
@@ -354,6 +401,12 @@ public class IdeaListTest {
 
     @Test
     public void indexOfFirst_element_Returns_index_of_first_occurrence_of_given_element_in_this_list() {
+        IdeaList<LocalDate> input = IdeaList.of(l7, l7, l6, l1, l2, l3, null, l7);
+        assertEquals(6, input.indexOfFirst((LocalDate) null));
+    }
+
+    @Test
+    public void indexOfFirst_element_Returns_index_of_first_occurrence_of_given_element_in_this_list_2() {
         assertEquals(0, integerIdeaList.indexOfFirst(i1));
         assertEquals(4, personIdeaList.indexOfFirst(p5));
         assertEquals(2, dogIdeaList.indexOfFirst(d3));
@@ -396,6 +449,11 @@ public class IdeaListTest {
 
     @Test
     public void length_Returns_the_length_of_this_list() {
+        assertEquals(9, IdeaList.of(null, p6, p5, null, null, p1, p1, p1, null).length());
+    }
+
+    @Test
+    public void length_Returns_the_length_of_this_list_2() {
         assertEquals(8, integerIdeaList.length());
         assertEquals(6, personIdeaList.length());
         assertEquals(6, dogIdeaList.length());
@@ -409,6 +467,12 @@ public class IdeaListTest {
 
     @Test
     public void toList_Transforms_IdeaList_into_List() {
+        List<Person> personList = Arrays.asList(null, p1, null, p2, p3, p4, p5, p6, null);
+        assertEquals(personList, IdeaList.of(personList).toList());
+    }
+
+    @Test
+    public void toList_Transforms_IdeaList_into_List_2() {
         List<Person> personList = Arrays.asList(p1, p2, p3, p4, p5, p6);
         List<Dog> dogList = Arrays.asList(d1, d2, d3, d4, d5, d6);
 
@@ -424,18 +488,41 @@ public class IdeaListTest {
 
     @Test
     public void iterator_Returns_Iterator_that_loops_through_this_list() {
-        Iterator<LocalDate> it = localDateIdeaList.iterator();
-        assertEquals(l1, it.next());
-        assertEquals(l2, it.next());
-        assertEquals(l3, it.next());
-        assertEquals(l4, it.next());
-        assertEquals(l5, it.next());
-        assertEquals(l6, it.next());
-        assertEquals(l7, it.next());
+        Iterator<Dog> it = dogIdeaList.iterator();
+        assertEquals(d1, it.next());
+        assertEquals(d2, it.next());
+        assertEquals(d3, it.next());
+        assertEquals(d4, it.next());
+        assertEquals(d5, it.next());
+        assertEquals(d6, it.next());
     }
 
     @Test
     public void iterator_Returns_Iterator_that_loops_through_this_list_2() {
+        Iterator<LocalDate> it = IdeaList.of(null, null, null, l7, l6, l1, l1, l5, null).iterator();
+        assertTrue(it.hasNext());
+        assertNull(it.next());
+        assertTrue(it.hasNext());
+        assertNull(it.next());
+        assertTrue(it.hasNext());
+        assertNull(it.next());
+        assertTrue(it.hasNext());
+        assertEquals(l7, it.next());
+        assertTrue(it.hasNext());
+        assertEquals(l6, it.next());
+        assertTrue(it.hasNext());
+        assertEquals(l1, it.next());
+        assertTrue(it.hasNext());
+        assertEquals(l1, it.next());
+        assertTrue(it.hasNext());
+        assertEquals(l5, it.next());
+        assertTrue(it.hasNext());
+        assertNull(it.next());
+        assertFalse(it.hasNext());
+    }
+
+    @Test
+    public void iterator_Returns_Iterator_that_loops_through_this_list_3() {
         Iterator<Integer> it = IdeaList.of(6, 0, 1, 7, 5, 4).iterator();
         assertTrue(it.hasNext());
         assertEquals(6, it.next().intValue());
@@ -496,6 +583,16 @@ public class IdeaListTest {
 
     @Test
     public void equals_Returns_false_if_this_list_is_not_equal_to_given_list() {
+
+        IdeaList<Person> people1 = IdeaList.of(p2, null, p5, p2, null, p1, p4);
+        IdeaList<Person> people2 = IdeaList.of(p2, null, p5, p2, null, p1, p3);
+
+        assertNotEquals(people1, people2);
+        assertNotEquals(people2, people1);
+    }
+
+    @Test
+    public void equals_Returns_false_if_this_list_is_not_equal_to_given_list_2() {
         Person np1 = new Person("Zoe", "Turner");
         Person np2 = new Person("Alex", "Johnson");
         Person np3 = new Person("Patricia", "Vanilla");
@@ -515,6 +612,21 @@ public class IdeaListTest {
 
     @Test
     public void equals_Returns_true_if_given_list_has_same_type_as_this_list_and_all_elements_are_equal() {
+        Person np1 = new Person("Zoe", "Turner");
+        Person np2 = new Person("Alex", "Johnson");
+        Person np3 = new Person("Patricia", "Vanilla");
+        Person np4 = new Person("Jeffie", "Allstar");
+        Person np5 = new Person("Daenerys", "Targaryen");
+        Person np6 = new Person("John", "Jefferson");
+        IdeaList<Person> people1 = IdeaList.of(null, np1, np2, null, np3, np4, np5, null, np6, null);
+        IdeaList<Person> people2 = IdeaList.of(null, p1, p2, null, p3, p4, p5, null, p6, null);
+
+        assertEquals(people1, people2);
+        assertEquals(people2, people1);
+    }
+
+    @Test
+    public void equals_Returns_true_if_given_list_has_same_type_as_this_list_and_all_elements_are_equal_2() {
         Person np1 = new Person("Zoe", "Turner");
         Person np2 = new Person("Alex", "Johnson");
         Person np3 = new Person("Patricia", "Vanilla");
@@ -875,6 +987,11 @@ public class IdeaListTest {
         assertEquals(expected, localDateIdeaList.insertAt(3, IdeaList.of(local1, local2)));
     }
 
+    @Test(expected = NullPointerException.class)
+    public void concatWith_Iterable_Throws_exception_if_given_elements_null() {
+        personIdeaList.concatWith(null);
+    }
+
     @Test
     public void concatWith_Iterable_Returns_given_list_if_this_list_is_empty() {
         assertEquals(personIdeaList, IdeaList.<Person>empty().concatWith(personSet));
@@ -890,7 +1007,7 @@ public class IdeaListTest {
         Person np1 = new Person("Jan", "Janssens");
         Person np2 = new Person("Eveline", "Roberts");
         IdeaList<Person> expected = IdeaList.of(np1, np2, null, p2, p3, p4, p5, null);
-        IdeaList<Person> input = IdeaList.of(null, p2, p3, p4, p5, null);
+        List<Person> input = new LinkedList<>(Arrays.asList(null, p2, p3, p4, p5, null));
         assertEquals(expected, IdeaList.of(np1, np2).concatWith(input));
     }
 
@@ -942,14 +1059,15 @@ public class IdeaListTest {
         assertEquals(IdeaList.of(d1, d2, d3), IdeaList.of(d1, d2, d3).add());
     }
 
-    @Test //TODO This shouldn't work??
+    @Test
     public void add_Adds_the_given_elements_to_the_end_of_the_list_with_null() {
         Dog d1 = new Dog(9, "Lassy");
         Dog d2 = new Dog(1, null);
         Dog d3 = new Dog(11, "Lala");
         Dog d4 = new Dog(428, "Momo");
         Dog d5 = new Dog(0, null);
-        assertEquals(IdeaList.of(d1, d2, d3, d4, d5), IdeaList.of(d1, d2).add(d3, d4, d5));
+        IdeaList<Dog> expected = IdeaList.of(d1, null, d2, null, d3, d4, d5, null, null);
+        assertEquals(expected, IdeaList.of(d1, null, d2).add(null, d3, d4, d5, null, null));
     }
 
     @Test
@@ -960,6 +1078,12 @@ public class IdeaListTest {
         Dog d4 = new Dog(428, "Momo");
         Dog d5 = new Dog(0, "Giri");
         assertEquals(IdeaList.of(d1, d2, d3, d4, d5), IdeaList.of(d1, d2).add(d3, d4, d5));
+    }
+
+    @SuppressWarnings("all") // To avoid @NotNull warning when calling method with null
+    @Test(expected = NullPointerException.class)
+    public void linkToBackOf_Iterable_Throws_exception_if_given_elements_null() {
+        personIdeaList.linkToBackOf(null);
     }
 
     @Test
@@ -974,6 +1098,17 @@ public class IdeaListTest {
 
     @Test
     public void linkToBackOf_Iterable_Links_this_list_to_the_back_of_the_given_Iterable() {
+        Dog n1 = new Dog(11, "Lala");
+        Dog n2 = new Dog(428, "Momo");
+        Dog n3 = new Dog(0, "Giri");
+        Set<Dog> dogs = new LinkedHashSet<>(Arrays.asList(n1, null, n2, n3));
+
+        IdeaList<Dog> expected = IdeaList.of(n1, null, n2, n3, null, d5, d6, d2, null, d3, d1, null, d4);
+        assertEquals(expected, IdeaList.of(null, d5, d6, d2, null, d3, d1, null, d4).linkToBackOf(dogs));
+    }
+
+    @Test
+    public void linkToBackOf_Iterable_Links_this_list_to_the_back_of_the_given_Iterable_2() {
         Dog n1 = new Dog(11, "Lala");
         Dog n2 = new Dog(428, "Momo");
         Dog n3 = new Dog(0, "Giri");
@@ -1020,18 +1155,19 @@ public class IdeaListTest {
         assertEquals(IdeaList.of(d1, d2, d3), IdeaList.of(d1, d2, d3).addToFront());
     }
 
-    @Test //TODO This shouldn't work??
-    public void addToFront_Adds_the_given_elements_to_the_end_of_the_list_with_null() {
+    @Test
+    public void addToFront_Adds_given_elements_to_front_of_the_list() {
         Dog d1 = new Dog(9, "Lassy");
         Dog d2 = new Dog(1, null);
         Dog d3 = new Dog(11, "Lala");
         Dog d4 = new Dog(428, "Momo");
         Dog d5 = new Dog(0, null);
-        assertEquals(IdeaList.of(d3, d4, d5, d1, d2), IdeaList.of(d1, d2).addToFront(d3, d4, d5));
+        IdeaList<Dog> expected = IdeaList.of(d3, null, null, d4, d5, null, d1, null, d2);
+        assertEquals(expected, IdeaList.of(null, d1, null, d2).addToFront(d3, null, null, d4, d5));
     }
 
     @Test
-    public void addToFront_Adds_given_elements_to_front_of_the_list() {
+    public void addToFront_Adds_given_elements_to_front_of_the_list_2() {
         Dog n1 = new Dog(11, "Lala");
         Dog n2 = new Dog(428, "Momo");
         Dog n3 = new Dog(0, "Giri");
@@ -1047,6 +1183,13 @@ public class IdeaListTest {
 
     @Test
     public void removeFirst_Removes_first_instance_of_the_given_element_from_this_list() {
+        IdeaList<Person> expected = IdeaList.of(p5, p1, p2, p5, p5, p3, null, p4, p5, null);
+        IdeaList<Person> inputList = IdeaList.of(p5, p1, null, p2, p5, p5, p3, null, p4, p5, null);
+        assertEquals(expected, inputList.removeFirst(null));
+    }
+
+    @Test
+    public void removeFirst_Removes_first_instance_of_the_given_element_from_this_list_2() {
         IdeaList<Person> expected = IdeaList.of(p1, p2, p5, p5, p3, p4, p5);
         IdeaList<Person> inputList = IdeaList.of(p5, p1, p2, p5, p5, p3, p4, p5);
         assertEquals(expected, inputList.removeFirst(p5));
@@ -1092,6 +1235,13 @@ public class IdeaListTest {
 
     @Test
     public void removeAll_Removes_all_instances_of_the_given_element_from_this_list() {
+        IdeaList<Person> expected = IdeaList.of(p5, p1, p2, p5, p5, p3, p4, p5);
+        IdeaList<Person> inputList = IdeaList.of(null, p5, p1, null, p2, p5, p5, p3, null, p4, p5, null);
+        assertEquals(expected, inputList.removeAll(null));
+    }
+
+    @Test
+    public void removeAll_Removes_all_instances_of_the_given_element_from_this_list_2() {
         IdeaList<Person> expected = IdeaList.of(p1, p2, p3, p4);
         IdeaList<Person> inputList = IdeaList.of(p5, p1, p2, p5, p5, p3, p4, p5);
         assertEquals(expected, inputList.removeAll(p5));
@@ -1139,6 +1289,11 @@ public class IdeaListTest {
 
 
     // List operations ==============================================================================
+    @Test
+    public void reduce_initialValue_Returns_initialValue_if_operation_returns_accumulator() {
+        assertNull(localDateIdeaList.reduce(null, (acc, integer) -> acc));
+    }
+
     @Test
     public void reduce_initialValue_Returns_initialValue_if_this_list_does_not_contain_elements() {
         assertEquals(0, IdeaList.<Integer>empty().reduce(0, (acc, integer) -> 10).intValue());
@@ -1369,8 +1524,20 @@ public class IdeaListTest {
         assertEquals(expected, given.flatten());
     }
 
+    @SuppressWarnings("all") // To avoid @NotNull warning when calling method with null
+    @Test(expected = NullPointerException.class)
+    public void zipWith_Triplet_Throws_exception_if_other_is_null() {
+        personIdeaList.zipWith(null, localDateIdeaList);
+    }
+
+    @SuppressWarnings("all") // To avoid @NotNull warning when calling method with null
+    @Test(expected = NullPointerException.class)
+    public void zipWith_Triplet_Throws_exception_if_other2_is_null() {
+        personIdeaList.zipWith(integerIdeaList, null);
+    }
+
     @Test
-    public void zipWith_Triplet_Gives_correct_tail_when_value_is_not_calculated() {
+    public void zipWith_Triplet_Gives_correct_tail_when_lazy_value_is_not_calculated() {
         IdeaList<Triplet<Person, Integer, LocalDate>> given = personIdeaList.zipWith(integerIdeaList, localDateIdeaList);
         assertEquals(Triplet.of(p2, i2, l2), given.tail.value().value.value());
         assertEquals(Triplet.of(p5, i5, l5), given.tail.value().tail.value().tail.value().tail.value().value.value());
@@ -1407,7 +1574,22 @@ public class IdeaListTest {
     }
 
     @Test
-    public void zipWith_Returns_list_of_Tuples_built_from_elements_of_this_list_and_other_Iterables_with_same_index() {
+    public void zipWith_Triplet_Returns_list_of_Tuples_built_from_elements_of_this_list_and_other_Iterables_with_same_index() {
+        LocalDate ld = LocalDate.of(40, 2, 8);
+
+        IdeaList<Dog> dogs = IdeaList.of(d1, d2, d3, d4);
+        Queue<LocalDate> dates = new LinkedList<>(Arrays.asList(null, ld));
+        Set<Integer> ints = new LinkedHashSet<>(Arrays.asList(-22, null, 7, 1025, null));
+
+        IdeaList<Triplet<Dog, LocalDate, Integer>> expected = IdeaList.of(
+                Triplet.of(d1, null, -22),
+                Triplet.of(d2, ld, null)
+        );
+        assertEquals(expected, dogs.zipWith(dates, ints));
+    }
+
+    @Test
+    public void zipWith_Triplet_Returns_list_of_Tuples_built_from_elements_of_this_list_and_other_Iterables_with_same_index_2() {
         LocalDate ld1 = LocalDate.of(1993, 6, 1);
         LocalDate ld2 = LocalDate.of(40, 2, 8);
 
@@ -1420,6 +1602,11 @@ public class IdeaListTest {
                 Triplet.of(d2, ld2, 3)
         );
         assertEquals(expected, dogs.zipWith(dates, ints));
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void zipWith_Pair_Throws_exception_if_other_is_null() {
+        personIdeaList.zipWith(null);
     }
 
     @Test
@@ -1436,6 +1623,19 @@ public class IdeaListTest {
 
     @Test
     public void zipWith_Returns_list_of_Pairs_built_from_elements_of_this_list_and_other_Iterable_with_same_index() {
+        IdeaList<Dog> dogs = IdeaList.of(null, null, d3, d4);
+        Queue<Person> people = new LinkedList<>(Arrays.asList(p5, p6, null));
+
+        IdeaList<Pair<Dog, Person>> expected = IdeaList.of(
+                Pair.of(null, p5),
+                Pair.of(null, p6),
+                Pair.of(d3, null)
+        );
+        assertEquals(expected, dogs.zipWith(people));
+    }
+
+    @Test
+    public void zipWith_Returns_list_of_Pairs_built_from_elements_of_this_list_and_other_Iterable_with_same_index_2() {
         IdeaList<Dog> dogs = IdeaList.of(d1, d2, d3, d4);
         Queue<Person> people = new LinkedList<>(Arrays.asList(p5, p6, p2));
 
@@ -1454,6 +1654,19 @@ public class IdeaListTest {
 
     @Test
     public void withIndex_Returns_a_list_of_IndexElement_pairs_where_each_element_is_bundled_together_with_its_index() {
+        IdeaList<Person> input = IdeaList.of(null, p5, p6, p4, null, p1);
+        IndexElement<Person> pair1 = IndexElement.of(0, null);
+        IndexElement<Person> pair2 = IndexElement.of(1, p5);
+        IndexElement<Person> pair3 = IndexElement.of(2, p6);
+        IndexElement<Person> pair4 = IndexElement.of(3, p4);
+        IndexElement<Person> pair5 = IndexElement.of(4, null);
+        IndexElement<Person> pair6 = IndexElement.of(5, p1);
+        IdeaList<IndexElement<Person>> expected = IdeaList.of(pair1, pair2, pair3, pair4, pair5, pair6);
+        assertEquals(expected, input.withIndex());
+    }
+
+    @Test
+    public void withIndex_Returns_a_list_of_IndexElement_pairs_where_each_element_is_bundled_together_with_its_index_2() {
         IndexElement<Person> pair1 = IndexElement.of(0, p1);
         IndexElement<Person> pair2 = IndexElement.of(1, p2);
         IndexElement<Person> pair3 = IndexElement.of(2, p3);

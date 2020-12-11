@@ -201,8 +201,12 @@ public abstract class IdeaList<E> implements Iterable<E> {
 
     public abstract IdeaList<E> removeAt(int index);
 
-    public IdeaList<E> removeAll(E element) {
+    /*public IdeaList<E> removeAll(E element) {
         return where(current -> !current.equals(element));
+    }*/
+
+    public IdeaList<E> removeAll(E element) {
+        return where(current -> !Objects.equals(current, element));
     }
 
     @Override
@@ -394,9 +398,14 @@ public abstract class IdeaList<E> implements Iterable<E> {
                     createTail(tail -> tail.insertAt(index - 1, elements));
         }
 
-        @Override
+        /*@Override
         public IdeaList<E> removeFirst(E element) {
             return value.value().equals(element) ? tail.value() : createTail(tail -> tail.removeFirst(element));
+        }*/
+
+        @Override
+        public IdeaList<E> removeFirst(E element) {
+            return Objects.equals(value.value(), element) ? tail.value() : createTail(tail -> tail.removeFirst(element));
         }
 
         @Override
