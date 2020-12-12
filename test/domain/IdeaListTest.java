@@ -84,7 +84,6 @@ public class IdeaListTest {
         assertEquals(0, IdeaList.empty().length());
     }
 
-    @SuppressWarnings("all") // To avoid @NotNull warning when calling method with null
     @Test(expected = NullPointerException.class)
     public void of_Iterable_Throws_exception_if_Iterable_null() {
         IdeaList.of((Iterable<Object>) null);
@@ -693,6 +692,13 @@ public class IdeaListTest {
 
     @Test
     public void containsAll_Iterable_Returns_true_if_this_list_contains_all_given_elements() {
+        Queue<Person> personQueue = new LinkedList<>(Arrays.asList(null, new Person("Jefke", "Merens"), new Person("Marie", "Bosmans")));
+        IdeaList<Person> personList = IdeaList.of(null, new Person("Jefke", "Merens"), null, new Person("Nathalie", "Hofdaal"), new Person("Marie", "Bosmans"), null);
+        assertTrue(personList.containsAll(personQueue));
+    }
+
+    @Test
+    public void containsAll_Iterable_Returns_true_if_this_list_contains_all_given_elements_2() {
         Queue<Person> queue = new LinkedList<>();
         queue.offer(new Person("Jefke", "Merens"));
         queue.add(new Person("Marie", "Bosmans"));
@@ -1080,7 +1086,6 @@ public class IdeaListTest {
         assertEquals(IdeaList.of(d1, d2, d3, d4, d5), IdeaList.of(d1, d2).add(d3, d4, d5));
     }
 
-    @SuppressWarnings("all") // To avoid @NotNull warning when calling method with null
     @Test(expected = NullPointerException.class)
     public void linkToBackOf_Iterable_Throws_exception_if_given_elements_null() {
         personIdeaList.linkToBackOf(null);

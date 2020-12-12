@@ -24,16 +24,17 @@ public abstract class IdeaList<E> implements Iterable<E> {
     private static <E> IdeaList<E> concat(Iterator<E> iterator, IdeaList<E> elements) {
         if (iterator.hasNext()) {
             E element = iterator.next();
-            return IdeaList.create(
-                    Lazy.of(() -> element),
-                    Lazy.of(() -> concat(iterator, elements))
-            );
+            return IdeaList.create(Lazy.of(() -> element), Lazy.of(() -> concat(iterator, elements)));
         }
         return elements;
     }
 
+    private static <E> IdeaList<E> concat(Iterable<E> iterable, IdeaList<E> elements) {
+        return concat(iterable.iterator(), elements);
+    }
+
     public static <E> IdeaList<E> of(Iterable<E> elements) {
-        return concat(elements.iterator(), IdeaList.empty());
+        return concat(elements, IdeaList.empty());
     }
 
     @SafeVarargs
@@ -50,13 +51,33 @@ public abstract class IdeaList<E> implements Iterable<E> {
         return rangeLength(0, length).map(indexToElement);
     }
 
-    private static IndexOutOfBoundsException negativeIndexException(int index) {
-        return new IndexOutOfBoundsException("Index cannot be negative. Given: " + index);
+    private static void handleNegativeIndex(int index) {
+        if (index < 0) throw new IndexOutOfBoundsException("Index cannot be negative. Given: " + index);
+    }
+
+    private IndexOutOfBoundsException indexOutOfBoundsException(int index) {
+        return new IndexOutOfBoundsException("Index " + index + " out of bounds for length " + length());
     }
 
 
     // Getters ======================================================================================
-    public abstract E get(int index);
+    private static <E> IndexElement<E> or(IndexElement<E> pair, int alternative) {
+        return pair == null ? IndexElement.of(alternative, null) : pair;
+    }
+
+    /*private static <E> IndexElement<E> or(IndexElement<E> pair, E alternative) {
+        return pair == null ? IndexElement.of(0, alternative) : pair;
+    }*/
+
+    private static <E> IndexElement<E> or(IndexElement<E> pair, Supplier<RuntimeException> alternative) {
+        if (pair == null) throw alternative.get();
+        return pair;
+    }
+
+    public E get(int index) {
+        handleNegativeIndex(index);
+        return or(withIndex().findFirst(pair -> pair.index == index), () -> indexOutOfBoundsException(index)).element;
+    }
 
     public abstract E first();
 
@@ -74,12 +95,8 @@ public abstract class IdeaList<E> implements Iterable<E> {
         return findFirst(predicate);
     }
 
-    private static <E> int indexOrMinusOne(IndexElement<E> pair) {
-        return pair == null ? -1 : pair.index;
-    }
-
     public int indexOfFirst(Predicate<E> predicate) {
-        return indexOrMinusOne(withIndex().findFirst(currentPair -> predicate.test(currentPair.element)));
+        return or(withIndex().findFirst(currentPair -> predicate.test(currentPair.element)), -1).index;
     }
 
     /*public int indexOfFirst(E element) {
@@ -179,8 +196,12 @@ public abstract class IdeaList<E> implements Iterable<E> {
         return insertAt(index, Arrays.asList(elements));
     }
 
-    public IdeaList<E> concatWith(Iterable<E> elements) {
+    /*public IdeaList<E> concatWith(Iterable<E> elements) {
         return concat(iterator(), IdeaList.of(elements));
+    }*/
+
+    public IdeaList<E> concatWith(Iterable<E> elements) {
+        return concat(this, IdeaList.of(elements));
     }
 
     @SafeVarargs
@@ -188,8 +209,12 @@ public abstract class IdeaList<E> implements Iterable<E> {
         return concatWith(Arrays.asList(elements));
     }
 
-    public IdeaList<E> linkToBackOf(Iterable<E> elements) {
+    /*public IdeaList<E> linkToBackOf(Iterable<E> elements) {
         return concat(elements.iterator(), this);
+    }*/
+
+    public IdeaList<E> linkToBackOf(Iterable<E> elements) {
+        return concat(elements, this);
     }
 
     @SafeVarargs
@@ -334,17 +359,17 @@ public abstract class IdeaList<E> implements Iterable<E> {
             return IdeaList.create(value, Lazy.of(() -> function.apply(tail.value())));
         }
 
-        private static void handleNegativeIndex(int index) {
+        /*private static void handleNegativeIndex(int index) {
             if (index < 0) throw negativeIndexException(index);
-        }
+        }*/
 
 
         // Getters ======================================================================================
-        @Override
+        /*@Override
         public E get(int index) {
             handleNegativeIndex(index);
             return index == 0 ? value.value() : tail.value().get(index - 1);
-        }
+        }*/
 
         @Override
         public E first() {
@@ -391,10 +416,17 @@ public abstract class IdeaList<E> implements Iterable<E> {
 
 
         // Modifiers ====================================================================================
-        @Override
+        /*@Override
         public IdeaList<E> insertAt(int index, Iterable<E> elements) {
             handleNegativeIndex(index);
             return index == 0 ? concat(elements.iterator(), this) :
+                    createTail(tail -> tail.insertAt(index - 1, elements));
+        }*/
+
+        @Override
+        public IdeaList<E> insertAt(int index, Iterable<E> elements) {
+            handleNegativeIndex(index);
+            return index == 0 ? concat(elements, this) :
                     createTail(tail -> tail.insertAt(index - 1, elements));
         }
 
@@ -435,9 +467,14 @@ public abstract class IdeaList<E> implements Iterable<E> {
                     createTail(tail -> tail.where(predicate)) : tail.value().where(predicate);
         }
 
-        @Override
+        /*@Override
         <R> IdeaList<R> concatNestedIterables() {
             return concat(((Iterable<R>) value.value()).iterator(), tail.value().concatNestedIterables());
+        }*/
+
+        @Override
+        <R> IdeaList<R> concatNestedIterables() {
+            return concat((Iterable<R>) value.value(), tail.value().concatNestedIterables());
         }
 
         /*@Override
@@ -470,16 +507,20 @@ public abstract class IdeaList<E> implements Iterable<E> {
             return new NoSuchElementException("List is empty");
         }
 
-        private static IndexOutOfBoundsException indexTooBigException(int index) {
-            return new IndexOutOfBoundsException("Index " + index + "too big for this list");
-        }
+        /*private static IndexOutOfBoundsException indexTooBigException(int index) {
+            return new IndexOutOfBoundsException("Index " + index + " too big for this list");
+        }*/
 
+        // Index 5 out of bounds for length 4
+        private IndexOutOfBoundsException indexOutOfBoundsException(int index) {
+            return new IndexOutOfBoundsException("Index " + index + " out of bounds for length " + length());
+        }
 
         // Getters ======================================================================================
-        @Override
+        /*@Override
         public E get(int index) {
-            throw indexTooBigException(index);
-        }
+            throw indexOutOfBoundsException(index);
+        }*/
 
         @Override
         public E first() {
@@ -527,7 +568,7 @@ public abstract class IdeaList<E> implements Iterable<E> {
         // Modifiers ====================================================================================
         @Override
         public IdeaList<E> insertAt(int index, Iterable<E> elements) {
-            throw indexTooBigException(index);
+            throw indexOutOfBoundsException(index);
         }
 
         @Override
@@ -537,7 +578,7 @@ public abstract class IdeaList<E> implements Iterable<E> {
 
         @Override
         public IdeaList<E> removeAt(int index) {
-            throw indexTooBigException(index);
+            throw indexOutOfBoundsException(index);
         }
 
 
