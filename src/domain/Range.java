@@ -1,43 +1,16 @@
 package domain;
 
-import java.util.function.IntUnaryOperator;
-
 public class Range {
-    private final int from;
 
-    private Range(int from) {
-        this.from = from;
+    public static IntRange from(int start) {
+        return new IntRange(start);
     }
 
-    public static Range from(int start) {
-        return new Range(start);
-    }
-
-    private static IdeaList<Integer> createRange(int length, IntUnaryOperator indexToElement) {
-        return (length < 0) ? IdeaList.empty() : IdeaList.initialiseWith(length, indexToElement::applyAsInt);
-    }
-
-    public IdeaList<Integer> length(int length) {
-        return createRange(length, index -> from + index);
-    }
-
-    public IdeaList<Integer> upTo(int end) {
-        return length(end - from);
-    }
-
-    public IdeaList<Integer> upToAndIncluding(int end) {
-        return upTo(end + 1);
-    }
-
-    public IdeaList<Integer> downTo(int end) {
-        return createRange(from - end, index -> from - index);
-    }
-
-    public IdeaList<Integer> downToAndIncluding(int end) {
-        return downTo(end - 1);
+    public static CharRange from(char start) {
+        return new CharRange(start);
     }
 
     public static IdeaList<Integer> infiniteIndices() {
-        return IdeaList.initialiseWith(Integer.MAX_VALUE, index -> index);
+        return IntRange.infiniteIndices();
     }
 }
