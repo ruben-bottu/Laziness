@@ -1529,15 +1529,15 @@ public class IdeaListTest {
         assertEquals(expected, given.flatten());
     }
 
-    @SuppressWarnings("all") // To avoid @NotNull warning when calling method with null
     @Test(expected = NullPointerException.class)
     public void zipWith_Triplet_Throws_exception_if_other_is_null() {
+        //noinspection ConstantConditions
         personIdeaList.zipWith(null, localDateIdeaList);
     }
 
-    @SuppressWarnings("all") // To avoid @NotNull warning when calling method with null
     @Test(expected = NullPointerException.class)
     public void zipWith_Triplet_Throws_exception_if_other2_is_null() {
+        //noinspection ConstantConditions
         personIdeaList.zipWith(integerIdeaList, null);
     }
 

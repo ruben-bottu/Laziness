@@ -61,22 +61,9 @@ public abstract class IdeaList<E> implements Iterable<E> {
 
 
     // Getters ======================================================================================
-    private static <E> IndexElement<E> or(IndexElement<E> pair, int alternative) {
-        return pair == null ? IndexElement.of(alternative, null) : pair;
-    }
-
-    /*private static <E> IndexElement<E> or(IndexElement<E> pair, E alternative) {
-        return pair == null ? IndexElement.of(0, alternative) : pair;
-    }*/
-
-    private static <E> IndexElement<E> or(IndexElement<E> pair, Supplier<RuntimeException> alternative) {
-        if (pair == null) throw alternative.get();
-        return pair;
-    }
-
     public E get(int index) {
         handleNegativeIndex(index);
-        return or(withIndex().findFirst(pair -> pair.index == index), () -> indexOutOfBoundsException(index)).element;
+        return withIndex().findFirstOrThrow(currentPair -> currentPair.index == index, IndexOutOfBoundsException::new).element;
     }
 
     public abstract E first();
@@ -89,19 +76,21 @@ public abstract class IdeaList<E> implements Iterable<E> {
         return get(new Random().nextInt(length()));
     }
 
-    public abstract E findFirst(Predicate<E> predicate);
+    public abstract E findFirstOrElse(Predicate<E> predicate, E defaultValue);
+
+    public abstract E findFirstOrThrow(Predicate<E> predicate, Supplier<RuntimeException> exceptionSupplier);
+
+    public E findFirst(Predicate<E> predicate) {
+        return findFirstOrElse(predicate, null);
+    }
 
     public E first(Predicate<E> predicate) {
         return findFirst(predicate);
     }
 
     public int indexOfFirst(Predicate<E> predicate) {
-        return or(withIndex().findFirst(currentPair -> predicate.test(currentPair.element)), -1).index;
+        return withIndex().findFirstOrElse(currentPair -> predicate.test(currentPair.element), IndexElement.of(-1, null)).index;
     }
-
-    /*public int indexOfFirst(E element) {
-        return indexOfFirst(current -> current.equals(element));
-    }*/
 
     public int indexOfFirst(E element) {
         return indexOfFirst(current -> Objects.equals(current, element));
@@ -146,15 +135,6 @@ public abstract class IdeaList<E> implements Iterable<E> {
         return Enumerable.isContentEqual(this, ideaList);
     }
 
-    /*@Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        IdeaList<?> ideaList = (IdeaList<?>) o;
-        return Objects.equals(value, ideaList.value) &&
-                Objects.equals(tail, ideaList.tail);
-    }*/
-
     public boolean contains(E element) {
         return indexOfFirst(element) != -1;
     }
@@ -196,10 +176,6 @@ public abstract class IdeaList<E> implements Iterable<E> {
         return insertAt(index, Arrays.asList(elements));
     }
 
-    /*public IdeaList<E> concatWith(Iterable<E> elements) {
-        return concat(iterator(), IdeaList.of(elements));
-    }*/
-
     public IdeaList<E> concatWith(Iterable<E> elements) {
         return concat(this, IdeaList.of(elements));
     }
@@ -208,10 +184,6 @@ public abstract class IdeaList<E> implements Iterable<E> {
     public final IdeaList<E> add(E... elements) {
         return concatWith(Arrays.asList(elements));
     }
-
-    /*public IdeaList<E> linkToBackOf(Iterable<E> elements) {
-        return concat(elements.iterator(), this);
-    }*/
 
     public IdeaList<E> linkToBackOf(Iterable<E> elements) {
         return concat(elements, this);
@@ -225,10 +197,6 @@ public abstract class IdeaList<E> implements Iterable<E> {
     public abstract IdeaList<E> removeFirst(E element);
 
     public abstract IdeaList<E> removeAt(int index);
-
-    /*public IdeaList<E> removeAll(E element) {
-        return where(current -> !current.equals(element));
-    }*/
 
     public IdeaList<E> removeAll(E element) {
         return where(current -> !Objects.equals(current, element));
@@ -359,18 +327,8 @@ public abstract class IdeaList<E> implements Iterable<E> {
             return IdeaList.create(value, Lazy.of(() -> function.apply(tail.value())));
         }
 
-        /*private static void handleNegativeIndex(int index) {
-            if (index < 0) throw negativeIndexException(index);
-        }*/
-
 
         // Getters ======================================================================================
-        /*@Override
-        public E get(int index) {
-            handleNegativeIndex(index);
-            return index == 0 ? value.value() : tail.value().get(index - 1);
-        }*/
-
         @Override
         public E first() {
             return value.value();
@@ -388,8 +346,13 @@ public abstract class IdeaList<E> implements Iterable<E> {
         }
 
         @Override
-        public E findFirst(Predicate<E> predicate) {
-            return predicate.test(value.value()) ? value.value() : tail.value().findFirst(predicate);
+        public E findFirstOrElse(Predicate<E> predicate, E defaultValue) {
+            return predicate.test(value.value()) ? value.value() : tail.value().findFirstOrElse(predicate, defaultValue);
+        }
+
+        @Override
+        public E findFirstOrThrow(Predicate<E> predicate, Supplier<RuntimeException> exceptionSupplier) {
+            return predicate.test(value.value()) ? value.value() : tail.value().findFirstOrThrow(predicate, exceptionSupplier);
         }
 
         @Override
@@ -416,24 +379,12 @@ public abstract class IdeaList<E> implements Iterable<E> {
 
 
         // Modifiers ====================================================================================
-        /*@Override
-        public IdeaList<E> insertAt(int index, Iterable<E> elements) {
-            handleNegativeIndex(index);
-            return index == 0 ? concat(elements.iterator(), this) :
-                    createTail(tail -> tail.insertAt(index - 1, elements));
-        }*/
-
         @Override
         public IdeaList<E> insertAt(int index, Iterable<E> elements) {
             handleNegativeIndex(index);
             return index == 0 ? concat(elements, this) :
                     createTail(tail -> tail.insertAt(index - 1, elements));
         }
-
-        /*@Override
-        public IdeaList<E> removeFirst(E element) {
-            return value.value().equals(element) ? tail.value() : createTail(tail -> tail.removeFirst(element));
-        }*/
 
         @Override
         public IdeaList<E> removeFirst(E element) {
@@ -466,11 +417,6 @@ public abstract class IdeaList<E> implements Iterable<E> {
             return predicate.test(value.value()) ?
                     createTail(tail -> tail.where(predicate)) : tail.value().where(predicate);
         }
-
-        /*@Override
-        <R> IdeaList<R> concatNestedIterables() {
-            return concat(((Iterable<R>) value.value()).iterator(), tail.value().concatNestedIterables());
-        }*/
 
         @Override
         <R> IdeaList<R> concatNestedIterables() {
@@ -507,21 +453,12 @@ public abstract class IdeaList<E> implements Iterable<E> {
             return new NoSuchElementException("List is empty");
         }
 
-        /*private static IndexOutOfBoundsException indexTooBigException(int index) {
-            return new IndexOutOfBoundsException("Index " + index + " too big for this list");
-        }*/
-
         // Index 5 out of bounds for length 4
         private IndexOutOfBoundsException indexOutOfBoundsException(int index) {
             return new IndexOutOfBoundsException("Index " + index + " out of bounds for length " + length());
         }
 
         // Getters ======================================================================================
-        /*@Override
-        public E get(int index) {
-            throw indexOutOfBoundsException(index);
-        }*/
-
         @Override
         public E first() {
             throw noSuchElementException();
@@ -538,9 +475,24 @@ public abstract class IdeaList<E> implements Iterable<E> {
         }
 
         @Override
+        public E findFirstOrElse(Predicate<E> predicate, E defaultValue) {
+            return defaultValue;
+        }
+
+        /*@Override
+        public <X extends Throwable> E findFirstOrThrow(Predicate<E> predicate, Supplier<X> exceptionSupplier) throws X {
+            throw exceptionSupplier.get();
+        }*/
+
+        @Override
+        public E findFirstOrThrow(Predicate<E> predicate, Supplier<RuntimeException> exceptionSupplier) {
+            throw exceptionSupplier.get();
+        }
+
+        /*@Override
         public E findFirst(Predicate<E> predicate) {
             return null;
-        }
+        }*/
 
         @Override
         public IdeaList<Integer> indices() {
