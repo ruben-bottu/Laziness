@@ -47,8 +47,21 @@ public abstract class IdeaList<E> implements Iterable<E> {
     }
 
     public static <E> IdeaList<E> initialiseWith(int length, Function<Integer, E> indexToElement) {
-        if (length < 0) throw new IllegalArgumentException("Cannot initialise list with length " + length);
+        handleNegativeLength(length);
         return rangeLength(0, length).map(indexToElement);
+    }
+
+    private static IdeaList<Long> rangeLength(long from, long length) {
+        return length == 0L ? IdeaList.empty() : IdeaList.create(Lazy.of(() -> from), Lazy.of(() -> rangeLength(from + 1L, length - 1L)));
+    }
+
+    public static <E> IdeaList<E> initialiseWithLong(long length, Function<Long, E> indexToElement) {
+        handleNegativeLength(length);
+        return rangeLength(0L, length).map(indexToElement);
+    }
+
+    private static void handleNegativeLength(long length) {
+        if (length < 0) throw new IllegalArgumentException("Cannot initialise list with length " + length);
     }
 
     private static void handleNegativeIndex(int index) {
@@ -64,16 +77,14 @@ public abstract class IdeaList<E> implements Iterable<E> {
     /*public E get(int index) {
         handleNegativeIndex(index);
         return withIndex().findFirstOrThrow(currentPair -> currentPair.index == index,
-                IndexOutOfBoundsException::new).element;
-    }*/
-
-    /*public E get(int index) {
-        handleNegativeIndex(index);
-        return withIndex().findFirstOrThrow(currentPair -> currentPair.index == index,
                 () -> indexOutOfBoundsException(index)).element;
     }*/
 
-    public abstract E get(int index);
+    public E get(int index) {
+        handleNegativeIndex(index);
+        return withIndex().findFirst(pair -> pair.index == index)
+                .orElseThrow(() -> indexOutOfBoundsException(index)).element;
+    }
 
     public abstract E first();
 
@@ -85,17 +96,15 @@ public abstract class IdeaList<E> implements Iterable<E> {
         return get(new Random().nextInt(length()));
     }
 
-    /*public abstract E findFirstOrElse(Predicate<E> predicate, E defaultValue);
+    /*public abstract E findFirst(Predicate<E> predicate);*/
 
-    public abstract E findFirstOrThrow(Predicate<E> predicate, Supplier<RuntimeException> exceptionSupplier);*/
+    public abstract Optional<E> findFirst(Predicate<E> predicate);
 
-    /*public E findFirst(Predicate<E> predicate) {
-        return findFirstOrElse(predicate, null);
+    /*public E first(Predicate<E> predicate) {
+        return findFirst(predicate);
     }*/
 
-    public abstract E findFirst(Predicate<E> predicate);
-
-    public E first(Predicate<E> predicate) {
+    public Optional<E> first(Predicate<E> predicate) {
         return findFirst(predicate);
     }
 
@@ -103,7 +112,9 @@ public abstract class IdeaList<E> implements Iterable<E> {
         return withIndex().findFirstOrElse(currentPair -> predicate.test(currentPair.element), IndexElement.of(-1, null)).index;
     }*/
 
-    public abstract int indexOfFirst(Predicate<E> predicate);
+    public int indexOfFirst(Predicate<E> predicate) {
+        return withIndex().findFirst(pair -> predicate.test(pair.element)).orElse(IndexElement.ofIndex(-1)).index;
+    }
 
     public int indexOfFirst(E element) {
         return indexOfFirst(current -> Objects.equals(current, element));
@@ -182,7 +193,13 @@ public abstract class IdeaList<E> implements Iterable<E> {
 
 
     // Modifiers ====================================================================================
-    public abstract IdeaList<E> insertAt(int index, Iterable<E> elements);
+    //public abstract IdeaList<E> insertAt(int index, Iterable<E> elements);
+
+    abstract IdeaList<E> insertAtHelper(int index, Iterable<E> elements, Supplier<RuntimeException> exceptionSupplier);
+
+    public IdeaList<E> insertAt(int index, Iterable<E> elements) {
+        return insertAtHelper(index, elements, () -> indexOutOfBoundsException(index));
+    }
 
     @SafeVarargs
     public final IdeaList<E> insertAt(int index, E... elements) {
@@ -209,7 +226,13 @@ public abstract class IdeaList<E> implements Iterable<E> {
 
     public abstract IdeaList<E> removeFirst(E element);
 
-    public abstract IdeaList<E> removeAt(int index);
+    abstract IdeaList<E> removeAtHelper(int index, Supplier<RuntimeException> exceptionSupplier);
+
+    public IdeaList<E> removeAt(int index) {
+        return removeAtHelper(index, () -> indexOutOfBoundsException(index));
+    }
+
+    //public abstract IdeaList<E> removeAt(int index);
 
     public IdeaList<E> removeAll(E element) {
         return where(current -> !Objects.equals(current, element));
@@ -342,11 +365,11 @@ public abstract class IdeaList<E> implements Iterable<E> {
 
 
         // Getters ======================================================================================
-        @Override
+        /*@Override
         public E get(int index) {
             handleNegativeIndex(index);
             return index == 0 ? value.value() : tail.value().get(index - 1);
-        }
+        }*/
 
         @Override
         public E first() {
@@ -374,15 +397,20 @@ public abstract class IdeaList<E> implements Iterable<E> {
             return predicate.test(value.value()) ? value.value() : tail.value().findFirstOrThrow(predicate, exceptionSupplier);
         }*/
 
-        @Override
+        /*@Override
         public E findFirst(Predicate<E> predicate) {
             return predicate.test(value.value()) ? value.value() : tail.value().findFirst(predicate);
-        }
+        }*/
 
         @Override
+        public Optional<E> findFirst(Predicate<E> predicate) {
+            return predicate.test(value.value()) ? Optional.of(value.value()) : tail.value().findFirst(predicate);
+        }
+
+        /*@Override
         public int indexOfFirst(Predicate<E> predicate) {
             return predicate.test(value.value()) ? 0 : 1 + tail.value().indexOfFirst(predicate);
-        }
+        }*/
 
         @Override
         public IdeaList<Integer> indices() {
@@ -408,11 +436,18 @@ public abstract class IdeaList<E> implements Iterable<E> {
 
 
         // Modifiers ====================================================================================
-        @Override
+        /*@Override
         public IdeaList<E> insertAt(int index, Iterable<E> elements) {
             handleNegativeIndex(index);
             return index == 0 ? concat(elements, this) :
                     createTail(tail -> tail.insertAt(index - 1, elements));
+        }*/
+
+        @Override
+        IdeaList<E> insertAtHelper(int index, Iterable<E> elements, Supplier<RuntimeException> exceptionSupplier) {
+            handleNegativeIndex(index);
+            return index == 0 ? concat(elements, this) :
+                    createTail(tail -> tail.insertAtHelper(index - 1, elements, exceptionSupplier));
         }
 
         @Override
@@ -420,12 +455,17 @@ public abstract class IdeaList<E> implements Iterable<E> {
             return Objects.equals(value.value(), element) ? tail.value() : createTail(tail -> tail.removeFirst(element));
         }
 
-        @Override
+        /*@Override
         public IdeaList<E> removeAt(int index) {
             handleNegativeIndex(index);
             return index == 0 ? tail.value() : createTail(tail -> tail.removeAt(index - 1));
-        }
+        }*/
 
+        @Override
+        IdeaList<E> removeAtHelper(int index, Supplier<RuntimeException> exceptionSupplier) {
+            handleNegativeIndex(index);
+            return index == 0 ? tail.value() : createTail(tail -> tail.removeAtHelper(index - 1, exceptionSupplier));
+        }
 
         // List operations ==============================================================================
         @Override
@@ -482,17 +522,12 @@ public abstract class IdeaList<E> implements Iterable<E> {
             return new NoSuchElementException("List is empty");
         }
 
-        // Index 5 out of bounds for length 4
+        // TODO duplicate code
         private IndexOutOfBoundsException indexOutOfBoundsException(int index) {
             return new IndexOutOfBoundsException("Index " + index + " out of bounds for length " + length());
         }
 
         // Getters ======================================================================================
-        @Override
-        public E get(int index) {
-            throw indexOutOfBoundsException(index);
-        }
-
         @Override
         public E first() {
             throw noSuchElementException();
@@ -509,23 +544,13 @@ public abstract class IdeaList<E> implements Iterable<E> {
         }
 
         /*@Override
-        public E findFirstOrElse(Predicate<E> predicate, E defaultValue) {
-            return defaultValue;
-        }
-
-        @Override
-        public E findFirstOrThrow(Predicate<E> predicate, Supplier<RuntimeException> exceptionSupplier) {
-            throw exceptionSupplier.get();
+        public E findFirst(Predicate<E> predicate) {
+            return null;
         }*/
 
         @Override
-        public E findFirst(Predicate<E> predicate) {
-            return null;
-        }
-
-        @Override
-        public int indexOfFirst(Predicate<E> predicate) {
-            return -1;
+        public Optional<E> findFirst(Predicate<E> predicate) {
+            return Optional.empty();
         }
 
         @Override
@@ -552,9 +577,14 @@ public abstract class IdeaList<E> implements Iterable<E> {
 
 
         // Modifiers ====================================================================================
-        @Override
+        /*@Override
         public IdeaList<E> insertAt(int index, Iterable<E> elements) {
             throw indexOutOfBoundsException(index);
+        }*/
+
+        @Override
+        IdeaList<E> insertAtHelper(int index, Iterable<E> elements, Supplier<RuntimeException> exceptionSupplier) {
+            throw exceptionSupplier.get();
         }
 
         @Override
@@ -562,11 +592,15 @@ public abstract class IdeaList<E> implements Iterable<E> {
             return this;
         }
 
-        @Override
+        /*@Override
         public IdeaList<E> removeAt(int index) {
             throw indexOutOfBoundsException(index);
-        }
+        }*/
 
+        @Override
+        IdeaList<E> removeAtHelper(int index, Supplier<RuntimeException> exceptionSupplier) {
+            throw exceptionSupplier.get();
+        }
 
         // List operations ==============================================================================
         @Override

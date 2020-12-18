@@ -10,7 +10,15 @@ public class Range {
         return new CharRange(start);
     }
 
+    public static LongRange from(long start) {
+        return new LongRange(start);
+    }
+
     public static IdeaList<Integer> infiniteIndices() {
         return IntRange.infiniteIndices();
+    }
+
+    public static IdeaList<Long> longInfiniteIndices() {
+        return LongRange.infiniteIndices();
     }
 }

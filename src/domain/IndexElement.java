@@ -17,6 +17,10 @@ public class IndexElement<E> {
         return new IndexElement<>(index, element);
     }
 
+    public static <E> IndexElement<E> ofIndex(int index) {
+        return of(index, null);
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

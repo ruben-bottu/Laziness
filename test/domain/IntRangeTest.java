@@ -4,7 +4,7 @@ import org.junit.Test;
 
 import static org.junit.Assert.*;
 
-public class RangeTest {
+public class IntRangeTest {
 
     @Test
     public void length_Returns_empty_list_if_given_length_negative() {
