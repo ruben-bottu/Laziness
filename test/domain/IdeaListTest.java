@@ -249,6 +249,11 @@ public class IdeaListTest {
     }
 
     @Test(expected = IllegalArgumentException.class)
+    public void single_Throws_exception_if_list_containing_nulls_contains_more_than_one_element() {
+        IdeaList.of(7, 8, 9, null, 7, 8, 0).single();
+    }
+
+    @Test(expected = IllegalArgumentException.class)
     public void single_Throws_exception_if_list_contains_more_than_one_element() {
         integerIdeaList.single();
     }
@@ -344,14 +349,14 @@ public class IdeaListTest {
     }
 
     @Test
+    @SuppressWarnings("all") // In this test case it is certain that the Optional object will contain a value
     public void findFirst_Returns_first_element_matching_given_predicate_in_list_with_nulls() {
         IdeaList<Dog> input = IdeaList.of(d2, d3, d3, null, d6, d5, null);
-        //noinspection OptionalGetWithoutIsPresent
         assertEquals(d5, input.findFirst(dog -> Objects.equals(dog, d5)).get());
     }
 
-    @SuppressWarnings("OptionalGetWithoutIsPresent")
     @Test
+    @SuppressWarnings("all") // In these test cases it is certain that all Optional objects will contain values
     public void findFirst_Returns_first_element_matching_given_predicate() {
         assertEquals(i8, integerIdeaList.findFirst(integer -> integer > 100).get().intValue());
         assertEquals(p3, personIdeaList.findFirst(person -> person.getFirstName().contains("t")).get());
@@ -375,14 +380,14 @@ public class IdeaListTest {
     }
 
     @Test
+    @SuppressWarnings("all") // In this test case it is certain that the Optional object will contain a value
     public void first_Returns_first_element_matching_given_predicate_in_list_with_nulls() {
         IdeaList<Dog> input = IdeaList.of(d2, d3, d3, null, d6, d5, null);
-        //noinspection OptionalGetWithoutIsPresent
         assertEquals(d5, input.first(dog -> Objects.equals(dog, d5)).get());
     }
 
-    @SuppressWarnings("OptionalGetWithoutIsPresent")
     @Test
+    @SuppressWarnings("all") // In these test cases it is certain that all Optional objects will contain values
     public void first_Returns_first_element_matching_given_predicate() {
         assertEquals(i8, integerIdeaList.first(integer -> integer > 100).get().intValue());
         assertEquals(p3, personIdeaList.first(person -> person.getFirstName().contains("t")).get());
@@ -790,7 +795,12 @@ public class IdeaListTest {
     }
 
     @Test
-    public void isNested_Returns_false_if_IdeaList_is_not_nested() {
+    public void isNested_Returns_false_if_this_list_containing_nulls_is_not_nested() {
+        assertFalse(IdeaList.of(null, d1, d1, d1, d2).isNested());
+    }
+
+    @Test
+    public void isNested_Returns_false_if_this_list_is_not_nested() {
         assertFalse(integerIdeaList.isNested());
         assertFalse(personIdeaList.isNested());
         assertFalse(dogIdeaList.isNested());
@@ -798,7 +808,17 @@ public class IdeaListTest {
     }
 
     @Test
-    public void isNested_Returns_true_if_IdeaList_is_nested_with_Iterables() {
+    public void isNested_Returns_true_if_this_list_containing_nulls_is_nested_with_Iterables() {
+        IdeaList<Set<Integer>> nestedIdeaList = IdeaList.of(
+                new HashSet<>(Arrays.asList(111, null, 2)),
+                new HashSet<>(Arrays.asList(1, null)),
+                new HashSet<>(Arrays.asList(null, 270, 31, 73, 500))
+        );
+        assertTrue(nestedIdeaList.isNested());
+    }
+
+    @Test
+    public void isNested_Returns_true_if_this_list_is_nested_with_Iterables() {
         IdeaList<Set<Integer>> nestedIdeaList = IdeaList.of(
                 new HashSet<>(Arrays.asList(111, -25, 2)),
                 new HashSet<>(Arrays.asList(1, 88)),
@@ -808,7 +828,7 @@ public class IdeaListTest {
     }
 
     @Test
-    public void isNested_Returns_true_if_IdeaList_is_nested_with_IdeaLists() {
+    public void isNested_Returns_true_if_this_list_is_nested_with_IdeaLists() {
         IdeaList<IdeaList<Integer>> nestedIdeaList = IdeaList.of(
                 IdeaList.of(9, 6, 3, 5),
                 IdeaList.of(1),
@@ -831,6 +851,11 @@ public class IdeaListTest {
     }
 
     @Test
+    public void all_Returns_true_if_all_elements_of_list_containing_nulls_match_given_predicate() {
+        assertTrue(IdeaList.of(l3, null, l3, l4, l1).all(element -> !Objects.equals(l2, element)));
+    }
+
+    @Test
     public void all_Returns_true_if_all_elements_match_given_predicate() {
         assertTrue(integerIdeaList.all(integer -> integer > -257));
         assertTrue(personIdeaList.all(person -> person.getFirstName().length() > 2));
@@ -841,6 +866,11 @@ public class IdeaListTest {
     @Test
     public void any_Returns_false_if_list_does_not_contain_elements() {
         assertFalse(IdeaList.empty().any());
+    }
+
+    @Test
+    public void any_Returns_true_if_list_containing_nulls_contains_elements() {
+        assertTrue(IdeaList.of(l5, null, l6, l7, null, l7).any());
     }
 
     @Test
@@ -862,6 +892,11 @@ public class IdeaListTest {
         assertFalse(dogIdeaList.any(animal -> animal.getAge() == 8));
         assertFalse(localDateIdeaList.any(localDate -> localDate.getDayOfMonth() == 2));
         assertFalse(localDateIdeaList.any(localDate -> localDate.getDayOfMonth() == 3));
+    }
+
+    @Test
+    public void any_predicate_Returns_true_if_at_least_one_element_in_list_containing_nulls_matches_predicate() {
+        assertTrue(IdeaList.of(p1, null, p3, p4, null, p1).any(element -> Objects.equals(p4, element)));
     }
 
     @Test
@@ -895,6 +930,11 @@ public class IdeaListTest {
         assertFalse(personIdeaList.none(person -> person.getSecondName().contains("o")));
         assertFalse(dogIdeaList.none(animal -> animal.getAge() > 5));
         assertFalse(localDateIdeaList.none(localDate -> localDate.getDayOfMonth() > 15 && localDate.getDayOfMonth() < 30));
+    }
+
+    @Test
+    public void none_predicate_Returns_true_if_no_element_in_list_containing_nulls_matches_predicate() {
+        assertTrue(IdeaList.of(null, p2, p2, p4, null, p2).none(element -> Objects.equals(p5, element)));
     }
 
     @Test
@@ -1592,15 +1632,16 @@ public class IdeaListTest {
         assertEquals(expected, given.flatten());
     }
 
+
     @Test(expected = NullPointerException.class)
+    @SuppressWarnings("all") // To avoid @NotNull warning when calling method with null
     public void zipWith_Triplet_Throws_exception_if_other_is_null() {
-        //noinspection ConstantConditions
         personIdeaList.zipWith(null, localDateIdeaList);
     }
 
     @Test(expected = NullPointerException.class)
+    @SuppressWarnings("all") // To avoid @NotNull warning when calling method with null
     public void zipWith_Triplet_Throws_exception_if_other2_is_null() {
-        //noinspection ConstantConditions
         personIdeaList.zipWith(integerIdeaList, null);
     }
 
