@@ -1,5 +1,8 @@
 package domain;
 
+import com.sun.istack.internal.Nullable;
+import domain.function.TriFunction;
+
 import java.util.*;
 import java.util.function.*;
 
@@ -21,48 +24,20 @@ public abstract class IdeaList<E> implements Iterable<E> {
         return new EndNode<>();
     }
 
-    /*private static <E> IdeaList<E> concat(Iterator<E> iterator, IdeaList<E> elements) {
+    private static <I, E> IdeaList<E> concat(Iterator<E> iterator, I elements, Function<I, IdeaList<E>> toIdeaList) {
         if (iterator.hasNext()) {
             E element = iterator.next();
-            return IdeaList.create(Lazy.of(() -> element), Lazy.of(() -> concat(iterator, elements)));
+            return IdeaList.create(Lazy.of(() -> element), Lazy.of(() -> concat(iterator, elements, toIdeaList)));
         }
-        return elements;
+        return toIdeaList.apply(elements);
     }
-
-    private static <E> IdeaList<E> concat(Iterable<E> iterable, IdeaList<E> elements) {
-        return concat(iterable.iterator(), elements);
-    }*/
-
-    /*private static <R> IdeaList<R> concat(Iterator<R> iterator, Lazy<IdeaList<R>> elements) {
-        if (iterator.hasNext()) {
-            R element = iterator.next();
-            return IdeaList.create(Lazy.of(() -> element), Lazy.of(() -> concat(iterator, elements)));
-        }
-        return elements.value();
-    }*/
-
-    private static <E> IdeaList<E> concat(Iterator<E> iterator, Lazy<IdeaList<E>> elements) {
-        if (iterator.hasNext()) {
-            E element = iterator.next();
-            return IdeaList.create(Lazy.of(() -> element), Lazy.of(() -> concat(iterator, elements)));
-        }
-        return elements.value();
-    }
-
-    /*private static <E> IdeaList<E> concat(Iterator<E> iterator, Lazy<IdeaList<E>> elements) {
-        if (iterator.hasNext()) {
-            E element = iterator.next();
-            return IdeaList.create(Lazy.of(() -> element), Lazy.of(() -> concat(iterator, elements)));
-        }
-        return elements.value();
-    }*/
 
     private static <E> IdeaList<E> concat(Iterable<E> iterable, Lazy<IdeaList<E>> elements) {
-        return concat(iterable.iterator(), elements);
+        return concat(iterable.iterator(), elements, Lazy::value);
     }
 
     private static <E> IdeaList<E> concat(Iterable<E> iterable, IdeaList<E> elements) {
-        return concat(iterable, Lazy.of(() -> elements));
+        return concat(iterable.iterator(), elements, Function.identity());
     }
 
     public static <E> IdeaList<E> of(Iterable<E> elements) {
@@ -87,45 +62,50 @@ public abstract class IdeaList<E> implements Iterable<E> {
         return length == 0L ? IdeaList.empty() : IdeaList.create(Lazy.of(() -> from), Lazy.of(() -> rangeLength(from + 1L, length - 1L)));
     }
 
+    // Will become redundant with LongIdeaList
     public static <E> IdeaList<E> initialiseWithLong(long length, Function<Long, E> indexToElement) {
         handleNegativeLength(length);
         return rangeLength(0L, length).map(indexToElement);
     }
 
     private static void handleNegativeLength(long length) {
-        if (length < 0) throw new IllegalArgumentException("Cannot initialise list with length " + length);
+        if (length < 0L) throw new IllegalArgumentException("Cannot initialise list with length " + length);
     }
 
     private static void handleNegativeIndex(int index) {
         if (index < 0) throw new IndexOutOfBoundsException("Index cannot be negative. Given: " + index);
     }
 
-    /*private IndexOutOfBoundsException indexOutOfBoundsException(int index) {
-        return new IndexOutOfBoundsException("Index " + index + " out of bounds for length " + length());
-    }*/
+    private static IndexOutOfBoundsException indexTooBigException() {
+        return new IndexOutOfBoundsException("Index too big");
+    }
 
-    private Supplier<IndexOutOfBoundsException> indexOutOfBoundsException(int index) {
-        return () -> new IndexOutOfBoundsException("Index " + index + " out of bounds for length " + length());
+    <R> R handleNegativeIndex(int negativeIndex, IntFunction<R> function) {
+        int length = length();
+        if (-negativeIndex > length) throw indexTooBigException();
+        return function.apply(length + negativeIndex);
+    }
+
+    <T, R> R handleNegativeIndex(int negativeIndex, T t, BiFunction<Integer, T, R> function) {
+        int length = length();
+        if (-negativeIndex > length) throw indexTooBigException();
+        return function.apply(length + negativeIndex, t);
     }
 
 
     // Getters ======================================================================================
     /*public E get(int index) {
         handleNegativeIndex(index);
-        return withIndex().findFirstOrThrow(currentPair -> currentPair.index == index,
-                () -> indexOutOfBoundsException(index)).element;
-    }*/
-
-    /*public E get(int index) {
-        handleNegativeIndex(index);
         return withIndex().findFirst(pair -> pair.index == index)
-                .orElseThrow(() -> indexOutOfBoundsException(index)).element;
+                .orElseThrow(IdeaList::indexTooBigException)
+                .element;
     }*/
 
     public E get(int index) {
-        handleNegativeIndex(index);
+        if (index < 0) return handleNegativeIndex(index, this::get);
         return withIndex().findFirst(pair -> pair.index == index)
-                .orElseThrow(indexOutOfBoundsException(index)).element;
+                .orElseThrow(IdeaList::indexTooBigException)
+                .element;
     }
 
     public abstract E first();
@@ -138,28 +118,34 @@ public abstract class IdeaList<E> implements Iterable<E> {
         return get(new Random().nextInt(length()));
     }
 
-    /*public abstract E findFirst(Predicate<E> predicate);*/
-
     public abstract Optional<E> findFirst(Predicate<E> predicate);
-
-    /*public E first(Predicate<E> predicate) {
-        return findFirst(predicate);
-    }*/
 
     public Optional<E> first(Predicate<E> predicate) {
         return findFirst(predicate);
     }
 
     /*public int indexOfFirst(Predicate<E> predicate) {
-        return withIndex().findFirstOrElse(currentPair -> predicate.test(currentPair.element), IndexElement.of(-1, null)).index;
+        return withIndex().findFirst(pair -> predicate.test(pair.element))
+                .orElse(IndexElement.ofIndex(-1))
+                .index;
     }*/
 
-    public int indexOfFirst(Predicate<E> predicate) {
-        return withIndex().findFirst(pair -> predicate.test(pair.element)).orElse(IndexElement.ofIndex(-1)).index;
+    public OptionalInt indexOfFirst(Predicate<E> predicate) {
+        return withIndex().findFirst(pair -> predicate.test(pair.element))
+                .map(pair -> OptionalInt.of(pair.index))
+                .orElseGet(OptionalInt::empty);
     }
 
-    public int indexOfFirst(E element) {
+    /*public int indexOfFirst(@Nullable E element) {
         return indexOfFirst(current -> Objects.equals(current, element));
+    }*/
+
+    /*public int indexOfFirst(@Nullable E element) {
+        return indexOfFirst(Predicate.isEqual(element));
+    }*/
+
+    public OptionalInt indexOfFirst(@Nullable E element) {
+        return indexOfFirst(Predicate.isEqual(element));
     }
 
     public int lastIndex() {
@@ -194,15 +180,23 @@ public abstract class IdeaList<E> implements Iterable<E> {
 
     // Checks =======================================================================================
     @Override
-    public boolean equals(Object o) {
+    public boolean equals(@Nullable Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         IdeaList<?> ideaList = (IdeaList<?>) o;
         return Enumerable.isContentEqual(this, ideaList);
     }
 
-    public boolean contains(E element) {
+    /*public boolean contains(@Nullable E element) {
         return indexOfFirst(element) != -1;
+    }*/
+
+    /*public boolean contains(@Nullable E element) {
+        return indexOfFirst(element).isPresent();
+    }*/
+
+    public boolean contains(@Nullable E element) {
+        return findFirst(Predicate.isEqual(element)).isPresent();
     }
 
     public boolean containsAll(Iterable<E> elements) {
@@ -235,30 +229,12 @@ public abstract class IdeaList<E> implements Iterable<E> {
 
 
     // Modifiers ====================================================================================
-    //public abstract IdeaList<E> insertAt(int index, Iterable<E> elements);
-
-    abstract IdeaList<E> insertAtHelper(int index, Iterable<E> elements, Supplier<IndexOutOfBoundsException> exceptionSupplier);
-
-    /*public IdeaList<E> insertAt(int index, Iterable<E> elements) {
-        return insertAtHelper(index, elements, () -> indexOutOfBoundsException(index));
-    }*/
-
-    /*public IdeaList<E> insertAt(int index, @NonNull Iterable<E> elements) {
-        return insertAtHelper(index, elements, indexOutOfBoundsException(index));
-    }*/
-
-    public IdeaList<E> insertAt(int index, Iterable<E> elements) {
-        return insertAtHelper(index, elements, indexOutOfBoundsException(index));
-    }
+    public abstract IdeaList<E> insertAt(int index, Iterable<E> elements);
 
     @SafeVarargs
     public final IdeaList<E> insertAt(int index, E... elements) {
         return insertAt(index, Arrays.asList(elements));
     }
-
-    /*public IdeaList<E> concatWith(@NonNull Iterable<E> elements) {
-        return concat(this, Lazy.of(() -> IdeaList.of(elements)));
-    }*/
 
     public IdeaList<E> concatWith(Iterable<E> elements) {
         return concat(this, Lazy.of(() -> IdeaList.of(elements)));
@@ -278,36 +254,30 @@ public abstract class IdeaList<E> implements Iterable<E> {
         return linkToBackOf(Arrays.asList(elements));
     }
 
-    public abstract IdeaList<E> removeFirst(E element);
+    public abstract IdeaList<E> removeFirst(@Nullable E element);
 
-    abstract IdeaList<E> removeAtHelper(int index, Supplier<IndexOutOfBoundsException> exceptionSupplier);
+    public abstract IdeaList<E> removeAt(int index);
 
-    /*public IdeaList<E> removeAt(int index) {
-        return removeAtHelper(index, () -> indexOutOfBoundsException(index));
-    }*/
-
-    public IdeaList<E> removeAt(int index) {
-        return removeAtHelper(index, indexOutOfBoundsException(index));
-    }
-
-    //public abstract IdeaList<E> removeAt(int index);
-
-    public IdeaList<E> removeAll(E element) {
+    public IdeaList<E> removeAll(@Nullable E element) {
         return where(current -> !Objects.equals(current, element));
     }
 
-    @Override
+    /*@Override
     public void forEach(Consumer<? super E> action) {
         for (E element : this) action.accept(element);
-    }
+    }*/
 
     public void forEachIndexed(BiConsumer<Integer, E> action) {
         withIndex().forEach(currentPair -> action.accept(currentPair.index, currentPair.element));
     }
 
+    /*public void forEachIndexed(IntObjConsumer<E> action) {
+        withIndex().forEach(currentPair -> action.accept(currentPair.index, currentPair.element));
+    }*/
+
 
     // List operations ==============================================================================
-    private static <E, A> A reduceHelper(A initialValue, IdeaList<E> list, BiFunction<A, E, A> operation) {
+    private static <A, E> A reduceHelper(A initialValue, IdeaList<E> list, BiFunction<A, E, A> operation) {
         A accumulator = initialValue;
         for (E element : list) accumulator = operation.apply(accumulator, element);
         return accumulator;
@@ -321,8 +291,13 @@ public abstract class IdeaList<E> implements Iterable<E> {
         return withIndex().reduce(initialValue, (accumulator, currentPair) -> operation.apply(currentPair.index, accumulator, currentPair.element));
     }
 
+    /*public <A> A reduceIndexed(A initialValue, IntTriFunction<A, E, A> operation) {
+        return withIndex().reduce(initialValue, (accumulator, currentPair) -> operation.apply(currentPair.index, accumulator, currentPair.element));
+    }*/
+
     public abstract E reduce(BinaryOperator<E> operation);
 
+    // Ideal scenario
     /*public E reduceIndexed(TriFunction<Integer, E, E, E> operation) {
         return withIndex().reduce((accumulator, currentPair) -> operation.apply(currentPair.index, accumulator, currentPair.element));
     }*/
@@ -331,15 +306,19 @@ public abstract class IdeaList<E> implements Iterable<E> {
         return withIndex().reduce((accumulator, currentPair) -> IndexElement.of(0, operation.apply(currentPair.index, accumulator.element, currentPair.element))).element;
     }
 
-    public abstract <R> IdeaList<R> map(Function<E, R> transform);
-
-    /*public <R> IdeaList<R> mapIndexed(@NonNull BiFunction<Integer, E, R> transform) {
-        return withIndex().map(currentPair -> transform.apply(currentPair.index, currentPair.element));
+    /*public E reduceIndexed(IntTriFunction<E, E, E> operation) {
+        return withIndex().reduce((accumulator, currentPair) -> IndexElement.of(0, operation.apply(currentPair.index, accumulator.element, currentPair.element))).element;
     }*/
+
+    public abstract <R> IdeaList<R> map(Function<E, R> transform);
 
     public <R> IdeaList<R> mapIndexed(BiFunction<Integer, E, R> transform) {
         return withIndex().map(currentPair -> transform.apply(currentPair.index, currentPair.element));
     }
+
+    /*public <R> IdeaList<R> mapIndexed(IntObjFunction<E, R> transform) {
+        return withIndex().map(currentPair -> transform.apply(currentPair.index, currentPair.element));
+    }*/
 
     public <R> IdeaList<R> select(Function<E, R> transform) {
         return map(transform);
@@ -349,11 +328,21 @@ public abstract class IdeaList<E> implements Iterable<E> {
         return mapIndexed(transform);
     }
 
+    /*public <R> IdeaList<R> selectIndexed(IntObjFunction<E, R> transform) {
+        return mapIndexed(transform);
+    }*/
+
     public abstract IdeaList<E> where(Predicate<E> predicate);
 
     public IdeaList<E> whereIndexed(BiPredicate<Integer, E> predicate) {
-        return withIndex().where(currentPair -> predicate.test(currentPair.index, currentPair.element)).select(currentPair -> currentPair.element);
+        return withIndex().where(currentPair -> predicate.test(currentPair.index, currentPair.element))
+                .select(currentPair -> currentPair.element);
     }
+
+    /*public IdeaList<E> whereIndexed(IntObjPredicate<E> predicate) {
+        return withIndex().where(currentPair -> predicate.test(currentPair.index, currentPair.element))
+                .select(currentPair -> currentPair.element);
+    }*/
 
     public IdeaList<E> filter(Predicate<E> predicate) {
         return where(predicate);
@@ -363,6 +352,10 @@ public abstract class IdeaList<E> implements Iterable<E> {
         return whereIndexed(predicate);
     }
 
+    /*public IdeaList<E> filterIndexed(IntObjPredicate<E> predicate) {
+        return whereIndexed(predicate);
+    }*/
+
     public IdeaList<E> findAll(Predicate<E> predicate) {
         return where(predicate);
     }
@@ -370,6 +363,10 @@ public abstract class IdeaList<E> implements Iterable<E> {
     public IdeaList<E> findAllIndexed(BiPredicate<Integer, E> predicate) {
         return whereIndexed(predicate);
     }
+
+    /*public IdeaList<E> findAllIndexed(IntObjPredicate<E> predicate) {
+        return whereIndexed(predicate);
+    }*/
 
     abstract <N> IdeaList<N> concatNestedIterables();
 
@@ -449,11 +446,6 @@ public abstract class IdeaList<E> implements Iterable<E> {
             return tail.value().isEmpty() ? value.value() : tail.value().last();
         }
 
-        /*@Override
-        public E findFirst(Predicate<E> predicate) {
-            return predicate.test(value.value()) ? value.value() : tail.value().findFirst(predicate);
-        }*/
-
         @Override
         public Optional<E> findFirst(Predicate<E> predicate) {
             return predicate.test(value.value()) ? Optional.of(value.value()) : tail.value().findFirst(predicate);
@@ -491,14 +483,14 @@ public abstract class IdeaList<E> implements Iterable<E> {
         }*/
 
         @Override
-        IdeaList<E> insertAtHelper(int index, Iterable<E> elements, Supplier<IndexOutOfBoundsException> exceptionSupplier) {
-            handleNegativeIndex(index);
+        public IdeaList<E> insertAt(int index, Iterable<E> elements) {
+            if (index < 0) return handleNegativeIndex(index, elements, this::insertAt);
             return index == 0 ? concat(elements, this) :
-                    createTail(tail -> tail.insertAtHelper(index - 1, elements, exceptionSupplier));
+                    createTail(tail -> tail.insertAt(index - 1, elements));
         }
 
         @Override
-        public IdeaList<E> removeFirst(E element) {
+        public IdeaList<E> removeFirst(@Nullable E element) {
             return Objects.equals(value.value(), element) ? tail.value() : createTail(tail -> tail.removeFirst(element));
         }
 
@@ -509,24 +501,17 @@ public abstract class IdeaList<E> implements Iterable<E> {
         }*/
 
         @Override
-        IdeaList<E> removeAtHelper(int index, Supplier<IndexOutOfBoundsException> exceptionSupplier) {
-            handleNegativeIndex(index);
-            return index == 0 ? tail.value() : createTail(tail -> tail.removeAtHelper(index - 1, exceptionSupplier));
+        public IdeaList<E> removeAt(int index) {
+            if (index < 0) return handleNegativeIndex(index, this::removeAt);
+            return index == 0 ? tail.value() : createTail(tail -> tail.removeAt(index - 1));
         }
+
 
         // List operations ==============================================================================
         @Override
         public E reduce(BinaryOperator<E> operation) {
             return reduceHelper(first(), tail.value(), operation);
         }
-
-        /*@Override
-        public <R> IdeaList<R> map(@NonNull Function<E, R> transform) {
-            return IdeaList.create(
-                    Lazy.of(() -> transform.apply(value.value())),
-                    Lazy.of(() -> tail.value().map(transform))
-            );
-        }*/
 
         @Override
         public <R> IdeaList<R> map(Function<E, R> transform) {
@@ -562,10 +547,6 @@ public abstract class IdeaList<E> implements Iterable<E> {
             return new NoSuchElementException("List is empty");
         }
 
-        // TODO duplicate code
-        private IndexOutOfBoundsException indexOutOfBoundsException(int index) {
-            return new IndexOutOfBoundsException("Index " + index + " out of bounds for length " + length());
-        }
 
         // Getters ======================================================================================
         @Override
@@ -582,11 +563,6 @@ public abstract class IdeaList<E> implements Iterable<E> {
         public E last() {
             throw noSuchElementException();
         }
-
-        /*@Override
-        public E findFirst(Predicate<E> predicate) {
-            return null;
-        }*/
 
         @Override
         public Optional<E> findFirst(Predicate<E> predicate) {
@@ -619,28 +595,31 @@ public abstract class IdeaList<E> implements Iterable<E> {
         // Modifiers ====================================================================================
         /*@Override
         public IdeaList<E> insertAt(int index, Iterable<E> elements) {
-            throw indexOutOfBoundsException(index);
+            handleNegativeIndex(index);
+            throw indexTooBigException();
         }*/
 
         @Override
-        IdeaList<E> insertAtHelper(int index, Iterable<E> elements, Supplier<IndexOutOfBoundsException> exceptionSupplier) {
-            throw exceptionSupplier.get();
+        public IdeaList<E> insertAt(int index, Iterable<E> elements) {
+            throw indexTooBigException();
         }
 
         @Override
-        public IdeaList<E> removeFirst(E element) {
+        public IdeaList<E> removeFirst(@Nullable E element) {
             return this;
         }
 
         /*@Override
         public IdeaList<E> removeAt(int index) {
-            throw indexOutOfBoundsException(index);
+            handleNegativeIndex(index);
+            throw indexTooBigException();
         }*/
 
         @Override
-        IdeaList<E> removeAtHelper(int index, Supplier<IndexOutOfBoundsException> exceptionSupplier) {
-            throw exceptionSupplier.get();
+        public IdeaList<E> removeAt(int index) {
+            throw indexTooBigException();
         }
+
 
         // List operations ==============================================================================
         @Override
@@ -648,20 +627,10 @@ public abstract class IdeaList<E> implements Iterable<E> {
             throw new UnsupportedOperationException("Empty list cannot be reduced");
         }
 
-        /*@Override
-        public <R> IdeaList<R> map(@NonNull Function<E, R> transform) {
-            return IdeaList.empty();
-        }*/
-
         @Override
         public <R> IdeaList<R> map(Function<E, R> transform) {
             return IdeaList.empty();
         }
-
-        /*@Override
-        public IdeaList<E> where(@NonNull Predicate<E> predicate) {
-            return this;
-        }*/
 
         @Override
         public IdeaList<E> where(Predicate<E> predicate) {

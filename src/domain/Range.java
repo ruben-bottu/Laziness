@@ -1,6 +1,9 @@
 package domain;
 
-public class Range {
+public final class Range {
+
+    // Private constructor to prevent instantiation
+    private Range() {}
 
     public static IntRange from(int start) {
         return new IntRange(start);

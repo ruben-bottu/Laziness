@@ -774,7 +774,7 @@ public class IdeaListTest {
 
     @Test
     public void isEmpty_Returns_false_if_list_containing_nulls_is_not_empty() {
-        assertFalse(IdeaList.of((Iterable<Object>) null).isEmpty());
+        assertFalse(IdeaList.of((Object) null).isEmpty());
         assertFalse(IdeaList.of(l4, null, l4, l1, null, l2, l3, l2).isEmpty());
     }
 
@@ -1318,6 +1318,15 @@ public class IdeaListTest {
     }
 
     @Test
+    public void removeAt_Removes_the_element_at_specified_position_from_this_list_containing_nulls() {
+        IdeaList<Dog> input = IdeaList.of(null, null, d1, null, d2, d3, d4, d5, null, d6);
+        assertEquals(IdeaList.of(null, d1, null, d2, d3, d4, d5, null, d6), input.removeAt(0));
+        assertEquals(IdeaList.of(null, d1, null, d2, d3, d4, d5, null, d6), input.removeAt(1));
+        assertEquals(IdeaList.of(null, null, d1, null, d3, d4, d5, null, d6), input.removeAt(4));
+        assertEquals(IdeaList.of(null, null, d1, null, d2, d3, d4, d5, null), input.removeAt(9));
+    }
+
+    @Test
     public void removeAt_Removes_the_element_at_specified_position() {
         assertEquals(IdeaList.of(d2, d3, d4, d5, d6), dogIdeaList.removeAt(0));
         assertEquals(IdeaList.of(d1, d3, d4, d5, d6), dogIdeaList.removeAt(1));
@@ -1346,20 +1355,34 @@ public class IdeaListTest {
 
     @Test
     public void forEachIndexed_Performs_no_actions_if_list_is_empty() {
-        List<Dog> dogs = new ArrayList<>();
         List<Integer> indices = new ArrayList<>();
+        List<Dog> dogs = new ArrayList<>();
         IdeaList.<Dog>empty().forEachIndexed((idx, cur) -> {
             indices.add(idx);
             dogs.add(cur);
         });
-        assertTrue(dogs.isEmpty());
         assertTrue(indices.isEmpty());
+        assertTrue(dogs.isEmpty());
+    }
+
+    @Test
+    public void forEachIndexed_Performs_given_action_on_each_element_of_this_list_containing_nulls_provided_with_its_index() {
+        IdeaList<Dog> input = IdeaList.of(null, d5, d5, d6, null, null, null);
+        List<Integer> indices = new ArrayList<>();
+        List<Dog> dogs = new ArrayList<>();
+
+        input.forEachIndexed((idx, cur) -> {
+            indices.add(idx);
+            dogs.add(cur);
+        });
+        assertEquals(Arrays.asList(0, 1, 2, 3, 4, 5, 6), indices);
+        assertEquals(input.toList(), dogs);
     }
 
     @Test
     public void forEachIndexed_Performs_given_action_on_each_element_of_this_list_provided_with_its_index() {
-        List<Dog> dogs = new ArrayList<>();
         List<Integer> indices = new ArrayList<>();
+        List<Dog> dogs = new ArrayList<>();
         dogIdeaList.forEachIndexed((idx, cur) -> {
             indices.add(idx);
             dogs.add(cur);
@@ -1374,6 +1397,15 @@ public class IdeaListTest {
         IdeaList.<Dog>empty().forEach(dogs::add);
 
         assertTrue(dogs.isEmpty());
+    }
+
+    @Test
+    public void forEach_Performs_given_action_on_each_element_of_this_list_containing_nulls() {
+        IdeaList<Dog> input = IdeaList.of(d1, d2, null, d1, null, d1, d6, d1);
+        List<Dog> dogs = new ArrayList<>();
+        input.forEach(dogs::add);
+
+        assertEquals(input.toList(), dogs);
     }
 
     @Test
@@ -1397,6 +1429,14 @@ public class IdeaListTest {
     }
 
     @Test
+    public void reduce_initialValue_Accumulates_this_list_containing_nulls_into_a_single_value_by_applying_given_operation_to_each_element_with_accumulator() {
+        IdeaList<LocalDate> input = IdeaList.of(l1, l2, l3, l4, l5, null, null, l6, l7, null);
+        IdeaList<LocalDate> expected = IdeaList.of(null, l7, l6, null, null, l5, l4, l3, l2, l1);
+
+        assertEquals(expected, input.reduce(IdeaList.empty(), IdeaList::addToFront));
+    }
+
+    @Test
     public void reduce_initialValue_Accumulates_this_list_into_a_single_value_by_applying_given_operation_to_each_primitive_element_with_accumulator() {
         IdeaList<Integer> integers = IdeaList.of(6, 7, 0, -1, 4, 5, -8);
         assertEquals(13, integers.reduce(0, Integer::sum).intValue());
@@ -1411,6 +1451,14 @@ public class IdeaListTest {
     @Test
     public void reduceIndexed_initialValue_Returns_initialValue_if_this_list_does_not_contain_elements() {
         assertEquals(0, IdeaList.<Integer>empty().reduceIndexed(0, (index, acc, integer) -> 10).intValue());
+    }
+
+    @Test
+    public void reduceIndexed_initialValue_Accumulates_this_list_containing_nulls_into_a_single_value_by_applying_given_operation_to_each_element_provided_with_accumulator_and_index() {
+        IdeaList<LocalDate> input = IdeaList.of(l1, l2, l3, l4, l5, null, null, l6, l7, null);
+        IdeaList<Object> expected = IdeaList.of(null, 9, l7, 8, l6, 7, null, 6, null, 5, l5, 4, l4, 3, l3, 2, l2, 1, l1, 0);
+
+        assertEquals(expected, input.reduceIndexed(IdeaList.empty(), (index, acc, date) -> acc.addToFront(index).addToFront(date)));
     }
 
     @Test

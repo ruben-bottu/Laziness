@@ -1,5 +1,7 @@
 package domain;
 
+import com.sun.istack.internal.Nullable;
+
 import java.util.Objects;
 
 public class Triplet<A, B, C> {
@@ -22,7 +24,7 @@ public class Triplet<A, B, C> {
     }
 
     @Override
-    public boolean equals(Object o) {
+    public boolean equals(@Nullable Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Triplet<?, ?, ?> triplet = (Triplet<?, ?, ?>) o;

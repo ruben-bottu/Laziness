@@ -3,7 +3,11 @@ package domain;
 import java.util.Iterator;
 import java.util.Objects;
 
-public abstract class Enumerable {
+// Iterable would be a better name, but Java doesn't have type aliasing
+public final class Enumerable {
+
+    // Private constructor to prevent instantiation
+    private Enumerable() {}
 
     public static Iterable<Void> infiniteNulls() {
         return Enumerator::infiniteNulls;
@@ -17,5 +21,13 @@ public abstract class Enumerable {
             if (!it1.hasNext()) return true;
             if (!Objects.equals(it1.next(), it2.next())) return false;
         }
+    }
+
+
+    // ==============================================================================================
+
+
+    public static Iterable<Integer> of(int[] elements) {
+        return () -> Enumerator.of(elements);
     }
 }

@@ -1,5 +1,7 @@
 package domain;
 
+import domain.IdeaList;
+
 import java.util.function.IntUnaryOperator;
 
 public class IntRange {
