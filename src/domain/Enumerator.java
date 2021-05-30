@@ -1,7 +1,5 @@
 package domain;
 
-import domain.primitive_specializations.IntIterator;
-
 import java.util.Iterator;
 import java.util.PrimitiveIterator;
 
@@ -102,9 +100,21 @@ public final class Enumerator {
     }
 
     // TODO significant performance improvement?
-    /*public static <T> Iterator<T> of(T[] elements) {
+    public static <E> Iterator<E> of(E[] elements) {
+        return new Iterator<E>() {
+            private int currentIndex = 0;
 
-    }*/
+            @Override
+            public boolean hasNext() {
+                return currentIndex < elements.length;
+            }
+
+            @Override
+            public E next() {
+                return elements[currentIndex++];
+            }
+        };
+    }
 
     /*public static IntIterator of(int[] elements) {
         return new IntIterator() {
@@ -125,7 +135,7 @@ public final class Enumerator {
         };
     }*/
 
-    public static PrimitiveIterator.OfInt of(int[] elements) {
+    /*public static PrimitiveIterator.OfInt of(int[] elements) {
         return new PrimitiveIterator.OfInt() {
             private final int[] innerArray = elements;
             private int currentIndex = 0;
@@ -141,6 +151,22 @@ public final class Enumerator {
                 int next = innerArray[currentIndex];
                 currentIndex++;
                 return next;
+            }
+        };
+    }*/
+
+    public static PrimitiveIterator.OfInt of(int[] elements) {
+        return new PrimitiveIterator.OfInt() {
+            private int currentIndex = 0;
+
+            @Override
+            public boolean hasNext() {
+                return currentIndex < elements.length;
+            }
+
+            @Override
+            public int nextInt() {
+                return elements[currentIndex++];
             }
         };
     }
