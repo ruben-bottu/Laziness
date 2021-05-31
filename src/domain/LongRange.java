@@ -1,7 +1,5 @@
 package domain;
 
-import domain.IdeaList;
-
 import java.util.function.LongUnaryOperator;
 
 public class LongRange {
