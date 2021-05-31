@@ -2,7 +2,6 @@ package domain;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.experimental.categories.Category;
 
 import java.time.LocalDate;
 import java.util.*;
@@ -98,21 +97,11 @@ public class IdeaListTest {
     @Test
     public void of_Iterable_Creates_IdeaList_of_given_Iterable_containing_null() {
         Set<Dog> dogSet = new LinkedHashSet<>(Arrays.asList(d2, d6, d1, null, d1, null));
-        /*IdeaList<Dog> currentNode = IdeaList.of(dogSet);
-        for (Dog dog : dogSet) {
-            assertEquals(dog, currentNode.value.value());
-            currentNode = currentNode.tail.value();
-        }*/
         assertTrue(Enumerable.isContentEqual(dogSet, IdeaList.of(dogSet)));
     }
 
     @Test
     public void of_Iterable_Creates_IdeaList_of_given_Iterable() {
-        /*IdeaList<Person> currentNode = IdeaList.of(personSet);
-        for (Person person : personSet) {
-            assertEquals(person, currentNode.value.value());
-            currentNode = currentNode.tail.value();
-        }*/
         assertTrue(Enumerable.isContentEqual(personSet, IdeaList.of(personSet)));
     }
 
@@ -132,8 +121,8 @@ public class IdeaListTest {
         assertEquals(IdeaList.empty(), IdeaList.of());
     }
 
-    @Test //TODO make covariant
-    public void of_elements_Creates_IdeaList_of_given_covariant_Iterable() { // Not covariance. Needs to be an Iterable, not separate elements
+    @Test
+    public void of_elements_Creates_IdeaList_of_given_covariant_Iterable() {
         IdeaList<Object> objects = IdeaList.of("bla", "foo", "zaza");
         assertEquals("bla", objects.value.value());
         assertEquals("foo", objects.tail.value().value.value());
@@ -143,13 +132,8 @@ public class IdeaListTest {
     @Test
     public void of_elements_Creates_IdeaList_of_given_elements_containing_null() {
         List<Dog> dogList = Arrays.asList(null, d3, d4, d1, null, d1, null);
-        //List<Dog> dogSet = Arrays.asList(null, d3, d4, d1, null, d1, null);
-        //IdeaList<Dog> currentNode = IdeaList.of(null, d3, d4, d1, null, d1, null);
-        /*for (Dog dog : dogSet) {
-            assertEquals(dog, currentNode.value.value());
-            currentNode = currentNode.tail.value();
-        }*/
-        assertTrue(Enumerable.isContentEqual(dogList, IdeaList.of(null, d3, d4, d1, null, d1, null)));
+        IdeaList<Dog> dogIdeaList = IdeaList.of(null, d3, d4, d1, null, d1, null);
+        assertTrue(Enumerable.isContentEqual(dogList, dogIdeaList));
     }
 
     @Test
@@ -316,21 +300,10 @@ public class IdeaListTest {
         assertTrue(localDateIdeaList.contains(localDateIdeaList.random()));
     }
 
-    /*@Test
-    public void findFirst_Returns_null_if_list_is_empty() {
-        assertNull(IdeaList.empty().findFirst(e -> true));
-    }*/
-
     @Test
     public void findFirst_Returns_empty_Optional_instance_if_list_is_empty() {
         assertFalse(IdeaList.empty().findFirst(e -> true).isPresent());
     }
-
-    /*@Test
-    public void findFirst_Returns_null_if_no_element_matches_given_predicate() {
-        assertNull(integerIdeaList.findFirst(integer -> integer > 75 && integer < 100));
-        assertNull(dogIdeaList.findFirst(animal -> animal.getAge() > 13));
-    }*/
 
     @Test
     public void findFirst_Returns_empty_Optional_instance_if_no_element_matches_given_predicate() {
@@ -396,57 +369,61 @@ public class IdeaListTest {
     }
 
     @Test
-    public void indexOfFirst_predicate_Returns_minus_one_if_list_is_empty() {
-        assertEquals(-1, IdeaList.empty().indexOfFirst(e -> true));
+    public void indexOfFirst_predicate_Returns_empty_OptionalInt_if_list_is_empty() {
+        assertEquals(OptionalInt.empty(), IdeaList.empty().indexOfFirst(e -> true));
     }
 
     @Test
-    public void indexOfFirst_predicate_Returns_minus_one_if_no_element_matches_given_predicate() {
-        assertEquals(-1, integerIdeaList.indexOfFirst(integer -> integer == 2));
-        assertEquals(-1, personIdeaList.indexOfFirst(person -> person.getFirstName().contains("b") || person.getSecondName().contains("b")));
-        assertEquals(-1, dogIdeaList.indexOfFirst(animal -> animal.getAge() > 13));
-        assertEquals(-1, localDateIdeaList.indexOfFirst(localDate -> localDate.getYear() > 2020 && localDate.getYear() < 4058));
+    public void indexOfFirst_predicate_Returns_empty_OptionalInt_if_no_element_matches_given_predicate() {
+        assertEquals(OptionalInt.empty(), integerIdeaList.indexOfFirst(integer -> integer == 2));
+        assertEquals(OptionalInt.empty(), personIdeaList.indexOfFirst(person -> person.getFirstName().contains("b") || person.getSecondName().contains("b")));
+        assertEquals(OptionalInt.empty(), dogIdeaList.indexOfFirst(animal -> animal.getAge() > 13));
+        assertEquals(OptionalInt.empty(), localDateIdeaList.indexOfFirst(localDate -> localDate.getYear() > 2020 && localDate.getYear() < 4058));
     }
 
     @Test
+    @SuppressWarnings("all") // In this test case it is certain that the OptionalInt object will contain a value
     public void indexOfFirst_predicate_Returns_index_of_first_element_that_matches_given_predicate_in_list_with_nulls() {
         IdeaList<Person> input = IdeaList.of(p1, p1, p2, null, p3, p3, null);
-        assertEquals(3, input.indexOfFirst(Objects::isNull));
+        assertEquals(3, input.indexOfFirst(Objects::isNull).getAsInt());
     }
 
     @Test
+    @SuppressWarnings("all") // In this test case it is certain that the OptionalInt object will contain a value
     public void indexOfFirst_predicate_Returns_index_of_first_element_that_matches_given_predicate() {
-        assertEquals(7, integerIdeaList.indexOfFirst(integer -> integer > 75));
-        assertEquals(1, personIdeaList.indexOfFirst(person -> person.getSecondName().contains("h")));
-        assertEquals(4, dogIdeaList.indexOfFirst(animal -> animal.getAge() > 6));
-        assertEquals(0, localDateIdeaList.indexOfFirst(localDate -> true));
+        assertEquals(7, integerIdeaList.indexOfFirst(integer -> integer > 75).getAsInt());
+        assertEquals(1, personIdeaList.indexOfFirst(person -> person.getSecondName().contains("h")).getAsInt());
+        assertEquals(4, dogIdeaList.indexOfFirst(animal -> animal.getAge() > 6).getAsInt());
+        assertEquals(0, localDateIdeaList.indexOfFirst(localDate -> true).getAsInt());
     }
 
     @Test
-    public void indexOfFirst_element_Returns_minus_one_if_list_is_empty() {
-        assertEquals(-1, IdeaList.empty().indexOfFirst(p1));
+    public void indexOfFirst_element_Returns_empty_OptionalInt_if_list_is_empty() {
+        assertEquals(OptionalInt.empty(), IdeaList.empty().indexOfFirst(p1));
     }
 
     @Test
-    public void indexOfFirst_element_Returns_minus_one_if_list_does_not_contain_given_element() {
-        assertEquals(-1, integerIdeaList.indexOfFirst(101));
-        assertEquals(-1, personIdeaList.indexOfFirst(new Person("James", "Walker")));
-        assertEquals(-1, dogIdeaList.indexOfFirst(new Dog(2, "Bolt")));
-        assertEquals(-1, localDateIdeaList.indexOfFirst(LocalDate.of(441, 3, 11)));
+    public void indexOfFirst_element_Returns_empty_OptionalInt_if_list_does_not_contain_given_element() {
+        assertEquals(OptionalInt.empty(), integerIdeaList.indexOfFirst(101));
+        assertEquals(OptionalInt.empty(), personIdeaList.indexOfFirst(new Person("James", "Walker")));
+        assertEquals(OptionalInt.empty(), dogIdeaList.indexOfFirst(new Dog(2, "Bolt")));
+        assertEquals(OptionalInt.empty(), localDateIdeaList.indexOfFirst(LocalDate.of(441, 3, 11)));
     }
 
     @Test
+    @SuppressWarnings("all") // In this test case it is certain that the OptionalInt object will contain a value
     public void indexOfFirst_element_Returns_index_of_first_occurrence_of_given_element_in_this_list_containing_nulls() {
         IdeaList<LocalDate> input = IdeaList.of(l7, l7, l6, l1, l2, l3, null, l7);
-        assertEquals(6, input.indexOfFirst((LocalDate) null));
+        assertEquals(6, input.indexOfFirst((LocalDate) null).getAsInt());
     }
 
     @Test
+    @SuppressWarnings("all") // In this test case it is certain that the OptionalInt object will contain a value
     public void indexOfFirst_element_Returns_index_of_first_occurrence_of_given_element_in_this_list() {
-        assertEquals(0, integerIdeaList.indexOfFirst(i1));
-        assertEquals(4, personIdeaList.indexOfFirst(p5));
-        assertEquals(2, dogIdeaList.indexOfFirst(d3));
-        assertEquals(6, localDateIdeaList.indexOfFirst(l7));
+        assertEquals(0, integerIdeaList.indexOfFirst(i1).getAsInt());
+        assertEquals(4, personIdeaList.indexOfFirst(p5).getAsInt());
+        assertEquals(2, dogIdeaList.indexOfFirst(d3).getAsInt());
+        assertEquals(6, localDateIdeaList.indexOfFirst(l7).getAsInt());
     }
 
     @Test
@@ -1460,6 +1437,7 @@ public class IdeaListTest {
         IdeaList<Object> expected = IdeaList.of(null, 9, l7, 8, l6, 7, null, 6, null, 5, l5, 4, l4, 3, l3, 2, l2, 1, l1, 0);
 
         assertEquals(expected, input.reduceIndexed(IdeaList.empty(), (index, acc, date) -> acc.addToFront(index).addToFront(date)));
+                               input.withIndex().reduce(IdeaList.empty(), (acc, idxDate) -> acc.addToFront(idxDate.index).addToFront(idxDate.element));
     }
 
     @Test
@@ -1683,13 +1661,11 @@ public class IdeaListTest {
 
 
     @Test(expected = NullPointerException.class)
-    @SuppressWarnings("all") // To avoid @NotNull warning when calling method with null
     public void zipWith_Triplet_Throws_exception_if_other_is_null() {
         personIdeaList.zipWith(null, localDateIdeaList);
     }
 
     @Test(expected = NullPointerException.class)
-    @SuppressWarnings("all") // To avoid @NotNull warning when calling method with null
     public void zipWith_Triplet_Throws_exception_if_other2_is_null() {
         personIdeaList.zipWith(integerIdeaList, null);
     }

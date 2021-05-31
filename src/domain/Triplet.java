@@ -3,6 +3,7 @@ package domain;
 import com.sun.istack.internal.Nullable;
 
 import java.util.Objects;
+import java.util.function.Predicate;
 
 public class Triplet<A, B, C> {
     public final A first;

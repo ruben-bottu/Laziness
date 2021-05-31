@@ -2,7 +2,6 @@ package domain;
 
 import com.sun.istack.internal.Nullable;
 import domain.function.TriFunction;
-import sun.invoke.empty.Empty;
 
 import java.util.*;
 import java.util.function.*;
@@ -21,13 +20,9 @@ public abstract class IdeaList<E> implements Iterable<E> {
         this.tail = tail;
     }
 
-    private static <E> IdeaList<E> create(Lazy<E> value, Lazy<IdeaList<E>> tail) {
+    static <E> IdeaList<E> create(Lazy<E> value, Lazy<IdeaList<E>> tail) {
         return new NormalNode<>(value, tail);
     }
-
-    /*public static <E> IdeaList<E> empty() {
-        return new EndNode<>();
-    }*/
 
     @SuppressWarnings("unchecked")
     public static <E> IdeaList<E> empty() {
@@ -59,11 +54,6 @@ public abstract class IdeaList<E> implements Iterable<E> {
         return IdeaList.of(asList(elements));
     }
 
-    /*@SafeVarargs
-    public static <E> IdeaList<E> of(E... elements) {
-        return concat(Enumerator.of(elements), IdeaList.empty(), Function.identity());
-    }*/
-
     private static IdeaList<Integer> rangeLength(int from, int length) {
         return length == 0 ? IdeaList.empty() : IdeaList.create(Lazy.of(() -> from), Lazy.of(() -> rangeLength(from + 1, length - 1)));
     }
@@ -77,7 +67,6 @@ public abstract class IdeaList<E> implements Iterable<E> {
         return length == 0L ? IdeaList.empty() : IdeaList.create(Lazy.of(() -> from), Lazy.of(() -> rangeLength(from + 1L, length - 1L)));
     }
 
-    // Will become redundant with LongIdeaList
     public static <E> IdeaList<E> initialiseWithLong(long length, Function<Long, E> indexToElement) {
         handleNegativeLength(length);
         return rangeLength(0L, length).map(indexToElement);
@@ -85,10 +74,6 @@ public abstract class IdeaList<E> implements Iterable<E> {
 
     private static void handleNegativeLength(long length) {
         if (length < 0L) throw new IllegalArgumentException("Cannot initialise list with length " + length);
-    }
-
-    private static void handleNegativeIndex(int index) {
-        if (index < 0) throw new IndexOutOfBoundsException("Index cannot be negative. Given: " + index);
     }
 
     private static IndexOutOfBoundsException indexTooBigException() {
@@ -103,13 +88,6 @@ public abstract class IdeaList<E> implements Iterable<E> {
 
 
     // Getters ======================================================================================
-    /*public E get(int index) {
-        handleNegativeIndex(index);
-        return withIndex().findFirst(pair -> pair.index == index)
-                .orElseThrow(IdeaList::indexTooBigException)
-                .element;
-    }*/
-
     public E get(int index) {
         if (index < 0) return get(toPositiveIndex(index));
         return withIndex().findFirst(pair -> pair.index == index)
@@ -133,25 +111,11 @@ public abstract class IdeaList<E> implements Iterable<E> {
         return findFirst(predicate);
     }
 
-    /*public int indexOfFirst(Predicate<E> predicate) {
-        return withIndex().findFirst(pair -> predicate.test(pair.element))
-                .orElse(IndexElement.ofIndex(-1))
-                .index;
-    }*/
-
     public OptionalInt indexOfFirst(Predicate<E> predicate) {
         return withIndex().findFirst(pair -> predicate.test(pair.element))
                 .map(pair -> OptionalInt.of(pair.index))
                 .orElseGet(OptionalInt::empty);
     }
-
-    /*public int indexOfFirst(@Nullable E element) {
-        return indexOfFirst(current -> Objects.equals(current, element));
-    }*/
-
-    /*public int indexOfFirst(@Nullable E element) {
-        return indexOfFirst(Predicate.isEqual(element));
-    }*/
 
     public OptionalInt indexOfFirst(@Nullable E element) {
         return indexOfFirst(isEqual(element));
@@ -163,7 +127,9 @@ public abstract class IdeaList<E> implements Iterable<E> {
 
     public abstract IdeaList<Integer> indices();
 
-    public abstract int length();
+    public int length() {
+        return count(elem -> true);
+    }
 
     public List<E> toList() {
         List<E> list = new ArrayList<>();
@@ -196,29 +162,13 @@ public abstract class IdeaList<E> implements Iterable<E> {
         return isContentEqual(this, ideaList);
     }
 
-    /*public boolean contains(@Nullable E element) {
-        return indexOfFirst(element) != -1;
-    }*/
-
-    /*public boolean contains(@Nullable E element) {
-        return indexOfFirst(element).isPresent();
-    }*/
-
     public boolean contains(@Nullable E element) {
-        return findFirst(isEqual(element)).isPresent();
+        return indexOfFirst(element).isPresent();
     }
 
     public boolean containsAll(Iterable<E> elements) {
         return IdeaList.of(elements).all(this::contains);
     }
-
-    // This method should be efficient for both Iterable and IdeaList
-    /*public boolean containsAll(Iterable<E> elements) {
-        for (E element : elements) {
-            if (!contains(element)) return false;
-        }
-        return true;
-    }*/
 
     public boolean isEmpty() {
         return none();
@@ -229,10 +179,6 @@ public abstract class IdeaList<E> implements Iterable<E> {
     public boolean all(Predicate<E> predicate) {
         return !map(predicate::test).contains(false);
     }
-
-    /*public boolean all2(Predicate<E> predicate) {
-        return lazyReduceRight(true, )
-    }*/
 
     public abstract boolean any();
 
@@ -283,91 +229,70 @@ public abstract class IdeaList<E> implements Iterable<E> {
         return where(current -> !Objects.equals(current, element));
     }
 
-    /*@Override
-    public void forEach(Consumer<? super E> action) {
-        for (E element : this) action.accept(element);
-    }*/
-
     public void forEachIndexed(BiConsumer<Integer, E> action) {
         withIndex().forEach(currentPair -> action.accept(currentPair.index, currentPair.element));
     }
 
-    /*public void forEachIndexed(IntObjConsumer<E> action) {
-        withIndex().forEach(currentPair -> action.accept(currentPair.index, currentPair.element));
-    }*/
-
 
     // List operations ==============================================================================
-    private static <A, E> A reduceHelper(A initialValue, IdeaList<E> list, BiFunction<A, E, A> operation) {
-        A accumulator = initialValue;
-        for (E element : list) accumulator = operation.apply(accumulator, element);
-        return accumulator;
-    }
-
     public <A> A reduce(A initialValue, BiFunction<A, E, A> operation) {
-        return reduceHelper(initialValue, this, operation);
+        return Enumerable.reduce(this, initialValue, operation);
     }
 
     public <A> A reduceIndexed(A initialValue, TriFunction<Integer, A, E, A> operation) {
-        return withIndex().reduce(initialValue, (acc, pair) -> operation.apply(pair.index, acc, pair.element));
+        return Enumerable.reduceIndexed(this, initialValue, operation);
     }
 
-    /*public <A> A reduceIndexed(A initialValue, IntTriFunction<A, E, A> operation) {
-        return withIndex().reduce(initialValue, (accumulator, currentPair) -> operation.apply(currentPair.index, accumulator, currentPair.element));
-    }*/
+    public <A> A reduce(BiFunction<A, E, A> operation, Function<E, A> transformFirst) {
+        return Enumerable.reduce(this, operation, transformFirst);
+    }
 
-    /*public <A> A reduceRight(A initialValue, BiFunction<E, A, A> operation) {
-        return operation.apply(value.value(), tail.value().reduceRight(initialValue, operation));
-    }*/
+    public <A> A reduceIndexed(TriFunction<Integer, A, E, A> operation, BiFunction<Integer, E, A> transformFirst) {
+        return Enumerable.reduceIndexed(this, operation, transformFirst);
+    }
 
-    public abstract <A> A reduceRight(A initialValue, BiFunction<E, A, A> operation);
+    public E reduce(BinaryOperator<E> operation) {
+        return Enumerable.reduce(this, operation);
+    }
+
+    public E reduceIndexed(TriFunction<Integer, E, E, E> operation) {
+        return Enumerable.reduceIndexed(this, operation);
+    }
+
+    public <A> A reduceRight(A initialValue, BiFunction<E, A, A> operation) {
+        return Enumerable.reduceRight(this, initialValue, operation);
+    }
+
+    public <A> A reduceRightIndexed(A initialValue, TriFunction<Integer, E, A, A> operation) {
+        return Enumerable.reduceRightIndexed(this, initialValue, operation);
+    }
+
+    public <A> A reduceRight(BiFunction<E, A, A> operation, Function<E, A> transformLast) {
+        return Enumerable.reduceRight(this, operation, transformLast);
+    }
+
+    public <A> A reduceRightIndexed(TriFunction<Integer, E, A, A> operation, BiFunction<Integer, E, A> transformLast) {
+        return Enumerable.reduceRightIndexed(this, operation, transformLast);
+    }
+
+    public E reduceRight(BinaryOperator<E> operation) {
+        return Enumerable.reduceRight(this, operation);
+    }
+
+    public E reduceRightIndexed(TriFunction<Integer, E, E, E> operation) {
+        return Enumerable.reduceRightIndexed(this, operation);
+    }
 
     public abstract <A> A lazyReduceRight(A initialValue, BiFunction<Lazy<E>, Lazy<A>, A> operation);
 
-    public abstract E reduce(BinaryOperator<E> operation);
-
-    // Ideal scenario
-    /*public E reduceIndexed(TriFunction<Integer, E, E, E> operation) {
-        return withIndex().reduce((accumulator, currentPair) -> operation.apply(currentPair.index, accumulator, currentPair.element));
-    }*/
-
-    public E reduceIndexed(TriFunction<Integer, E, E, E> operation) {
-        return withIndex().reduce((accumulator, currentPair) -> IndexElement.of(0, operation.apply(currentPair.index, accumulator.element, currentPair.element))).element;
-    }
-
-    /*public E reduceIndexed(IntTriFunction<E, E, E> operation) {
-        return withIndex().reduce((accumulator, currentPair) -> IndexElement.of(0, operation.apply(currentPair.index, accumulator.element, currentPair.element))).element;
-    }*/
-
-    /*public abstract <R> IdeaList<R> map(Function<E, R> transform);*/
-
-    /*public <R> IdeaList<R> map(Function<E, R> transform) {
-            return IdeaList.create(
-                    Lazy.of(() -> transform.apply(value.value())),
-                    Lazy.of(() -> tail.value().map(transform))
-            );
-        }*/
-
-    private static <E, R> IdeaList<R> addTransformedValueToList(Function<E, R> transform, Lazy<E> element, Lazy<IdeaList<R>> list) {
-        return IdeaList.create(Lazy.of(() -> transform.apply(element.value())), list);
-    }
-
     public <R> IdeaList<R> map(Function<E, R> transform) {
-        return lazyReduceRight(IdeaList.empty(), (elem, acc) -> addTransformedValueToList(transform, elem, acc));
+        BiFunction<Lazy<E>, Lazy<IdeaList<R>>, IdeaList<R>> transformAndPrependElem = (elem, list) -> IdeaList.create(Lazy.of(() -> transform.apply(elem.value())), list);
+        return lazyReduceRight(IdeaList.empty(), transformAndPrependElem);
     }
-
-    /*public <R> IdeaList<R> map(Function<E, R> transform) {
-        return lazyReduceRight(IdeaList.empty(),
-                (elem, acc) -> IdeaList.create(Lazy.of(() -> transform.apply(elem.value())), acc));
-    }*/
 
     public <R> IdeaList<R> mapIndexed(BiFunction<Integer, E, R> transform) {
         return withIndex().map(currentPair -> transform.apply(currentPair.index, currentPair.element));
     }
-
-    /*public <R> IdeaList<R> mapIndexed(IntObjFunction<E, R> transform) {
-        return withIndex().map(currentPair -> transform.apply(currentPair.index, currentPair.element));
-    }*/
 
     public <R> IdeaList<R> select(Function<E, R> transform) {
         return map(transform);
@@ -377,33 +302,15 @@ public abstract class IdeaList<E> implements Iterable<E> {
         return mapIndexed(transform);
     }
 
-    /*public <R> IdeaList<R> selectIndexed(IntObjFunction<E, R> transform) {
-        return mapIndexed(transform);
-    }*/
-
-    /*public abstract IdeaList<E> where(Predicate<E> predicate);*/
-
-    private static <E> IdeaList<E> addElementToListIfMatchesPredicate(Predicate<E> predicate, Lazy<E> element, Lazy<IdeaList<E>> list) {
-        return predicate.test(element.value()) ? IdeaList.create(element, list) : list.value();
-    }
-
     public IdeaList<E> where(Predicate<E> predicate) {
-        return lazyReduceRight(IdeaList.empty(), (elem, acc) -> addElementToListIfMatchesPredicate(predicate, elem, acc));
+        BiFunction<Lazy<E>, Lazy<IdeaList<E>>, IdeaList<E>> prependElemIfMatch = (elem, list) -> predicate.test(elem.value()) ? IdeaList.create(elem, list) : list.value();
+        return lazyReduceRight(IdeaList.empty(), prependElemIfMatch);
     }
-
-    /*public IdeaList<E> where(Predicate<E> predicate) {
-        return lazyReduceRight(IdeaList.empty(), (elem, acc) -> predicate.test(elem.value()) ? IdeaList.create(elem, acc) : acc.value());
-    }*/
 
     public IdeaList<E> whereIndexed(BiPredicate<Integer, E> predicate) {
         return withIndex().where(currentPair -> predicate.test(currentPair.index, currentPair.element))
                 .select(currentPair -> currentPair.element);
     }
-
-    /*public IdeaList<E> whereIndexed(IntObjPredicate<E> predicate) {
-        return withIndex().where(currentPair -> predicate.test(currentPair.index, currentPair.element))
-                .select(currentPair -> currentPair.element);
-    }*/
 
     public IdeaList<E> filter(Predicate<E> predicate) {
         return where(predicate);
@@ -413,10 +320,6 @@ public abstract class IdeaList<E> implements Iterable<E> {
         return whereIndexed(predicate);
     }
 
-    /*public IdeaList<E> filterIndexed(IntObjPredicate<E> predicate) {
-        return whereIndexed(predicate);
-    }*/
-
     public IdeaList<E> findAll(Predicate<E> predicate) {
         return where(predicate);
     }
@@ -424,21 +327,6 @@ public abstract class IdeaList<E> implements Iterable<E> {
     public IdeaList<E> findAllIndexed(BiPredicate<Integer, E> predicate) {
         return whereIndexed(predicate);
     }
-
-    /*public IdeaList<E> findAllIndexed(IntObjPredicate<E> predicate) {
-        return whereIndexed(predicate);
-    }*/
-
-    /*abstract <N> IdeaList<N> concatNestedIterables();*/
-
-    /*public <N> IdeaList<N> flatten() {
-        if (isNested()) return concatNestedIterables();
-        throw new UnsupportedOperationException("List contains elements that are not Iterable");
-    }*/
-
-    /*<N> IdeaList<N> concatNestedIterables() {
-            return concat((Iterable<N>) value.value(), Lazy.of(() -> tail.value().concatNestedIterables()));
-        }*/
 
     @SuppressWarnings("unchecked") // Cast is safe because isNested() first checks if list does in fact contain nested iterables
     private <N> IdeaList<N> concatNestedIterables() {
@@ -450,35 +338,37 @@ public abstract class IdeaList<E> implements Iterable<E> {
         throw new UnsupportedOperationException("List contains elements that are not Iterable");
     }
 
-    private static <A, B, C> boolean allHaveNext(Triplet<Iterator<A>, Iterator<B>, Iterator<C>> iterators) {
-        return iterators.first.hasNext() && iterators.second.hasNext() && iterators.third.hasNext();
-    }
-
-    private static <A, B, C> Triplet<A, B, C> next(Triplet<Iterator<A>, Iterator<B>, Iterator<C>> iterators) {
-        return Triplet.of(iterators.first.next(), iterators.second.next(), iterators.third.next());
-    }
-
-    private static <A, B, C> IdeaList<Triplet<A, B, C>> zipWithHelper(Triplet<Iterator<A>, Iterator<B>, Iterator<C>> iterators) {
-        if (!allHaveNext(iterators)) return IdeaList.empty();
-        Triplet<A, B, C> elements = next(iterators);
-        return IdeaList.create(Lazy.of(() -> elements), Lazy.of(() -> zipWithHelper(iterators)));
-    }
-
     public <A, B> IdeaList<Triplet<E, A, B>> zipWith(Iterable<A> other, Iterable<B> other2) {
-        return zipWithHelper(Triplet.of(iterator(), other.iterator(), other2.iterator()));
+        return Enumerable.zip(this, other, other2);
     }
 
     public <A> IdeaList<Pair<E, A>> zipWith(Iterable<A> other) {
-        return zipWith(other, Enumerable.infiniteNulls()).map(Triplet::toPair);
+        return Enumerable.zip(this, other);
     }
 
     public IdeaList<IndexElement<E>> withIndex() {
-        return Range.infiniteIndices().zipWith(this).map(Pair::toIndexElement);
+        return Enumerable.withIndex(this);
     }
 
     public IdeaList<E> step(int length) {
         if (length < 1) throw new IllegalArgumentException("Length cannot be smaller than 1. Given: " + length);
         return whereIndexed((index, current) -> index % length == 0);
+    }
+
+    public int sumOf(Function<E, Integer> toInt) {
+        return map(toInt).reduce(Integer::sum);
+    }
+
+    public double sumOfDouble(Function<E, Double> toDouble) {
+        return map(toDouble).reduce(Double::sum);
+    }
+
+    public int count(Predicate<E> predicate) {
+        return sumOf(elem -> predicate.test(elem) ? 1 : 0);
+    }
+
+    public <R extends Comparable<R>> E maxBy(Function<E, R> selector) {
+        return map(selector).zipWith(this).reduce((accum, compElem) -> accum.first.compareTo(compElem.first) > 0 ? accum : compElem).second;
     }
 
 
@@ -490,24 +380,11 @@ public abstract class IdeaList<E> implements Iterable<E> {
             super(value, tail);
         }
 
-        private IdeaList<E> createTail(UnaryOperator<IdeaList<E>> function) {
+        private IdeaList<E> retainValueAndTransformTail(UnaryOperator<IdeaList<E>> function) {
             return IdeaList.create(value, Lazy.of(() -> function.apply(tail.value())));
         }
 
-
         // Getters ======================================================================================
-        /*@Override
-        public E get(int index) {
-            handleNegativeIndex(index);
-            return index == 0 ? value.value() : tail.value().get(index - 1);
-        }*/
-
-        /*@Override
-        public E get(int index) {
-            if (index < 0) return get(toPositiveIndex(index));
-            return index == 0 ? value.value() : tail.value().get(index - 1);
-        }*/
-
         @Override
         public E first() {
             return value.value();
@@ -534,11 +411,6 @@ public abstract class IdeaList<E> implements Iterable<E> {
             return Range.from(0).upToAndIncluding(lastIndex());
         }
 
-        @Override
-        public int length() {
-            return 1 + tail.value().length();
-        }
-
 
         // Checks =======================================================================================
         @Override
@@ -553,74 +425,31 @@ public abstract class IdeaList<E> implements Iterable<E> {
 
 
         // Modifiers ====================================================================================
-        /*@Override
-        public IdeaList<E> insertAt(int index, Iterable<E> elements) {
-            handleNegativeIndex(index);
-            return index == 0 ? concat(elements, this) :
-                    createTail(tail -> tail.insertAt(index - 1, elements));
-        }*/
-
         @Override
         public IdeaList<E> insertAt(int index, Iterable<E> elements) {
             if (index < 0) return insertAt(toPositiveIndex(index), elements);
             return index == 0
                     ? concat(elements, this)
-                    : createTail(tail -> tail.insertAt(index - 1, elements));
+                    : retainValueAndTransformTail(tail -> tail.insertAt(index - 1, elements));
         }
 
         @Override
         public IdeaList<E> removeFirst(@Nullable E element) {
-            return Objects.equals(value.value(), element) ? tail.value() : createTail(tail -> tail.removeFirst(element));
+            return Objects.equals(value.value(), element) ? tail.value() : retainValueAndTransformTail(tail -> tail.removeFirst(element));
         }
-
-        /*@Override
-        public IdeaList<E> removeAt(int index) {
-            handleNegativeIndex(index);
-            return index == 0 ? tail.value() : createTail(tail -> tail.removeAt(index - 1));
-        }*/
 
         @Override
         public IdeaList<E> removeAt(int index) {
             if (index < 0) return removeAt(toPositiveIndex(index));
-            return index == 0 ? tail.value() : createTail(tail -> tail.removeAt(index - 1));
+            return index == 0 ? tail.value() : retainValueAndTransformTail(tail -> tail.removeAt(index - 1));
         }
 
 
         // List operations ==============================================================================
         @Override
-        public E reduce(BinaryOperator<E> operation) {
-            return reduceHelper(first(), tail.value(), operation);
-        }
-
-        @Override
-        public <A> A reduceRight(A initialValue, BiFunction<E, A, A> operation) {
-            return operation.apply(value.value(), tail.value().reduceRight(initialValue, operation));
-        }
-
-        @Override
         public <A> A lazyReduceRight(A initialValue, BiFunction<Lazy<E>, Lazy<A>, A> operation) {
             return operation.apply(value, Lazy.of(() -> tail.value().lazyReduceRight(initialValue, operation)));
         }
-
-        /*@Override
-        public <R> IdeaList<R> map(Function<E, R> transform) {
-            return IdeaList.create(
-                    Lazy.of(() -> transform.apply(value.value())),
-                    Lazy.of(() -> tail.value().map(transform))
-            );
-        }
-
-        @Override
-        public IdeaList<E> where(Predicate<E> predicate) {
-            return predicate.test(value.value()) ?
-                    createTail(tail -> tail.where(predicate)) : tail.value().where(predicate);
-        }*/
-
-        /*@Override
-        @SuppressWarnings("unchecked") // Cast is safe because isNested() first checks if list does in fact contain nested iterables
-        <N> IdeaList<N> concatNestedIterables() {
-            return concat((Iterable<N>) value.value(), Lazy.of(() -> tail.value().concatNestedIterables()));
-        }*/
     }
 
 
@@ -664,11 +493,6 @@ public abstract class IdeaList<E> implements Iterable<E> {
             throw new UnsupportedOperationException("Empty list has no indices");
         }
 
-        @Override
-        public int length() {
-            return 0;
-        }
-
 
         // Checks =======================================================================================
         @Override
@@ -683,12 +507,6 @@ public abstract class IdeaList<E> implements Iterable<E> {
 
 
         // Modifiers ====================================================================================
-        /*@Override
-        public IdeaList<E> insertAt(int index, Iterable<E> elements) {
-            handleNegativeIndex(index);
-            throw indexTooBigException();
-        }*/
-
         @Override
         public IdeaList<E> insertAt(int index, Iterable<E> elements) {
             throw indexTooBigException();
@@ -699,12 +517,6 @@ public abstract class IdeaList<E> implements Iterable<E> {
             return this;
         }
 
-        /*@Override
-        public IdeaList<E> removeAt(int index) {
-            handleNegativeIndex(index);
-            throw indexTooBigException();
-        }*/
-
         @Override
         public IdeaList<E> removeAt(int index) {
             throw indexTooBigException();
@@ -713,33 +525,8 @@ public abstract class IdeaList<E> implements Iterable<E> {
 
         // List operations ==============================================================================
         @Override
-        public E reduce(BinaryOperator<E> operation) {
-            throw new UnsupportedOperationException("Empty list cannot be reduced");
-        }
-
-        @Override
-        public <A> A reduceRight(A initialValue, BiFunction<E, A, A> operation) {
-            return initialValue;
-        }
-
-        @Override
         public <A> A lazyReduceRight(A initialValue, BiFunction<Lazy<E>, Lazy<A>, A> operation) {
             return initialValue;
         }
-
-        /*@Override
-        public <R> IdeaList<R> map(Function<E, R> transform) {
-            return IdeaList.empty();
-        }
-
-        @Override
-        public IdeaList<E> where(Predicate<E> predicate) {
-            return this;
-        }*/
-
-        /*@Override
-        <N> IdeaList<N> concatNestedIterables() {
-            return IdeaList.empty();
-        }*/
     }
 }
