@@ -2,8 +2,10 @@ package domain;
 
 import com.sun.istack.internal.Nullable;
 import domain.function.TriFunction;
+import domain.primitive_specializations.LazyInt;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.*;
 
 import static domain.Enumerable.isContentEqual;
@@ -61,6 +63,14 @@ public abstract class IdeaList<E> implements Iterable<E> {
     public static <E> IdeaList<E> initialiseWith(int length, Function<Integer, E> indexToElement) {
         handleNegativeLength(length);
         return rangeLength(0, length).map(indexToElement);
+    }
+
+    /*public static <E> IdeaList<E> initialiseWith2(int length, IntFunction<E> indexToElement) {
+        return Range.from(0).length(length).map(indexToElement);
+    }*/
+
+    public static <E> IdeaList<E> initWith(int length, Function<Integer, E> indexToElement) {
+        return initialiseWith(length, indexToElement);
     }
 
     private static IdeaList<Long> rangeLength(long from, long length) {
@@ -125,6 +135,7 @@ public abstract class IdeaList<E> implements Iterable<E> {
         return length() - 1;
     }
 
+    // Should return IntIdeaList
     public abstract IdeaList<Integer> indices();
 
     public int length() {
@@ -132,9 +143,11 @@ public abstract class IdeaList<E> implements Iterable<E> {
     }
 
     public List<E> toList() {
-        List<E> list = new ArrayList<>();
-        forEach(list::add);
-        return list;
+        return Enumerable.toList(this);
+    }
+
+    public <R> R[] toArray(IntFunction<R[]> generator) {
+        return generator.apply(length());
     }
 
     @Override
@@ -212,6 +225,11 @@ public abstract class IdeaList<E> implements Iterable<E> {
         return concatWith(asList(elements));
     }
 
+    @SafeVarargs
+    public final IdeaList<E> append(E... elements) {
+        return add(elements);
+    }
+
     public IdeaList<E> linkToBackOf(Iterable<E> elements) {
         return concat(elements, this);
     }
@@ -219,6 +237,11 @@ public abstract class IdeaList<E> implements Iterable<E> {
     @SafeVarargs
     public final IdeaList<E> addToFront(E... elements) {
         return linkToBackOf(asList(elements));
+    }
+
+    @SafeVarargs
+    public final IdeaList<E> prepend(E... elements) {
+        return addToFront(elements);
     }
 
     public abstract IdeaList<E> removeFirst(@Nullable E element);
@@ -231,6 +254,11 @@ public abstract class IdeaList<E> implements Iterable<E> {
 
     public void forEachIndexed(BiConsumer<Integer, E> action) {
         withIndex().forEach(currentPair -> action.accept(currentPair.index, currentPair.element));
+    }
+
+    public void forEachIndexed2(BiConsumer<Integer, E> action) {
+        AtomicInteger count = new AtomicInteger();
+        forEach(elem -> action.accept(count.getAndIncrement(), elem));
     }
 
 
@@ -247,7 +275,7 @@ public abstract class IdeaList<E> implements Iterable<E> {
         return Enumerable.reduce(this, operation, transformFirst);
     }
 
-    public <A> A reduceIndexed(TriFunction<Integer, A, E, A> operation, BiFunction<Integer, E, A> transformFirst) {
+    public <A> A reduceIndexed(TriFunction<Integer, A, E, A> operation, Function<E, A> transformFirst) {
         return Enumerable.reduceIndexed(this, operation, transformFirst);
     }
 
@@ -258,6 +286,14 @@ public abstract class IdeaList<E> implements Iterable<E> {
     public E reduceIndexed(TriFunction<Integer, E, E, E> operation) {
         return Enumerable.reduceIndexed(this, operation);
     }
+
+    /*public E reduceIndexed(TriFunction<Integer, E, E, E> operation) {
+        return withIndex().reduce((accumulator, currentPair) -> IndexElement.of(0, operation.apply(currentPair.index, accumulator.element, currentPair.element))).element;
+    }*/
+
+    /*public E reduceIndexed(TriFunction<Integer, E, E, E> operation) {
+        return withIndex().reduce((accum, idxElem) -> IndexElement.of(0, operation.apply(idxElem.index, accum.element, idxElem.element))).element;
+    }*/
 
     public <A> A reduceRight(A initialValue, BiFunction<E, A, A> operation) {
         return Enumerable.reduceRight(this, initialValue, operation);
@@ -283,7 +319,7 @@ public abstract class IdeaList<E> implements Iterable<E> {
         return Enumerable.reduceRightIndexed(this, operation);
     }
 
-    public abstract <A> A lazyReduceRight(A initialValue, BiFunction<Lazy<E>, Lazy<A>, A> operation);
+    abstract <A> A lazyReduceRight(A initialValue, BiFunction<Lazy<E>, Lazy<A>, A> operation);
 
     public <R> IdeaList<R> map(Function<E, R> transform) {
         BiFunction<Lazy<E>, Lazy<IdeaList<R>>, IdeaList<R>> transformAndPrependElem = (elem, list) -> IdeaList.create(Lazy.of(() -> transform.apply(elem.value())), list);
@@ -292,6 +328,16 @@ public abstract class IdeaList<E> implements Iterable<E> {
 
     public <R> IdeaList<R> mapIndexed(BiFunction<Integer, E, R> transform) {
         return withIndex().map(currentPair -> transform.apply(currentPair.index, currentPair.element));
+    }
+
+    public <R> IdeaList<R> mapIndexed2(BiFunction<Integer, E, R> transform) {
+        AtomicInteger index = new AtomicInteger();
+        return map(elem -> transform.apply(index.getAndIncrement(), elem));
+    }
+
+    public IntIdeaList mapToInt(ToIntFunction<E> transform) {
+        BiFunction<Lazy<E>, Lazy<IntIdeaList>, IntIdeaList> transformAndPrependElem = (elem, list) -> IntIdeaList.create(LazyInt.of(() -> transform.applyAsInt(elem.value())), list);
+        return lazyReduceRight(IntIdeaList.empty(), transformAndPrependElem);
     }
 
     public <R> IdeaList<R> select(Function<E, R> transform) {
@@ -312,6 +358,11 @@ public abstract class IdeaList<E> implements Iterable<E> {
                 .select(currentPair -> currentPair.element);
     }
 
+    public IdeaList<E> whereIndexed2(BiPredicate<Integer, E> predicate) {
+        AtomicInteger index = new AtomicInteger();
+        return where(elem -> predicate.test(index.getAndIncrement(), elem));
+    }
+
     public IdeaList<E> filter(Predicate<E> predicate) {
         return where(predicate);
     }
@@ -330,7 +381,7 @@ public abstract class IdeaList<E> implements Iterable<E> {
 
     @SuppressWarnings("unchecked") // Cast is safe because isNested() first checks if list does in fact contain nested iterables
     private <N> IdeaList<N> concatNestedIterables() {
-        return lazyReduceRight(IdeaList.empty(), (elem, acc) -> concat((Iterable<N>) value.value(), acc));
+        return lazyReduceRight(IdeaList.empty(), (elem, acc) -> concat((Iterable<N>) elem, acc));
     }
 
     public <N> IdeaList<N> flatten() {
@@ -355,8 +406,20 @@ public abstract class IdeaList<E> implements Iterable<E> {
         return whereIndexed((index, current) -> index % length == 0);
     }
 
-    public int sumOf(Function<E, Integer> toInt) {
+    /*public int sumOf(Function<E, Integer> toInt) {
         return map(toInt).reduce(Integer::sum);
+    }
+
+    public double sumOfDouble(Function<E, Double> toDouble) {
+        return map(toDouble).reduce(Double::sum);
+    }
+
+    public int count(Predicate<E> predicate) {
+        return sumOf(elem -> predicate.test(elem) ? 1 : 0);
+    }*/
+
+    public int sumOf(ToIntFunction<E> toInt) {
+        return mapToInt(toInt).sum();
     }
 
     public double sumOfDouble(Function<E, Double> toDouble) {
@@ -447,7 +510,7 @@ public abstract class IdeaList<E> implements Iterable<E> {
 
         // List operations ==============================================================================
         @Override
-        public <A> A lazyReduceRight(A initialValue, BiFunction<Lazy<E>, Lazy<A>, A> operation) {
+        <A> A lazyReduceRight(A initialValue, BiFunction<Lazy<E>, Lazy<A>, A> operation) {
             return operation.apply(value, Lazy.of(() -> tail.value().lazyReduceRight(initialValue, operation)));
         }
     }
@@ -525,7 +588,7 @@ public abstract class IdeaList<E> implements Iterable<E> {
 
         // List operations ==============================================================================
         @Override
-        public <A> A lazyReduceRight(A initialValue, BiFunction<Lazy<E>, Lazy<A>, A> operation) {
+        <A> A lazyReduceRight(A initialValue, BiFunction<Lazy<E>, Lazy<A>, A> operation) {
             return initialValue;
         }
     }

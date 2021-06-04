@@ -1,13 +1,16 @@
 package domain;
 
+import com.sun.istack.internal.Nullable;
 import domain.function.TriFunction;
 
-import java.util.Iterator;
-import java.util.Objects;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiFunction;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.function.Predicate;
+
+import static java.util.function.Predicate.isEqual;
 
 // Iterable would be a better name, but Java doesn't have type aliasing
 public final class Enumerable {
@@ -69,16 +72,33 @@ public final class Enumerable {
         return reduce(withIndex(iterable), initialValue, (accum, idxElem) -> operation.apply(idxElem.index, accum, idxElem.element));
     }
 
+    public static <A, E> A reduceIndexed2(Iterable<E> iterable, A initialValue, TriFunction<Integer, A, E, A> operation) {
+        AtomicInteger index = new AtomicInteger();
+        return reduce(iterable, initialValue, (accum, elem) -> operation.apply(index.getAndIncrement(), accum, elem));
+    }
+
     public static <E, A> A reduce(Iterable<E> iterable, BiFunction<A, E, A> operation, Function<E, A> transformFirst) {
         Iterator<E> iterator = iterable.iterator();
         if (!iterator.hasNext()) throw new UnsupportedOperationException("Empty list cannot be reduced");
         return reduceHelper(iterator, transformFirst.apply(iterator.next()), operation);
     }
 
-    public static <A, E> A reduceIndexed(Iterable<E> iterable, TriFunction<Integer, A, E, A> operation, BiFunction<Integer, E, A> transformFirst) {
+    // TODO BiFunction<Integer, E, A> -> Function<E, A> transformFirst
+    /*public static <A, E> A reduceIndexed(Iterable<E> iterable, TriFunction<Integer, A, E, A> operation, BiFunction<Integer, E, A> transformFirst) {
         return reduce(withIndex(iterable),
                 (accum, idxElem) -> operation.apply(idxElem.index, accum, idxElem.element),
                 idxElem -> transformFirst.apply(idxElem.index, idxElem.element));
+    }*/
+
+    public static <A, E> A reduceIndexed(Iterable<E> iterable, TriFunction<Integer, A, E, A> operation, Function<E, A> transformFirst) {
+        return reduce(withIndex(iterable),
+                (accum, idxElem) -> operation.apply(idxElem.index, accum, idxElem.element),
+                idxElem -> transformFirst.apply(idxElem.element));
+    }
+
+    public static <A, E> A reduceIndexed2(Iterable<E> iterable, TriFunction<Integer, A, E, A> operation, Function<E, A> transformFirst) {
+        AtomicInteger index = new AtomicInteger();
+        return reduce(iterable, (accum, elem) -> operation.apply(index.getAndIncrement(), accum, elem), transformFirst);
     }
 
     public static <E> E reduce(Iterable<E> iterable, BinaryOperator<E> operation) {
@@ -89,6 +109,11 @@ public final class Enumerable {
         return reduce(withIndex(iterable),
                 (accum, idxElem) -> operation.apply(idxElem.index, accum, idxElem.element),
                 idxElem -> idxElem.element);
+    }
+
+    public static <E> E reduceIndexed2(Iterable<E> iterable, TriFunction<Integer, E, E, E> operation) {
+        AtomicInteger index = new AtomicInteger();
+        return reduce(iterable, (accum, elem) -> operation.apply(index.getAndIncrement(), accum, elem));
     }
 
     private static <A, E> A reduceRightHelper(Iterator<E> iterator, A initialValue, BiFunction<E, A, A> operation) {
@@ -103,11 +128,15 @@ public final class Enumerable {
         return reduceRight(withIndex(iterable), initialValue, (idxElem, accum) -> operation.apply(idxElem.index, idxElem.element, accum));
     }
 
+    public static <A, E> A reduceRightIndexed2(Iterable<E> iterable, A initialValue, TriFunction<Integer, E, A, A> operation) {
+        AtomicInteger index = new AtomicInteger();
+        return reduceRight(iterable, initialValue, (accum, elem) -> operation.apply(index.getAndIncrement(), accum, elem));
+    }
+
     private static <A, E> A reduceRightHelper(Iterator<E> iterator, BiFunction<E, A, A> operation, Function<E, A> transformLast) {
         if (iterator.hasNext()) {
             E element = iterator.next();
-            if (!iterator.hasNext()) return transformLast.apply(element);
-            return operation.apply(element, reduceRightHelper(iterator, operation, transformLast));
+            return !iterator.hasNext() ? transformLast.apply(element) : operation.apply(element, reduceRightHelper(iterator, operation, transformLast));
         }
         throw new UnsupportedOperationException("Empty list cannot be reduced");
     }
@@ -122,6 +151,11 @@ public final class Enumerable {
                 idxElem -> transformLast.apply(idxElem.index, idxElem.element));
     }
 
+    public static <A, E> A reduceRightIndexed2(Iterable<E> iterable, TriFunction<Integer, E, A, A> operation, Function<E, A> transformLast) {
+        AtomicInteger index = new AtomicInteger();
+        return reduceRight(iterable, (elem, accum) -> operation.apply(index.getAndIncrement(), elem, accum), transformLast);
+    }
+
     public static <E> E reduceRight(Iterable<E> iterable, BinaryOperator<E> operation) {
         return reduceRight(iterable, operation, Function.identity());
     }
@@ -132,6 +166,11 @@ public final class Enumerable {
                 idxElem -> idxElem.element);
     }
 
+    public static <E> E reduceRightIndexed2(Iterable<E> iterable, TriFunction<Integer, E, E, E> operation) {
+        AtomicInteger index = new AtomicInteger();
+        return reduceRight(iterable, (elem, accum) -> operation.apply(index.getAndIncrement(), elem, accum));
+    }
+
     public static int sum(Iterable<Integer> iterable) {
         return reduce(iterable, 0, Integer::sum);
     }
@@ -140,17 +179,158 @@ public final class Enumerable {
         return reduce(iterable, 0.0d, Double::sum);
     }
 
-    public <E> boolean all(Iterable<E> iterable, Predicate<E> predicate) {
+    public static <E> boolean all(Iterable<E> iterable, Predicate<E> predicate) {
         for (E element : iterable) {
             if (!predicate.test(element)) return false;
         }
         return true;
     }
 
-    public <E> boolean any(Iterable<E> iterable, Predicate<E> predicate) {
+    private static <E> boolean isEmpty(Optional<E> optional) {
+        return !optional.isPresent();
+    }
+
+    public static <E> boolean all2(Iterable<E> iterable, Predicate<E> predicate) {
+        return ! findFirst(iterable, predicate.negate()).isPresent(); // isEmpty()
+    }
+
+    public static <E> boolean all3(Iterable<E> iterable, Predicate<E> predicate) {
+        return isEmpty( findFirst(iterable, predicate.negate()) );
+    }
+
+    public static <E> boolean any(Iterable<E> iterable, Predicate<E> predicate) {
         for (E element : iterable) {
             if (predicate.test(element)) return true;
         }
         return false;
+    }
+
+    public static <E> boolean any2(Iterable<E> iterable, Predicate<E> predicate) {
+        return findFirst(iterable, predicate).isPresent();
+    }
+
+    public static <E> Optional<E> findFirst(Iterable<E> iterable, Predicate<E> predicate) {
+        for (E element : iterable) {
+            if (predicate.test(element)) return Optional.of(element);
+        }
+        return Optional.empty();
+    }
+
+    private static <E> E first(Iterator<E> iterator) {
+        if (iterator.hasNext()) return iterator.next();
+        throw new NoSuchElementException("Iterable is empty");
+    }
+
+    public static <E> E first(Iterable<E> iterable) {
+        return first(iterable.iterator());
+    }
+
+    public static <E> E single(Iterable<E> iterable) {
+        Iterator<E> iterator = iterable.iterator();
+        E single = first(iterator);
+        if (iterator.hasNext()) throw new IllegalArgumentException("Iterable has more than one element");
+        return single;
+    }
+
+    public static <E> E last(Iterable<E> iterable) {
+        Iterator<E> iterator = iterable.iterator();
+        if (!iterator.hasNext()) throw new NoSuchElementException("Iterable is empty");
+        E last = iterator.next();
+        while (iterator.hasNext()) {
+            last = iterator.next();
+        }
+        return last;
+    }
+
+    /*public <E> OptionalInt indexOfFirst2(Iterable<E> iterable, Predicate<E> predicate) {
+        AtomicInteger index = new AtomicInteger(0);
+        return findFirst(iterable, elem -> {
+            if (predicate.test(elem)) {
+                return true;
+            } else {
+                index.getAndIncrement();
+                return false;
+            }
+        } ).map(elem -> OptionalInt.of(index.intValue())).orElseGet(OptionalInt::empty);
+    }*/
+
+    /*public <E> OptionalInt indexOfFirst2(Iterable<E> iterable, Predicate<E> predicate) {
+        AtomicInteger index = new AtomicInteger(-1);
+        Predicate<E> incrementAndTest = elem -> {
+            index.getAndIncrement();
+            return predicate.test(elem);
+        };
+        return findFirst(iterable, incrementAndTest)
+                .map(elem -> OptionalInt.of(index.intValue()))
+                .orElseGet(OptionalInt::empty);
+    }*/
+
+    public static <E> OptionalInt indexOfFirst(Iterable<E> iterable, Predicate<E> predicate) {
+        int index = 0;
+        for (E element : iterable) {
+            if (predicate.test(element)) return OptionalInt.of(index);
+            index++;
+        }
+        return OptionalInt.empty();
+    }
+
+    /*public <E> E lazyGet(Iterable<Lazy<E>> iterable, int index) {
+        int count = 0;
+        for (Lazy<E> element : iterable) {
+            if (index == count++) return element.value();
+        }
+        throw new IndexOutOfBoundsException("Index too big");
+    }*/
+
+    private static IndexOutOfBoundsException indexOutOfBoundsException(int index, int length) {
+        return new IndexOutOfBoundsException("Index "+index+" out of bounds for length "+length);
+    }
+
+    public static <E> E get(Iterable<E> iterable, int index) {
+        int count = 0;
+        for (E element : iterable) {
+            if (index == count++) return element;
+        }
+        throw indexOutOfBoundsException(index, count);
+    }
+
+    public static <E> E get2(Iterable<E> iterable, int index) {
+        AtomicInteger count = new AtomicInteger();
+        return findFirst(iterable, __ -> index == count.getAndIncrement())
+                .orElseThrow(() -> indexOutOfBoundsException(index, count.get()));
+    }
+
+    public static <E> OptionalInt indexOfFirst(Iterable<E> iterable, @Nullable E element) {
+        return indexOfFirst(iterable, isEqual(element));
+    }
+
+    public static <E> boolean contains(Iterable<E> iterable, @Nullable E element) {
+        return indexOfFirst(iterable, element).isPresent();
+    }
+
+    /*public boolean containsAll(Iterable<E> elements) {
+        return IdeaList.of(elements).all(this::contains);
+    }*/
+
+    public static <E> boolean containsAll(Iterable<E> iterable, Iterable<E> elements) {
+        return all(elements, elem -> contains(iterable, elem));
+    }
+
+    public static <E> boolean isEmpty(Iterable<E> iterable) {
+        return none(iterable);
+    }
+
+    public static <E> boolean any(Iterable<E> iterable) {
+        return iterable.iterator().hasNext();
+    }
+
+    public static <E> boolean none(Iterable<E> iterable) {
+        return !any(iterable);
+    }
+
+    public static <E> List<E> toList(Iterable<E> iterable) {
+        List<E> list = new ArrayList<>();
+        iterable.forEach(list::add);
+        return list;
     }
 }

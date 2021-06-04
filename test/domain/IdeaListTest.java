@@ -1437,7 +1437,7 @@ public class IdeaListTest {
         IdeaList<Object> expected = IdeaList.of(null, 9, l7, 8, l6, 7, null, 6, null, 5, l5, 4, l4, 3, l3, 2, l2, 1, l1, 0);
 
         assertEquals(expected, input.reduceIndexed(IdeaList.empty(), (index, acc, date) -> acc.addToFront(index).addToFront(date)));
-                               input.withIndex().reduce(IdeaList.empty(), (acc, idxDate) -> acc.addToFront(idxDate.index).addToFront(idxDate.element));
+                             //input.withIndex().reduce(IdeaList.empty(), (acc, idxDate) -> acc.addToFront(idxDate.index).addToFront(idxDate.element));
     }
 
     @Test
