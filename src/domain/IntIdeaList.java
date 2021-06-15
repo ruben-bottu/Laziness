@@ -1,12 +1,10 @@
 package domain;
 
+import domain.primitive_specializations.IntObjPair;
 import domain.primitive_specializations.LazyInt;
 import domain.primitive_specializations.PrimitiveEnumerator;
 
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Objects;
-import java.util.PrimitiveIterator;
+import java.util.*;
 import java.util.function.*;
 
 public abstract class IntIdeaList implements Iterable<Integer> {
@@ -118,7 +116,7 @@ public abstract class IntIdeaList implements Iterable<Integer> {
 
     @Override
     public void forEach(Consumer<? super Integer> action) {
-        iterator().forEachRemaining((IntConsumer) action);
+        iterator().forEachRemaining(action);
     }
 
     abstract <A> A lazyReduceRight(A initialValue, BiFunction<LazyInt, Lazy<A>, A> operation);
@@ -162,7 +160,7 @@ public abstract class IntIdeaList implements Iterable<Integer> {
     }
 
     public int count(IntPredicate predicate) {
-        return reduce((accum, elem) -> predicate.test(elem) ? accum + 1 : accum);
+        return map(elem -> predicate.test(elem) ? 1 : 0).sum();
     }
 
     public int length() {
@@ -175,6 +173,42 @@ public abstract class IntIdeaList implements Iterable<Integer> {
 
     public int min() {
         return reduce(Math::min);
+    }
+
+    /*public <A> IdeaList<Pair<E, A>> zipWith(Iterable<A> other) {
+        return Enumerable.zip(this, other);
+    }*/
+
+    /*private static <A, B> boolean allHaveNext(Pair<Iterator<A>, Iterator<B>> iterators) {
+        return iterators.first.hasNext() && iterators.second.hasNext();
+    }
+
+    private static <A, B> Pair<A, B> next(Pair<Iterator<A>, Iterator<B>> iterators) {
+        return Pair.of(iterators.first.next(), iterators.second.next());
+    }
+
+    private static <A, B> IdeaList<Pair<A, B>> zipHelper(Pair<Iterator<A>, Iterator<B>> iterators) {
+        if (!allHaveNext(iterators)) return IdeaList.empty();
+        Pair<A, B> elements = next(iterators);
+        return IdeaList.create(Lazy.of(() -> elements), Lazy.of(() -> zipHelper(iterators)));
+    }*/
+
+    private static <A> boolean allHaveNext(Pair<PrimitiveIterator.OfInt, Iterator<A>> iterators) {
+        return iterators.first.hasNext() && iterators.second.hasNext();
+    }
+
+    private static <A> IntObjPair<A> next(Pair<PrimitiveIterator.OfInt, Iterator<A>> iterators) {
+        return IntObjPair.of(iterators.first.nextInt(), iterators.second.next());
+    }
+
+    private static <A> IdeaList<IntObjPair<A>> zipHelper(Pair<PrimitiveIterator.OfInt, Iterator<A>> iterators) {
+        if (!allHaveNext(iterators)) return IdeaList.empty();
+        IntObjPair<A> elements = next(iterators);
+        return IdeaList.create(Lazy.of(() -> elements), Lazy.of(() -> zipHelper(iterators)));
+    }
+
+    public <A> IdeaList<IntObjPair<A>> zipWith(Iterable<A> other) {
+        return zipHelper(Pair.of(iterator(), other.iterator()));
     }
 
 
