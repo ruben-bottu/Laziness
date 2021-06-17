@@ -1,5 +1,6 @@
 package idealist;
 
+import idealist.range.Range;
 import org.junit.Test;
 
 import static org.junit.Assert.*;

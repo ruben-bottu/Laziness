@@ -1,8 +1,8 @@
 package idealist;
 
-import idealist.primitive_specializations.IntObjPair;
-import idealist.primitive_specializations.LazyInt;
+import idealist.tuple.IntObjPair;
 import idealist.primitive_specializations.PrimitiveEnumerator;
+import idealist.tuple.Pair;
 
 import java.util.*;
 import java.util.function.*;
@@ -158,6 +158,10 @@ public abstract class IntIdeaList implements Iterable<Integer> {
     public double average() {
         return (double) sum() / length();
     }
+
+    /*public int count2(IntPredicate predicate) {
+        return reduce(0, (accum, elem) -> predicate.test(elem) ? accum + 1 : accum);
+    }*/
 
     public int count(IntPredicate predicate) {
         return map(elem -> predicate.test(elem) ? 1 : 0).sum();

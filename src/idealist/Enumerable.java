@@ -2,6 +2,10 @@ package idealist;
 
 import idealist.function.IndexedBiFunction;
 import idealist.function.TriFunction;
+import idealist.range.Range;
+import idealist.tuple.IndexElement;
+import idealist.tuple.Pair;
+import idealist.tuple.Triplet;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -32,6 +36,18 @@ public final class Enumerable {
         }
     }
 
+    /*public static boolean isContentEqual2(Iterable<?> iterable, Iterable<?> other) {
+        var it1 = iterable.iterator();
+        var it2 = other.iterator();
+        while (true) {
+            if (it1.hasNext() && !it2.hasNext() || !it1.hasNext() && it2.hasNext()) return false;
+            if (!it1.hasNext()) return true;
+            if (!Objects.equals(it1.next(), it2.next())) return false;
+        }
+    }*/
+
+    // anyDoNotHaveNext
+    // anyDontHaveNext
     private static <A, B, C> boolean allHaveNext(Triplet<Iterator<A>, Iterator<B>, Iterator<C>> iterators) {
         return iterators.first.hasNext() && iterators.second.hasNext() && iterators.third.hasNext();
     }
@@ -46,12 +62,18 @@ public final class Enumerable {
         return IdeaList.create(Lazy.of(() -> elements), Lazy.of(() -> zipHelper(iterators)));
     }
 
-    public static <A, B, C> IdeaList<Triplet<A, B, C>> zip(Iterable<A> aIterable, Iterable<B> bIterable, Iterable<C> cIterable) {
-        return zipHelper(Triplet.of(aIterable.iterator(), bIterable.iterator(), cIterable.iterator()));
+    /*private static <A, B, C> IdeaList<Triplet<A, B, C>> zipHelper2(Triplet<Iterator<A>, Iterator<B>, Iterator<C>> iterators) {
+        if (!allHaveNext(iterators)) return IdeaList.empty();
+        var elements = next(iterators);
+        return IdeaList.create(Lazy.of(() -> elements), Lazy.of(() -> zipHelper2(iterators)));
+    }*/
+
+    public static <A, B, C> IdeaList<Triplet<A, B, C>> zip(Iterable<A> first, Iterable<B> second, Iterable<C> third) {
+        return zipHelper(Triplet.of(first.iterator(), second.iterator(), third.iterator()));
     }
 
-    public static <A, B> IdeaList<Pair<A, B>> zip(Iterable<A> aIterable, Iterable<B> bIterable) {
-        return zip(aIterable, bIterable, Enumerable.infiniteNulls()).map(Triplet::toPair);
+    public static <A, B> IdeaList<Pair<A, B>> zip(Iterable<A> first, Iterable<B> second) {
+        return zip(first, second, Enumerable.infiniteNulls()).map(Triplet::toPair);
     }
 
     private static <A, B> boolean allHaveNext(Pair<Iterator<A>, Iterator<B>> iterators) {
@@ -68,9 +90,15 @@ public final class Enumerable {
         return IdeaList.create(Lazy.of(() -> elements), Lazy.of(() -> zipHelper(iterators)));
     }
 
+    /*private static <A, B> IdeaList<Pair<A, B>> zipHelper(Pair<Iterator<A>, Iterator<B>> iterators) {
+        if (!allHaveNext(iterators)) return IdeaList.empty();
+        var elements = next(iterators);
+        return IdeaList.create(Lazy.of(() -> elements), Lazy.of(() -> zipHelper(iterators)));
+    }*/
+
     // TODO benchmark
-    public static <A, B> IdeaList<Pair<A, B>> zipDirectlyImplemented(Iterable<A> aIterable, Iterable<B> bIterable) {
-        return zipHelper(Pair.of(aIterable.iterator(), bIterable.iterator()));
+    public static <A, B> IdeaList<Pair<A, B>> zipDirectlyImplemented(Iterable<A> first, Iterable<B> second) {
+        return zipHelper(Pair.of(first.iterator(), second.iterator()));
     }
 
     public static <E> IdeaList<IndexElement<E>> withIndex(Iterable<E> iterable) {
@@ -96,14 +124,30 @@ public final class Enumerable {
         return reduce(iterable, initialValue, (accum, elem) -> operation.apply(index.getAndIncrement(), accum, elem));
     }
 
+    public static <A, E> A reduceIndexed2(Iterable<E> iterable, A initialValue, TriFunction<Integer, A, E, A> operation) {
+        var index = new AtomicInteger();
+        return reduce(iterable, initialValue, (accum, elem) -> operation.apply(index.getAndIncrement(), accum, elem));
+    }
+
     public static <E, A> A reduce(Iterable<E> iterable, BiFunction<A, E, A> operation, Function<E, A> transformFirst) {
         Iterator<E> iterator = iterable.iterator();
         if (!iterator.hasNext()) throw new UnsupportedOperationException("Empty list cannot be reduced");
         return reduceHelper(iterator, transformFirst.apply(iterator.next()), operation);
     }
 
+    public static <E, A> A reduceT2(Iterable<E> iterable, Function<E, A> transformFirst, BiFunction<A, E, A> operation) {
+        var iterator = iterable.iterator();
+        if (!iterator.hasNext()) throw new UnsupportedOperationException("Empty list cannot be reduced");
+        return reduceHelper(iterator, transformFirst.apply(iterator.next()), operation);
+    }
+
     public static <A, E> A reduceIndexed(Iterable<E> iterable, TriFunction<Integer, A, E, A> operation, Function<E, A> transformFirst) {
         AtomicInteger index = new AtomicInteger();
+        return reduce(iterable, (accum, elem) -> operation.apply(index.getAndIncrement(), accum, elem), transformFirst);
+    }
+
+    public static <A, E> A reduceIndexed2(Iterable<E> iterable, TriFunction<Integer, A, E, A> operation, Function<E, A> transformFirst) {
+        var index = new AtomicInteger();
         return reduce(iterable, (accum, elem) -> operation.apply(index.getAndIncrement(), accum, elem), transformFirst);
     }
 
@@ -176,18 +220,22 @@ public final class Enumerable {
         return true;
     }
 
-    private static <E> boolean isEmpty(Optional<E> optional) {
+    /*private static <E> boolean isEmpty(Optional<E> optional) {
         return !optional.isPresent();
-    }
+    }*/
 
     // TODO benchmark
-    public static <E> boolean all2(Iterable<E> iterable, Predicate<E> predicate) {
+    /*public static <E> boolean all2(Iterable<E> iterable, Predicate<E> predicate) {
         return ! findFirst(iterable, predicate.negate()).isPresent(); // isEmpty()
+    }*/
+
+    public static <E> boolean all2(Iterable<E> iterable, Predicate<E> predicate) {
+        return findFirst(iterable, predicate.negate()).isEmpty();
     }
 
-    public static <E> boolean all3(Iterable<E> iterable, Predicate<E> predicate) {
+    /*public static <E> boolean all3(Iterable<E> iterable, Predicate<E> predicate) {
         return isEmpty( findFirst(iterable, predicate.negate()) );
-    }
+    }*/
 
     public static <E> boolean any(Iterable<E> iterable, Predicate<E> predicate) {
         for (E element : iterable) {

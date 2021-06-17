@@ -1,4 +1,4 @@
-package idealist.primitive_specializations;
+package idealist.tuple;
 
 import java.util.Objects;
 

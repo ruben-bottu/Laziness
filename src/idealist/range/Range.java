@@ -1,4 +1,6 @@
-package idealist;
+package idealist.range;
+
+import idealist.IdeaList;
 
 public final class Range {
 

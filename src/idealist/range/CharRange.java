@@ -1,4 +1,6 @@
-package idealist;
+package idealist.range;
+
+import idealist.IdeaList;
 
 public class CharRange {
     private final IntRange intRange;

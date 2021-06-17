@@ -1,6 +1,7 @@
-package idealist;
+package idealist.tuple;
 
-import com.sun.istack.internal.Nullable;
+
+import idealist.Nullable;
 
 import java.util.Objects;
 

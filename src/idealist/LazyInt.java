@@ -1,4 +1,4 @@
-package idealist.primitive_specializations;
+package idealist;
 
 import java.util.function.IntSupplier;
 

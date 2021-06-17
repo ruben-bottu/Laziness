@@ -1,4 +1,6 @@
-package idealist;
+package idealist.tuple;
+
+import idealist.Nullable;
 
 import java.util.Objects;
 

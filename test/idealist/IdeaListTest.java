@@ -1,5 +1,9 @@
 package idealist;
 
+import idealist.range.Range;
+import idealist.tuple.IndexElement;
+import idealist.tuple.Pair;
+import idealist.tuple.Triplet;
 import org.junit.Before;
 import org.junit.Test;
 

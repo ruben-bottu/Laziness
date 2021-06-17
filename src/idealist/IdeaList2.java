@@ -1,13 +1,13 @@
 package idealist;
 
 import idealist.function.TriFunction;
-import idealist.primitive_specializations.LazyInt;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.*;
 
 import static idealist.Enumerable.isContentEqual;
+import static idealist.Lambda.alwaysTrue;
 import static java.util.Arrays.asList;
 import static java.util.function.Predicate.isEqual;
 
@@ -143,7 +143,11 @@ public abstract class IdeaList2<E> implements Iterable<E> {
     //public abstract IdeaList2<Integer> indices();
 
     public int length() {
-        return count(elem -> true);
+        return count(__ -> true);
+    }
+
+    public int length2() {
+        return count(alwaysTrue());
     }
 
     public List<E> toList() {
@@ -172,7 +176,13 @@ public abstract class IdeaList2<E> implements Iterable<E> {
     // TODO change body
     @Override
     public Iterator<E> iterator() {
-        return null;
+        return new Iterator<>() {
+            @Override
+            public boolean hasNext() { return false; }
+
+            @Override
+            public E next() { return null; }
+        };
     }
 
 
@@ -401,11 +411,25 @@ public abstract class IdeaList2<E> implements Iterable<E> {
         throw new UnsupportedOperationException("List contains elements that are not Iterable");
     }*/
 
+    @SuppressWarnings("unchecked") // Cast is safe because isNested() first checks if list does in fact contain nested iterables
     public <N> IdeaList2<N> flatten() {
+        // maybe put result of concatNestedIdeaLists() in variable for more precise @SuppressWarnings("unchecked")
+        // here I only suppress unchecked warnings which means only explicit casts so there should be no issue
         if (isNestedIdeaLists()) return concatNestedIdeaLists((IdeaList2<IdeaList2<N>>) this);
         // if (isNested()) return concatNestedIterables();
         throw new UnsupportedOperationException("List contains elements that are not Iterable");
     }
+
+    /*public <N> IdeaList2<N> flatten() {
+        // maybe put result of concatNestedIdeaLists() in variable for more precise @SuppressWarnings("unchecked")
+        if (isNestedIdeaLists()) {
+            @SuppressWarnings("unchecked") // Cast is safe because isNested() first checks if list does in fact contain nested iterables
+            var list = concatNestedIdeaLists((IdeaList2<IdeaList2<N>>) this);
+            return list;
+        }
+        // if (isNested()) return concatNestedIterables();
+        throw new UnsupportedOperationException("List contains elements that are not Iterable");
+    }*/
 
     /*public <A, B> IdeaList2<Triplet<E, A, B>> zipWith(Iterable<A> other, Iterable<B> other2) {
         return Enumerable.zip(this, other, other2);
