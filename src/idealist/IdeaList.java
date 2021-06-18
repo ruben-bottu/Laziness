@@ -294,27 +294,27 @@ public abstract class IdeaList<E> implements Iterable<E> {
 
     // List operations ==============================================================================
     public <A> A reduce(A initialValue, BiFunction<A, E, A> operation) {
-        return Enumerable.reduce(this, initialValue, operation);
+        return Enumerable.reduce(initialValue, operation, this);
     }
 
     public <A> A reduceIndexed(A initialValue, TriFunction<Integer, A, E, A> operation) {
-        return Enumerable.reduceIndexed(this, initialValue, operation);
+        return Enumerable.reduceIndexed(initialValue, operation, this);
     }
 
     public <A> A reduce(BiFunction<A, E, A> operation, Function<E, A> transformFirst) {
-        return Enumerable.reduce(this, operation, transformFirst);
+        return Enumerable.reduce(operation, transformFirst, this);
     }
 
     public <A> A reduceIndexed(TriFunction<Integer, A, E, A> operation, Function<E, A> transformFirst) {
-        return Enumerable.reduceIndexed(this, operation, transformFirst);
+        return Enumerable.reduceIndexed(operation, transformFirst, this);
     }
 
     public E reduce(BinaryOperator<E> operation) {
-        return Enumerable.reduce(this, operation);
+        return Enumerable.reduce(operation, this);
     }
 
     public E reduceIndexed(TriFunction<Integer, E, E, E> operation) {
-        return Enumerable.reduceIndexed(this, operation);
+        return Enumerable.reduceIndexed(operation, this);
     }
 
     /*public E reduceIndexed(TriFunction<Integer, E, E, E> operation) {
@@ -326,27 +326,27 @@ public abstract class IdeaList<E> implements Iterable<E> {
     }*/
 
     public <A> A reduceRight(A initialValue, BiFunction<E, A, A> operation) {
-        return Enumerable.reduceRight(this, initialValue, operation);
+        return Enumerable.reduceRight(initialValue, operation, this);
     }
 
     public <A> A reduceRightIndexed(A initialValue, TriFunction<Integer, E, A, A> operation) {
-        return Enumerable.reduceRightIndexed(this, initialValue, operation);
+        return Enumerable.reduceRightIndexed(initialValue, operation, this);
     }
 
     public <A> A reduceRight(BiFunction<E, A, A> operation, Function<E, A> transformLast) {
-        return Enumerable.reduceRight(this, operation, transformLast);
+        return Enumerable.reduceRight(operation, transformLast, this);
     }
 
     public <A> A reduceRightIndexed(TriFunction<Integer, E, A, A> operation, Function<E, A> transformLast) {
-        return Enumerable.reduceRightIndexed(this, operation, transformLast);
+        return Enumerable.reduceRightIndexed(operation, transformLast, this);
     }
 
     public E reduceRight(BinaryOperator<E> operation) {
-        return Enumerable.reduceRight(this, operation);
+        return Enumerable.reduceRight(operation, this);
     }
 
     public E reduceRightIndexed(TriFunction<Integer, E, E, E> operation) {
-        return Enumerable.reduceRightIndexed(this, operation);
+        return Enumerable.reduceRightIndexed(operation, this);
     }
 
     abstract <A> A lazyReduceRight(A initialValue, BiFunction<Lazy<E>, Lazy<A>, A> operation);

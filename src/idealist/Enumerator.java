@@ -9,7 +9,7 @@ public final class Enumerator {
     private Enumerator() {}
 
     public static Iterator<Void> infiniteNulls() {
-        return new Iterator<Void>() {
+        return new Iterator<>() {
 
             @Override
             public boolean hasNext() {
@@ -24,7 +24,7 @@ public final class Enumerator {
     }
 
     public static <E> Iterator<E> of(IdeaList<E> elements) {
-        return new Iterator<E>() {
+        return new Iterator<>() {
             private IdeaList<E> innerList = elements;
 
             @Override
@@ -41,8 +41,27 @@ public final class Enumerator {
         };
     }
 
+    // TODO remove
+    public static <E> Iterator<E> of(IdeaList2<E> elements) {
+        return new Iterator<>() {
+            private IdeaList2<E> innerList = elements;
+
+            @Override
+            public boolean hasNext() {
+                return innerList.any();
+            }
+
+            @Override
+            public E next() {
+                E next = innerList.first();
+                innerList = innerList.tail.value();
+                return next;
+            }
+        };
+    }
+
     public static <E> Iterator<E> of(E[] elements) {
-        return new Iterator<E>() {
+        return new Iterator<>() {
             private int index = 0;
 
             @Override
