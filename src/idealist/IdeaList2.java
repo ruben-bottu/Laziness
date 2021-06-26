@@ -51,6 +51,37 @@ public abstract class IdeaList2<E> implements Iterable<E> {
         return IdeaList2.empty();
     }
 
+    /*private static <L, E> IdeaList<E> concat(Iterator<E> iterator, L elements, Function<L, IdeaList<E>> toIdeaList) {
+        if (iterator.hasNext()) {
+            E element = iterator.next();
+            return IdeaList.create(Lazy.of(() -> element), Lazy.of(() -> concat(iterator, elements, toIdeaList)));
+        }
+        return toIdeaList.apply(elements);
+    }*/
+
+    /*private static <E, L> IdeaList2<E> concat(Iterator<Lazy<E>> iterator, L elements, Function<L, IdeaList2<E>> toIdeaList) {
+        if (iterator.hasNext()) {
+            return IdeaList2.create(iterator.next(), Lazy.of(() -> concat(iterator, elements, toIdeaList)));
+        }
+        return toIdeaList.apply(elements);
+    }*/
+
+    private static <E, L> IdeaList2<E> concat(Iterator<Lazy<E>> iterator, L elements, Function<L, IdeaList2<E>> toIdeaList) {
+        return iterator.hasNext()
+                ? IdeaList2.create(iterator.next(), Lazy.of(() -> concat(iterator, elements, toIdeaList)))
+                : toIdeaList.apply(elements);
+    }
+
+    private static <E> IdeaList2<E> concat(Iterator<Lazy<E>> iterator, Lazy<IdeaList2<E>> elements) {
+        return iterator.hasNext()
+                ? IdeaList2.create(iterator.next(), Lazy.of(() -> concat(iterator, elements)))
+                : elements.value();
+    }
+
+    public static <E> IdeaList2<E> ofLazy(Iterable<Lazy<E>> elements) {
+        return concat(elements.iterator(), IdeaList2.empty(), Function.identity());
+    }
+
     public static <E> IdeaList2<E> of(Iterable<E> elements) {
         return constructIdeaListFromIterator(elements.iterator());
     }
@@ -334,7 +365,10 @@ public abstract class IdeaList2<E> implements Iterable<E> {
     public E reduceRightIndexed(TriFunction<Integer, E, E, E> operation) {
         return Enumerable.reduceRightIndexed(operation, this);
     }
+    // public <A> A reduce(A initialValue, BiFunction<A, E, A> operation) {
+    // abstract <A> A lazyReduce(A initialValue, BiFunction<Lazy<A>, Lazy<E>, A> operation);
 
+    // public <A> A reduceRight(A initialValue, BiFunction<E, A, A> operation) {
     abstract <A> A lazyReduceRight(A initialValue, BiFunction<Lazy<E>, Lazy<A>, A> operation);
 
     public <R> IdeaList2<R> map(Function<E, R> transform) {
@@ -476,6 +510,30 @@ public abstract class IdeaList2<E> implements Iterable<E> {
         return map(selector).zipWith(this).reduce((accum, compElem) -> accum.first.compareTo(compElem.first) > 0 ? accum : compElem).second;
     }*/
 
+    public <R extends Comparable<R>> List<E> toListSortedByAscending(Function<E, R> selector) {
+        List<E> list = toList();
+        list.sort(Comparator.comparing(selector));
+        return list;
+    }
+
+    public <R extends Comparable<R>> IdeaList2<E> sortByAscending(Function<E, R> selector) {
+        return IdeaList2.of(toListSortedByAscending(selector));
+    }
+
+    public <R extends Comparable<R>> List<E> toListSortedByDescending(Function<E, R> selector) {
+        List<E> list = toList();
+        list.sort(Comparator.comparing(selector, Comparator.reverseOrder()));
+        return list;
+    }
+
+    public <R extends Comparable<R>> IdeaList2<E> sortByDescending(Function<E, R> selector) {
+        return IdeaList2.of(toListSortedByDescending(selector));
+    }
+
+    /*public IdeaList2<E> reverse() {
+        return reduce(IdeaList2.empty(), (accum, elem) -> IdeaList2.create(elem, accum));
+    }*/
+
 
     /////////////////////////////////////////////////////////////////////////////////////////////////
     private static class NormalNode<E> extends IdeaList2<E> {
@@ -577,7 +635,7 @@ public abstract class IdeaList2<E> implements Iterable<E> {
 
     /////////////////////////////////////////////////////////////////////////////////////////////////
     private static class EndNode<E> extends IdeaList2<E> {
-        private static final IdeaList2<?> EMPTY = new IdeaList2.EndNode<>();
+        private static final IdeaList2<?> EMPTY = new EndNode<>();
 
         // Constructors and factory methods =============================================================
         private EndNode() {

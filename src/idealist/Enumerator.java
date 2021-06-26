@@ -60,6 +60,24 @@ public final class Enumerator {
         };
     }
 
+    public static <E> Iterator<Lazy<E>> of(MutableList<E> elements) {
+        return new Iterator<>() {
+            private MutableList<E> innerList = elements;
+
+            @Override
+            public boolean hasNext() {
+                return innerList.any();
+            }
+
+            @Override
+            public Lazy<E> next() {
+                Lazy<E> next = innerList.first();
+                innerList = innerList.tail;
+                return next;
+            }
+        };
+    }
+
     public static <E> Iterator<E> of(E[] elements) {
         return new Iterator<>() {
             private int index = 0;
