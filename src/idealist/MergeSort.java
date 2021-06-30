@@ -5,10 +5,10 @@ import java.util.Comparator;
 class MergeSort {
     private static final int NODE_REFERENCE_ARRAY_SIZE = 32;
 
-    /*static <E> IdeaList2<E> sort(Comparator<E> comparator, IdeaList2<E> elements) {
+    /*static <E> IdeaList<E> sort(Comparator<E> comparator, IdeaList<E> elements) {
     }*/
 
-    static <E> IdeaList2<E> sort(Comparator<E> comparator, IdeaList2<E> elements) {
+    static <E> IdeaList<E> sort(Comparator<E> comparator, IdeaList<E> elements) {
         if (elements.isEmpty()) return elements;
 
         @SuppressWarnings("unchecked")
@@ -57,7 +57,7 @@ class MergeSort {
         // 8)
         
 
-        return IdeaList2.of(temp[0]);
+        return IdeaList.of(temp[0]);
     }
 
     private static <E> int compare(Comparator<E> comparator, Lazy<E> left, Lazy<E> right) {
