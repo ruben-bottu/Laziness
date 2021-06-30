@@ -70,39 +70,8 @@ public abstract class IdeaList2<E> implements Iterable<E> {
         return concat(iterable.iterator(), elements, Function.identity());
     }
 
-    /*private static <L, E> IdeaList<E> concat(Iterator<E> iterator, L elements, Function<L, IdeaList<E>> toIdeaList) {
-        if (iterator.hasNext()) {
-            E element = iterator.next();
-            return IdeaList.create(Lazy.of(() -> element), Lazy.of(() -> concat(iterator, elements, toIdeaList)));
-        }
-        return toIdeaList.apply(elements);
-    }*/
-
-    /*private static <E, L> IdeaList2<E> concat(Iterator<Lazy<E>> iterator, L elements, Function<L, IdeaList2<E>> toIdeaList) {
-        if (iterator.hasNext()) {
-            return IdeaList2.create(iterator.next(), Lazy.of(() -> concat(iterator, elements, toIdeaList)));
-        }
-        return toIdeaList.apply(elements);
-    }*/
-
-    /*private static <E, L> IdeaList2<E> concat(Iterator<Lazy<E>> iterator, L elements, Function<L, IdeaList2<E>> toIdeaList) {
-        return iterator.hasNext()
-                ? IdeaList2.create(iterator.next(), Lazy.of(() -> concat(iterator, elements, toIdeaList)))
-                : toIdeaList.apply(elements);
-    }
-
-    private static <E> IdeaList2<E> concat(Iterator<Lazy<E>> iterator, Lazy<IdeaList2<E>> elements) {
-        return iterator.hasNext()
-                ? IdeaList2.create(iterator.next(), Lazy.of(() -> concat(iterator, elements)))
-                : elements.value();
-    }
-
-    public static <E> IdeaList2<E> ofLazy(Iterable<Lazy<E>> elements) {
-        return concat(elements.iterator(), IdeaList2.empty(), Function.identity());
-    }*/
-
     static <E> IdeaList2<E> of(MutableList<E> elements) {
-        //if (elements.isEmpty()) return IdeaList2.empty();
+        if (elements.isEmpty()) return IdeaList2.empty();
         return IdeaList2.create(elements.value, Lazy.of(() -> of(elements.tail)));
     }
 
@@ -665,10 +634,6 @@ public abstract class IdeaList2<E> implements Iterable<E> {
         private static final IdeaList2<?> EMPTY = new EndNode<>();
 
         // Constructors and factory methods =============================================================
-        /*private EndNode() {
-            super(null, null);
-        }*/
-
         private static <E> E throwNoSuchValueException() {
             throw new NoSuchElementException("The value field in EndNode contains no value");
         }

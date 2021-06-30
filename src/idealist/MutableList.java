@@ -94,8 +94,12 @@ abstract class MutableList<E> implements Iterable<Lazy<E>> {
     private static class EndNode<E> extends MutableList<E> {
         private static final MutableList<?> EMPTY = new EndNode<>();
 
+        private static <E> E throwNoSuchValueException() {
+            throw new NoSuchElementException("The value field in EndNode contains no value");
+        }
+
         private EndNode() {
-            super(null, null);
+            super(Lazy.of(EndNode::throwNoSuchValueException), null);
         }
 
         @Override
