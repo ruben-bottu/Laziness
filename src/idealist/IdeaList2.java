@@ -1,6 +1,7 @@
 package idealist;
 
 import idealist.function.TriFunction;
+import idealist.tuple.IndexElement;
 
 import java.lang.reflect.Array;
 import java.util.*;
@@ -35,10 +36,12 @@ public abstract class IdeaList2<E> implements Iterable<E> {
         return elements.lazyReduceRight(toIdeaList.apply(other), IdeaList2::create);
     }
 
+    // private static <I, E> I<E> concat(I<E> elements, Lazy<IdeaList2<E>> other) {
     private static <E> IdeaList2<E> concat(IdeaList2<E> elements, Lazy<IdeaList2<E>> other) {
         return concat(elements, other, Lazy::value);
     }
 
+    // private static <I, E> I<E> concat(I<E> elements, IdeaList2<E> other) {
     private static <E> IdeaList2<E> concat(IdeaList2<E> elements, IdeaList2<E> other) {
         return concat(elements, other, Function.identity());
     }
@@ -49,6 +52,22 @@ public abstract class IdeaList2<E> implements Iterable<E> {
             return IdeaList2.create(Lazy.of(() -> element), Lazy.of(() -> constructIdeaListFromIterator(iterator)));
         }
         return IdeaList2.empty();
+    }
+
+    private static <L, E> IdeaList<E> concat(Iterator<E> iterator, L elements, Function<L, IdeaList<E>> toIdeaList) {
+        if (iterator.hasNext()) {
+            E element = iterator.next();
+            return IdeaList.create(Lazy.of(() -> element), Lazy.of(() -> concat(iterator, elements, toIdeaList)));
+        }
+        return toIdeaList.apply(elements);
+    }
+
+    private static <E> IdeaList<E> concat(Iterable<E> iterable, Lazy<IdeaList<E>> elements) {
+        return concat(iterable.iterator(), elements, Lazy::value);
+    }
+
+    private static <E> IdeaList<E> concat(Iterable<E> iterable, IdeaList<E> elements) {
+        return concat(iterable.iterator(), elements, Function.identity());
     }
 
     /*private static <L, E> IdeaList<E> concat(Iterator<E> iterator, L elements, Function<L, IdeaList<E>> toIdeaList) {
@@ -66,7 +85,7 @@ public abstract class IdeaList2<E> implements Iterable<E> {
         return toIdeaList.apply(elements);
     }*/
 
-    private static <E, L> IdeaList2<E> concat(Iterator<Lazy<E>> iterator, L elements, Function<L, IdeaList2<E>> toIdeaList) {
+    /*private static <E, L> IdeaList2<E> concat(Iterator<Lazy<E>> iterator, L elements, Function<L, IdeaList2<E>> toIdeaList) {
         return iterator.hasNext()
                 ? IdeaList2.create(iterator.next(), Lazy.of(() -> concat(iterator, elements, toIdeaList)))
                 : toIdeaList.apply(elements);
@@ -80,6 +99,11 @@ public abstract class IdeaList2<E> implements Iterable<E> {
 
     public static <E> IdeaList2<E> ofLazy(Iterable<Lazy<E>> elements) {
         return concat(elements.iterator(), IdeaList2.empty(), Function.identity());
+    }*/
+
+    static <E> IdeaList2<E> of(MutableList<E> elements) {
+        //if (elements.isEmpty()) return IdeaList2.empty();
+        return IdeaList2.create(elements.value, Lazy.of(() -> of(elements.tail)));
     }
 
     public static <E> IdeaList2<E> of(Iterable<E> elements) {
@@ -307,8 +331,8 @@ public abstract class IdeaList2<E> implements Iterable<E> {
     }
 
     public void forEachIndexed(BiConsumer<Integer, E> action) {
-        var count = new AtomicInteger();
-        forEach(elem -> action.accept(count.getAndIncrement(), elem));
+        var index = new AtomicInteger();
+        forEach(elem -> action.accept(index.getAndIncrement(), elem));
     }
 
     public void forEachIndexed2(BiConsumer<Integer, E> action) {
@@ -485,6 +509,10 @@ public abstract class IdeaList2<E> implements Iterable<E> {
         return Enumerable.withIndex(this);
     }*/
 
+    public IdeaList2<IndexElement<E>> withIndex() {
+        return mapIndexed(IndexElement::of);
+    }
+
     public IdeaList2<E> step(int length) {
         if (length < 1) throw new IllegalArgumentException("Length cannot be smaller than 1. Given: " + length);
         return whereIndexed((index, current) -> index % length == 0);
@@ -530,6 +558,11 @@ public abstract class IdeaList2<E> implements Iterable<E> {
         return IdeaList2.of(toListSortedByDescending(selector));
     }
 
+    /*public IdeaList<E> sortWith(Comparator<E> comparator) {
+        Comparator<Lazy<E>> lazyComparator = Comparator.comparing(Lazy::value, comparator);
+        return MergeSort.sort(lazyComparator, this);
+    }*/
+
     /*public IdeaList2<E> reverse() {
         return reduce(IdeaList2.empty(), (accum, elem) -> IdeaList2.create(elem, accum));
     }*/
@@ -543,7 +576,7 @@ public abstract class IdeaList2<E> implements Iterable<E> {
             super(value, tail);
         }
 
-        private IdeaList2<E> retainValueAndTransformTail(UnaryOperator<IdeaList2<E>> function) {
+        private IdeaList2<E> keepValueAndTransformTail(UnaryOperator<IdeaList2<E>> function) {
             return IdeaList2.create(value, Lazy.of(() -> function.apply(tail.value())));
         }
 
@@ -552,12 +585,6 @@ public abstract class IdeaList2<E> implements Iterable<E> {
         public E get(int index) {
             if (index < 0) return get(toPositiveIndex(index));
             return index == 0 ? value.value() : tail.value().get(index - 1);
-        }
-
-        public E get2(int index) {
-            return index < 0
-                    ? get2(toPositiveIndex(index))
-                    : (index == 0 ? value.value() : tail.value().get(index - 1));
         }
 
         @Override
@@ -610,18 +637,18 @@ public abstract class IdeaList2<E> implements Iterable<E> {
             if (index < 0) return insertAt(toPositiveIndex(index), elements);
             return index == 0
                     ? concat(elements, this)
-                    : retainValueAndTransformTail(tail -> tail.insertAt(index - 1, elements));
+                    : keepValueAndTransformTail(tail -> tail.insertAt(index - 1, elements));
         }
 
         @Override
         public IdeaList2<E> removeFirst(@Nullable E element) {
-            return Objects.equals(value.value(), element) ? tail.value() : retainValueAndTransformTail(tail -> tail.removeFirst(element));
+            return Objects.equals(value.value(), element) ? tail.value() : keepValueAndTransformTail(tail -> tail.removeFirst(element));
         }
 
         @Override
         public IdeaList2<E> removeAt(int index) {
             if (index < 0) return removeAt(toPositiveIndex(index));
-            return index == 0 ? tail.value() : retainValueAndTransformTail(tail -> tail.removeAt(index - 1));
+            return index == 0 ? tail.value() : keepValueAndTransformTail(tail -> tail.removeAt(index - 1));
         }
 
 
@@ -638,8 +665,20 @@ public abstract class IdeaList2<E> implements Iterable<E> {
         private static final IdeaList2<?> EMPTY = new EndNode<>();
 
         // Constructors and factory methods =============================================================
-        private EndNode() {
+        /*private EndNode() {
             super(null, null);
+        }*/
+
+        private static <E> E throwNoSuchValueException() {
+            throw new NoSuchElementException("The value field in EndNode contains no value");
+        }
+
+        private static <E> IdeaList2<E> throwNoSuchTailException() {
+            throw new NoSuchElementException("The tail field in EndNode contains no value");
+        }
+
+        private EndNode() {
+            super(Lazy.of(EndNode::throwNoSuchValueException), Lazy.of(EndNode::throwNoSuchTailException));
         }
 
         private static NoSuchElementException noSuchElementException() {

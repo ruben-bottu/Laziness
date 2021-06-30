@@ -54,7 +54,10 @@ class MergeSort {
         // 7)
         temp[0] = merge(comparator, temp[0], temp[1]);
 
-        return IdeaList2.ofLazy(temp[0]);
+        // 8)
+        
+
+        return IdeaList2.of(temp[0]);
     }
 
     private static <E> int compare(Comparator<E> comparator, Lazy<E> left, Lazy<E> right) {
