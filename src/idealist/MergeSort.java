@@ -71,6 +71,8 @@ class MergeSort {
     }
 
     private static <E> MutableList<E> merge(Comparator<E> comparator, MutableList<E> left, MutableList<E> right) {
+        // TODO change to dummy MutableList node instead of EMPTY
+        // EMPTY will remain modified forever
         MutableList<E> merged = MutableList.empty();
         MutableList<E> temp = merged;
 

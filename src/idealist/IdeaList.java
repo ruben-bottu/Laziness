@@ -39,16 +39,15 @@ public abstract class IdeaList<E> implements Iterable<E> {
         return elements.lazyReduceRight(toIdeaList.apply(other), IdeaList::create);
     }
 
-    // private static <I, E> I<E> concat(I<E> elements, Lazy<IdeaList<E>> other) {
     private static <E> IdeaList<E> concat(IdeaList<E> elements, Lazy<IdeaList<E>> other) {
         return concat(elements, other, Lazy::value);
     }
 
-    // private static <I, E> I<E> concat(I<E> elements, IdeaList<E> other) {
     private static <E> IdeaList<E> concat(IdeaList<E> elements, IdeaList<E> other) {
         return concat(elements, other, Function.identity());
     }
 
+    // TODO benchmark agains concat methods
     private static <E> IdeaList<E> constructIdeaListFromIterator(Iterator<E> iterator) {
         if (iterator.hasNext()) {
             E element = iterator.next();
@@ -57,21 +56,21 @@ public abstract class IdeaList<E> implements Iterable<E> {
         return IdeaList.empty();
     }
 
-    /*private static <L, E> IdeaList<E> concat(Iterator<E> iterator, L elements, Function<L, IdeaList<E>> toIdeaList) {
+    private static <E, O> IdeaList<E> concat(Iterator<E> iterator, O other, Function<O, IdeaList<E>> toIdeaList) {
         if (iterator.hasNext()) {
             E element = iterator.next();
-            return IdeaList.create(Lazy.of(() -> element), Lazy.of(() -> concat(iterator, elements, toIdeaList)));
+            return IdeaList.create(Lazy.of(() -> element), Lazy.of(() -> concat(iterator, other, toIdeaList)));
         }
-        return toIdeaList.apply(elements);
+        return toIdeaList.apply(other);
     }
 
-    private static <E> IdeaList<E> concat(Iterable<E> iterable, Lazy<IdeaList<E>> elements) {
-        return concat(iterable.iterator(), elements, Lazy::value);
+    private static <E> IdeaList<E> concat(Iterable<E> elements, Lazy<IdeaList<E>> other) {
+        return concat(elements.iterator(), other, Lazy::value);
     }
 
-    private static <E> IdeaList<E> concat(Iterable<E> iterable, IdeaList<E> elements) {
-        return concat(iterable.iterator(), elements, Function.identity());
-    }*/
+    private static <E> IdeaList<E> concat(Iterable<E> elements, IdeaList<E> other) {
+        return concat(elements.iterator(), other, Function.identity());
+    }
 
     static <E> IdeaList<E> of(MutableList<E> elements) {
         if (elements.isEmpty()) return IdeaList.empty();
@@ -82,10 +81,24 @@ public abstract class IdeaList<E> implements Iterable<E> {
         return constructIdeaListFromIterator(elements.iterator());
     }
 
+    public static <E> IdeaList<E> of2(Iterable<E> elements) {
+        return concat(elements, IdeaList.empty());
+    }
+
     @SafeVarargs
     public static <E> IdeaList<E> of(E... elements) {
         return IdeaList.of(asList(elements));
     }
+
+    /*public static IntIdeaList of(int... elements) { }*/
+
+    /*public static CharIdeaList of(char... elements) { }*/
+
+    /*public static LongIdeaList of(long... elements) { }*/
+
+    /*public static FloatIdeaList of(float... elements) { }*/
+
+    /*public static DoubleIdeaList of(double... elements) { }*/
 
     @SafeVarargs
     public static <E> IdeaList<E> ofDirect(E... elements) {
@@ -103,6 +116,7 @@ public abstract class IdeaList<E> implements Iterable<E> {
 
     // TODO benchmark
     /*public static <E> IdeaList<E> initialiseWith2(int length, IntFunction<E> indexToElement) {
+        handleNegativeLength(length);
         return Range.from(0).length(length).map(indexToElement);
     }*/
 
@@ -119,6 +133,7 @@ public abstract class IdeaList<E> implements Iterable<E> {
         return rangeLength(0L, length).map(indexToElement);
     }
 
+    // TODO use int
     private static void handleNegativeLength(long length) {
         if (length < 0L) throw new IllegalArgumentException("Cannot initialise list with length " + length);
     }
@@ -127,7 +142,7 @@ public abstract class IdeaList<E> implements Iterable<E> {
         return new IndexOutOfBoundsException("Index too big");
     }
 
-    int toPositiveIndex(int negativeIndex) {
+    protected int toPositiveIndex(int negativeIndex) {
         int length = length();
         if (-negativeIndex > length) throw indexTooBigException();
         return length + negativeIndex;
@@ -171,17 +186,21 @@ public abstract class IdeaList<E> implements Iterable<E> {
         return findFirst(predicate);
     }
 
-    abstract OptionalInt indexOfFirstHelper(Predicate<E> predicate, int index);
+    protected abstract OptionalInt indexOfFirstHelper(Predicate<E> predicate, int index);
 
     public OptionalInt indexOfFirst(Predicate<E> predicate) {
         return indexOfFirstHelper(predicate, 0);
     }
 
-    /*public OptionalInt indexOfFirst(Predicate<E> predicate) {
+    public OptionalInt indexOfFirst2(Predicate<E> predicate) {
         return withIndex().findFirst(idxElem -> predicate.test(idxElem.element))
                 .map(idxElem -> OptionalInt.of(idxElem.index))
                 .orElseGet(OptionalInt::empty);
-    }*/
+    }
+
+    public OptionalInt indexOfFirst3(Predicate<E> predicate) {
+        return Enumerable.indexOfFirst(predicate, this);
+    }
 
     public OptionalInt indexOfFirst(@Nullable E element) {
         return indexOfFirst(isEqual(element));
@@ -253,6 +272,7 @@ public abstract class IdeaList<E> implements Iterable<E> {
         return indexOfFirst(element).isPresent();
     }
 
+    // Is this method redundant?
     public boolean containsAll(IdeaList<E> elements) {
         return elements.all(this::contains);
     }
@@ -261,13 +281,22 @@ public abstract class IdeaList<E> implements Iterable<E> {
         return IdeaList.of(elements).all(this::contains);
     }
 
+    /*public boolean containsAll2(Iterable<E> elements) {
+        for (E element : elements) if (!contains(element)) return false;
+        return true;
+    }*/
+
+    public boolean containsAll2(Iterable<E> elements) {
+        return Enumerable.all(this::contains, elements);
+    }
+
     public boolean isEmpty() {
         return none();
     }
 
     public abstract boolean isNested();
 
-    public abstract boolean isNestedIdeaLists();
+    public abstract boolean containsNestedIdeaLists();
 
     public boolean all(Predicate<E> predicate) {
         return !map(predicate::test).contains(false);
@@ -295,9 +324,24 @@ public abstract class IdeaList<E> implements Iterable<E> {
         return insertAt(index, IdeaList.of(elements));
     }
 
+    protected abstract <I> IdeaList<E> insertAtHelper(int index, I elements, BiFunction<I, IdeaList<E>, IdeaList<E>> concat);
+
+    public IdeaList<E> insertAt2(int index, IdeaList<E> elements) {
+        return insertAtHelper(index, elements, IdeaList::concat);
+    }
+
+    public IdeaList<E> insertAt2(int index, Iterable<E> elements) {
+        return insertAtHelper(index, elements, IdeaList::concat);
+    }
+
     @SafeVarargs
     public final IdeaList<E> insertAt(int index, E... elements) {
         return insertAt(index, IdeaList.of(elements));
+    }
+
+    @SafeVarargs
+    public final IdeaList<E> insertAt2(int index, E... elements) {
+        return insertAt(index, asList(elements));
     }
 
     public IdeaList<E> concatWith(IdeaList<E> elements) {
@@ -314,6 +358,11 @@ public abstract class IdeaList<E> implements Iterable<E> {
     }
 
     @SafeVarargs
+    public final IdeaList<E> add2(E... elements) {
+        return concatWith(asList(elements));
+    }
+
+    @SafeVarargs
     public final IdeaList<E> append(E... elements) {
         return add(elements);
     }
@@ -326,9 +375,18 @@ public abstract class IdeaList<E> implements Iterable<E> {
         return concat(IdeaList.of(elements), this);
     }
 
+    public IdeaList<E> linkToBackOf2(Iterable<E> elements) {
+        return concat(elements, this);
+    }
+
     @SafeVarargs
     public final IdeaList<E> addToFront(E... elements) {
         return linkToBackOf(IdeaList.of(elements));
+    }
+
+    @SafeVarargs
+    public final IdeaList<E> addToFront2(E... elements) {
+        return linkToBackOf(asList(elements));
     }
 
     @SafeVarargs
@@ -341,7 +399,7 @@ public abstract class IdeaList<E> implements Iterable<E> {
     public abstract IdeaList<E> removeAt(int index);
 
     public IdeaList<E> removeAll(@Nullable E element) {
-        return where(current -> !Objects.equals(current, element));
+        return where(elem -> !Objects.equals(elem, element));
     }
 
     public void forEachIndexed(BiConsumer<Integer, E> action) {
@@ -412,7 +470,7 @@ public abstract class IdeaList<E> implements Iterable<E> {
     // abstract <A> A lazyReduce(A initialValue, BiFunction<Lazy<A>, Lazy<E>, A> operation);
 
     // public <A> A reduceRight(A initialValue, BiFunction<E, A, A> operation) {
-    abstract <A> A lazyReduceRight(A initialValue, BiFunction<Lazy<E>, Lazy<A>, A> operation);
+    protected abstract <A> A lazyReduceRight(A initialValue, BiFunction<Lazy<E>, Lazy<A>, A> operation);
 
     public <R> IdeaList<R> map(Function<E, R> transform) {
         BiFunction<Lazy<E>, Lazy<IdeaList<R>>, IdeaList<R>> transformAndPrependElem = (elem, list) -> IdeaList.create(Lazy.of(() -> transform.apply(elem.value())), list);
@@ -473,13 +531,39 @@ public abstract class IdeaList<E> implements Iterable<E> {
         throw new UnsupportedOperationException("List contains elements that are not Iterable");
     }*/
 
+    /*// concat(IdeaList<E> elements, IdeaList<E> other)
+        // concat(Iterable<E> elements, IdeaList<E> other)
+        @Override
+        protected <I> IdeaList<E> insertAtHelper(int index, I elements, BiFunction<I, IdeaList<E>, IdeaList<E>> concat) {
+            if (index < 0) return insertAtHelper(toPositiveIndex(index), elements, concat);
+            return index == 0
+                    ? concat.apply(elements, this)
+                    : keepValueAndTransformTail(tail -> tail.insertAtHelper(index - 1, elements, concat));
+        }*/
+
+    //private static <N, I> IdeaList<N> concatNestedHelper(IdeaList<I> elements, BiFunction<I, Lazy<IdeaList<E>>, >)
+
     private static <N> IdeaList<N> concatNestedIdeaLists(IdeaList<IdeaList<N>> elements) {
         return elements.lazyReduceRight(IdeaList.empty(), (elem, accum) -> concat(elem.value(), accum));
     }
 
+    private static <N> IdeaList<N> concatNestedIterables(IdeaList<Iterable<N>> elements) {
+        return elements.lazyReduceRight(IdeaList.empty(), (elem, accum) -> concat(elem.value(), accum));
+    }
+
+    /*private static <N> IdeaList<N> concatNestedIdeaLists(IdeaList<IdeaList<N>> elements) {
+        return elements.lazyReduceRight(IdeaList.empty(), (elem, accum) -> concat(elem.value(), accum));
+    }
+
+    private static <N> IdeaList<N> concatNestedIterables(IdeaList<Iterable<N>> elements) {
+        return elements.lazyReduceRight(IdeaList.empty(), (elem, accum) -> concat(elem.value(), accum));
+    }*/
+
     /*private static <N> IdeaList<N> concatNestedIterables(IdeaList<Iterable<N>> elements) {
         return elements.lazyReduceRight(IdeaList.empty(), (elem, accum) -> concat(elem.value(), accum));
     }*/
+
+
 
     @SuppressWarnings("unchecked") // Cast is safe because isNested() first checks if list does in fact contain nested iterables
     private <N> IdeaList<N> concatNestedIdeaLists() {
@@ -494,7 +578,7 @@ public abstract class IdeaList<E> implements Iterable<E> {
 
     @SuppressWarnings("unchecked") // Cast is safe because isNested() first checks if list does in fact contain nested iterables
     public <N> IdeaList<N> flatten() {
-        if (isNestedIdeaLists()) return concatNestedIdeaLists((IdeaList<IdeaList<N>>) this);
+        if (containsNestedIdeaLists()) return concatNestedIdeaLists((IdeaList<IdeaList<N>>) this);
         // if (isNested()) return concatNestedIterables();
         throw new UnsupportedOperationException("List contains elements that are not Iterable");
     }
@@ -561,6 +645,10 @@ public abstract class IdeaList<E> implements Iterable<E> {
         return IdeaList.of(toListSortedByAscending(selector));
     }
 
+    public <R extends Comparable<R>> IdeaList<E> sortByAsc(Function<E, R> selector) {
+        return sortByAscending(selector);
+    }
+
     private <R extends Comparable<R>> List<E> toListSortedByDescending(Function<E, R> selector) {
         List<E> list = toList();
         list.sort(Comparator.comparing(selector, Comparator.reverseOrder()));
@@ -569,6 +657,10 @@ public abstract class IdeaList<E> implements Iterable<E> {
 
     public <R extends Comparable<R>> IdeaList<E> sortByDescending(Function<E, R> selector) {
         return IdeaList.of(toListSortedByDescending(selector));
+    }
+
+    public <R extends Comparable<R>> IdeaList<E> sortByDesc(Function<E, R> selector) {
+        return sortByDescending(selector);
     }
 
     /*public IdeaList<E> sortWith(Comparator<E> comparator) {
@@ -622,7 +714,7 @@ public abstract class IdeaList<E> implements Iterable<E> {
         }
 
         @Override
-        OptionalInt indexOfFirstHelper(Predicate<E> predicate, int index) {
+        protected OptionalInt indexOfFirstHelper(Predicate<E> predicate, int index) {
             return predicate.test(value.value()) ? OptionalInt.of(index) : indexOfFirstHelper(predicate, index + 1);
         }
 
@@ -639,7 +731,7 @@ public abstract class IdeaList<E> implements Iterable<E> {
         }
 
         @Override
-        public boolean isNestedIdeaLists() {
+        public boolean containsNestedIdeaLists() {
             return value.value() instanceof IdeaList;
         }
 
@@ -658,6 +750,40 @@ public abstract class IdeaList<E> implements Iterable<E> {
                     : keepValueAndTransformTail(tail -> tail.insertAt(index - 1, elements));
         }
 
+        /*@Override
+        public IdeaList<E> insertAt2(int index, Iterable<E> elements) {
+            if (index < 0) return insertAt(toPositiveIndex(index), elements);
+            return index == 0
+                    ? concat(elements, this)
+                    : keepValueAndTransformTail(tail -> tail.insertAt(index - 1, elements));
+        }*/
+
+        // concat(IdeaList<E> elements, IdeaList<E> other)
+        // concat(Iterable<E> elements, IdeaList<E> other)
+        @Override
+        protected <I> IdeaList<E> insertAtHelper(int index, I elements, BiFunction<I, IdeaList<E>, IdeaList<E>> concat) {
+            if (index < 0) return insertAtHelper(toPositiveIndex(index), elements, concat);
+            return index == 0
+                    ? concat.apply(elements, this)
+                    : keepValueAndTransformTail(tail -> tail.insertAtHelper(index - 1, elements, concat));
+        }
+
+        /*@Override
+        public IdeaList<E> insertAt2(int index, IdeaList<E> elements) {
+            if (index < 0) return insertAt(toPositiveIndex(index), elements);
+            return index == 0
+                    ? concat(elements, this)
+                    : keepValueAndTransformTail(tail -> tail.insertAt(index - 1, elements));
+        }
+
+        @Override
+        public IdeaList<E> insertAt2(int index, Iterable<E> elements) {
+            if (index < 0) return insertAt(toPositiveIndex(index), elements);
+            return index == 0
+                    ? concat(elements, this)
+                    : keepValueAndTransformTail(tail -> tail.insertAt(index - 1, elements));
+        }*/
+
         @Override
         public IdeaList<E> removeFirst(@Nullable E element) {
             return Objects.equals(value.value(), element) ? tail.value() : keepValueAndTransformTail(tail -> tail.removeFirst(element));
@@ -672,7 +798,7 @@ public abstract class IdeaList<E> implements Iterable<E> {
 
         // List operations ==============================================================================
         @Override
-        <A> A lazyReduceRight(A initialValue, BiFunction<Lazy<E>, Lazy<A>, A> operation) {
+        protected <A> A lazyReduceRight(A initialValue, BiFunction<Lazy<E>, Lazy<A>, A> operation) {
             return operation.apply(value, Lazy.of(() -> tail.value().lazyReduceRight(initialValue, operation)));
         }
     }
@@ -727,7 +853,7 @@ public abstract class IdeaList<E> implements Iterable<E> {
         }
 
         @Override
-        OptionalInt indexOfFirstHelper(Predicate<E> predicate, int index) {
+        protected OptionalInt indexOfFirstHelper(Predicate<E> predicate, int index) {
             return OptionalInt.empty();
         }
 
@@ -744,7 +870,7 @@ public abstract class IdeaList<E> implements Iterable<E> {
         }
 
         @Override
-        public boolean isNestedIdeaLists() {
+        public boolean containsNestedIdeaLists() {
             return false;
         }
 
@@ -761,6 +887,21 @@ public abstract class IdeaList<E> implements Iterable<E> {
         }
 
         @Override
+        protected <I> IdeaList<E> insertAtHelper(int index, I elements, BiFunction<I, IdeaList<E>, IdeaList<E>> concat) {
+            throw indexTooBigException();
+        }
+
+        /*@Override
+        public IdeaList<E> insertAt2(int index, IdeaList<E> elements) {
+            throw indexTooBigException();
+        }
+
+        @Override
+        public IdeaList<E> insertAt2(int index, Iterable<E> elements) {
+            throw indexTooBigException();
+        }*/
+
+        @Override
         public IdeaList<E> removeFirst(@Nullable E element) {
             return this;
         }
@@ -773,7 +914,7 @@ public abstract class IdeaList<E> implements Iterable<E> {
 
         // List operations ==============================================================================
         @Override
-        <A> A lazyReduceRight(A initialValue, BiFunction<Lazy<E>, Lazy<A>, A> operation) {
+        protected <A> A lazyReduceRight(A initialValue, BiFunction<Lazy<E>, Lazy<A>, A> operation) {
             return initialValue;
         }
     }

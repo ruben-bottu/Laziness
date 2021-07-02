@@ -64,6 +64,7 @@ abstract class MutableList<E> implements Iterable<Lazy<E>> {
         return Enumerator.of(this);
     }
 
+
     /////////////////////////////////////////////////////////////////////////////////////////////////
     private static class NormalNode<E> extends MutableList<E> {
 
