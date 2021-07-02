@@ -531,25 +531,7 @@ public abstract class IdeaList<E> implements Iterable<E> {
         throw new UnsupportedOperationException("List contains elements that are not Iterable");
     }*/
 
-    /*// concat(IdeaList<E> elements, IdeaList<E> other)
-        // concat(Iterable<E> elements, IdeaList<E> other)
-        @Override
-        protected <I> IdeaList<E> insertAtHelper(int index, I elements, BiFunction<I, IdeaList<E>, IdeaList<E>> concat) {
-            if (index < 0) return insertAtHelper(toPositiveIndex(index), elements, concat);
-            return index == 0
-                    ? concat.apply(elements, this)
-                    : keepValueAndTransformTail(tail -> tail.insertAtHelper(index - 1, elements, concat));
-        }*/
 
-    //private static <N, I> IdeaList<N> concatNestedHelper(IdeaList<I> elements, BiFunction<I, Lazy<IdeaList<E>>, >)
-
-    private static <N> IdeaList<N> concatNestedIdeaLists(IdeaList<IdeaList<N>> elements) {
-        return elements.lazyReduceRight(IdeaList.empty(), (elem, accum) -> concat(elem.value(), accum));
-    }
-
-    private static <N> IdeaList<N> concatNestedIterables(IdeaList<Iterable<N>> elements) {
-        return elements.lazyReduceRight(IdeaList.empty(), (elem, accum) -> concat(elem.value(), accum));
-    }
 
     /*private static <N> IdeaList<N> concatNestedIdeaLists(IdeaList<IdeaList<N>> elements) {
         return elements.lazyReduceRight(IdeaList.empty(), (elem, accum) -> concat(elem.value(), accum));
@@ -563,8 +545,6 @@ public abstract class IdeaList<E> implements Iterable<E> {
         return elements.lazyReduceRight(IdeaList.empty(), (elem, accum) -> concat(elem.value(), accum));
     }*/
 
-
-
     @SuppressWarnings("unchecked") // Cast is safe because isNested() first checks if list does in fact contain nested iterables
     private <N> IdeaList<N> concatNestedIdeaLists() {
         return lazyReduceRight(IdeaList.empty(), (elem, list) -> concat((IdeaList<N>) elem.value(), list));
@@ -576,10 +556,30 @@ public abstract class IdeaList<E> implements Iterable<E> {
         throw new UnsupportedOperationException("List contains elements that are not Iterable");
     }*/
 
+    private static <I, N> IdeaList<N> concatNestedHelper(IdeaList<I> elements, BiFunction<I, Lazy<IdeaList<N>>, IdeaList<N>> concat) {
+        return elements.lazyReduceRight(IdeaList.empty(), (elem, accum) -> concat.apply(elem.value(), accum));
+    }
+
+    private static <N> IdeaList<N> concatNestedIdeaLists(IdeaList<IdeaList<N>> elements) {
+        return concatNestedHelper(elements, IdeaList::concat);
+    }
+
+    private static <N> IdeaList<N> concatNestedIterables(IdeaList<Iterable<N>> elements) {
+        return concatNestedHelper(elements, IdeaList::concat);
+    }
+
+    /*private static <N> IdeaList<N> concatNestedIdeaLists(IdeaList<IdeaList<N>> elements) {
+        return elements.lazyReduceRight(IdeaList.empty(), (elem, accum) -> concat(elem.value(), accum));
+    }
+
+    private static <N> IdeaList<N> concatNestedIterables(IdeaList<Iterable<N>> elements) {
+        return elements.lazyReduceRight(IdeaList.empty(), (elem, accum) -> concat(elem.value(), accum));
+    }*/
+
     @SuppressWarnings("unchecked") // Cast is safe because isNested() first checks if list does in fact contain nested iterables
     public <N> IdeaList<N> flatten() {
         if (containsNestedIdeaLists()) return concatNestedIdeaLists((IdeaList<IdeaList<N>>) this);
-        // if (isNested()) return concatNestedIterables();
+        if (isNested()) return concatNestedIterables((IdeaList<Iterable<N>>) this);
         throw new UnsupportedOperationException("List contains elements that are not Iterable");
     }
 
