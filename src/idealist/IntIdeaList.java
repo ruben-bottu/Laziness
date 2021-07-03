@@ -151,8 +151,9 @@ public abstract class IntIdeaList implements Iterable<Integer> {
 
     public abstract int reduce(IntBinaryOperator operation);
 
+    // reduce(0, Integer::sum); or reduce(Integer::sum); ?
     public int sum() {
-        return reduce(Integer::sum);
+        return reduce(0, Integer::sum);
     }
 
     public double average() {

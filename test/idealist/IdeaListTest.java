@@ -24,6 +24,7 @@ public class IdeaListTest {
     private IdeaList<LocalDate> localDateIdeaList;
 
     private Set<Person> personSet;
+    private LinkedList<Dog> dogLinkedList;
 
     @Before
     public void setUp() {
@@ -79,13 +80,14 @@ public class IdeaListTest {
         dogIdeaList = IdeaList.of(d1, d2, d3, d4, d5, d6);
         localDateIdeaList = IdeaList.of(l1, l2, l3, l4, l5, l6, l7);
         personSet = new LinkedHashSet<>(personIdeaList.toList());
+        dogLinkedList = new LinkedList<>(dogIdeaList.toList());
     }
 
 
     // Constructors and factory methods =============================================================
     @Test
     public void empty_Returns_an_empty_IdeaList() {
-        assertEquals(0, IdeaList.empty().length());
+        assertTrue(IdeaList.empty().isEmpty());
     }
 
     @Test(expected = NullPointerException.class)
@@ -149,7 +151,7 @@ public class IdeaListTest {
         assertEquals(d4, animals.tail.value().tail.value().tail.value().value.value());
         assertEquals(d5, animals.tail.value().tail.value().tail.value().tail.value().value.value());
         assertEquals(d6, animals.tail.value().tail.value().tail.value().tail.value().tail.value().value.value());
-        assertNull(animals.tail.value().tail.value().tail.value().tail.value().tail.value().tail.value().value);
+        assertTrue(animals.tail.value().tail.value().tail.value().tail.value().tail.value().tail.value().isEmpty());
     }
 
     /*@Test(expected = NullPointerException.class)
@@ -181,7 +183,7 @@ public class IdeaListTest {
 
 
     // Getters ======================================================================================
-    @Test(expected = IndexOutOfBoundsException.class)
+    /*@Test(expected = IndexOutOfBoundsException.class)
     public void get_Throws_IndexOutOfBoundsException_if_index_negative() {
         localDateIdeaList.get(-75);
     }
@@ -189,6 +191,24 @@ public class IdeaListTest {
     @Test(expected = IndexOutOfBoundsException.class)
     public void get_Throws_IndexOutOfBoundsException_if_index_just_negative() {
         integerIdeaList.get(-1);
+    }*/
+
+    @Test(expected = IndexOutOfBoundsException.class)
+    public void get_Throws_IndexOutOfBoundsException_if_negative_index_smaller_than_last_valid_index() {
+        dogIdeaList.get(-75);
+    }
+
+    @Test(expected = IndexOutOfBoundsException.class)
+    public void get_Throws_IndexOutOfBoundsException_if_negative_index_just_smaller_than_last_valid_index() {
+        localDateIdeaList.get(-8);
+    }
+
+    @Test
+    public void get_Returns_element_at_given_negative_index_if_index_valid() {
+        assertEquals(p6, personIdeaList.get(-1));
+        assertEquals(p1, personIdeaList.get(-6));
+        assertEquals(d4, dogIdeaList.get(-3));
+        assertEquals(d2, dogIdeaList.get(-5));
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
@@ -945,7 +965,7 @@ public class IdeaListTest {
         IdeaList.<Person>empty().insertAt(0, personSet);
     }
 
-    @Test(expected = IndexOutOfBoundsException.class)
+    /*@Test(expected = IndexOutOfBoundsException.class)
     public void insertAt_Iterable_Throws_exception_if_index_just_negative() {
         personIdeaList.insertAt(-1, Collections.emptyList());
     }
@@ -953,6 +973,26 @@ public class IdeaListTest {
     @Test(expected = IndexOutOfBoundsException.class)
     public void insertAt_Iterable_Throws_exception_if_index_negative() {
         personIdeaList.insertAt(-23, Collections.emptyList());
+    }*/
+
+    //get_Throws_IndexOutOfBoundsException_if_negative_index_smaller_than_last_valid_index
+
+    @Test(expected = IndexOutOfBoundsException.class)
+    public void insertAt_Iterable_Throws_exception_if_negative_index_just_smaller_than_last_valid_index() {
+        personIdeaList.insertAt(-7, personSet);
+    }
+
+    @Test(expected = IndexOutOfBoundsException.class)
+    public void insertAt_Iterable_Throws_exception_if_negative_index_smaller_than_last_valid_index() {
+        personIdeaList.insertAt(-23, personSet);
+    }
+
+    @Test
+    public void insertAt_Iterable_Inserts_given_elements_at_specified_negative_index() {
+        LocalDate local1 = LocalDate.of(1002, 7, 1);
+        LocalDate local2 = LocalDate.of(4014, 6, 9);
+        IdeaList<LocalDate> expected = IdeaList.of(l1, l2, local1, local2, l3, l4, l5, l6, l7);
+        assertEquals(expected, localDateIdeaList.insertAt(-5, Arrays.asList(local1, local2)));
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
@@ -971,14 +1011,14 @@ public class IdeaListTest {
     }
 
     @Test
-    public void insertAt_Iterable_Inserts_given_elements_containing_null_at_specified_position() {
+    public void insertAt_Iterable_Inserts_given_elements_containing_null_at_specified_index() {
         LocalDate local = LocalDate.of(4014, 6, 9);
         IdeaList<LocalDate> expected = IdeaList.of(null, l4, null, null, local, l5);
         assertEquals(expected, IdeaList.of(null, l4, null, l5).insertAt(3, Arrays.asList(null, local)));
     }
 
     @Test
-    public void insertAt_Iterable_Inserts_given_elements_at_specified_position() {
+    public void insertAt_Iterable_Inserts_given_elements_at_specified_index() {
         LocalDate local1 = LocalDate.of(1002, 7, 1);
         LocalDate local2 = LocalDate.of(4014, 6, 9);
         IdeaList<LocalDate> expected = IdeaList.of(l1, l2, l3, local1, local2, l4, l5, l6, l7);
@@ -1067,10 +1107,10 @@ public class IdeaListTest {
         assertEquals(expected, localDateIdeaList.insertAt(3, IdeaList.of(local1, local2)));
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    /*@Test(expected = IllegalArgumentException.class)
     public void concatWith_Iterable_Throws_exception_if_given_elements_null() {
         personIdeaList.concatWith(null);
-    }
+    }*/
 
     @Test
     public void concatWith_Iterable_Returns_given_list_if_this_list_is_empty() {

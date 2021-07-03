@@ -466,10 +466,7 @@ public abstract class IdeaList<E> implements Iterable<E> {
     public E reduceRightIndexed(TriFunction<Integer, E, E, E> operation) {
         return Enumerable.reduceRightIndexed(operation, this);
     }
-    // public <A> A reduce(A initialValue, BiFunction<A, E, A> operation) {
-    // abstract <A> A lazyReduce(A initialValue, BiFunction<Lazy<A>, Lazy<E>, A> operation);
 
-    // public <A> A reduceRight(A initialValue, BiFunction<E, A, A> operation) {
     protected abstract <A> A lazyReduceRight(A initialValue, BiFunction<Lazy<E>, Lazy<A>, A> operation);
 
     public <R> IdeaList<R> map(Function<E, R> transform) {
@@ -530,8 +527,6 @@ public abstract class IdeaList<E> implements Iterable<E> {
         if (isNested()) return concatNestedIterables();
         throw new UnsupportedOperationException("List contains elements that are not Iterable");
     }*/
-
-
 
     /*private static <N> IdeaList<N> concatNestedIdeaLists(IdeaList<IdeaList<N>> elements) {
         return elements.lazyReduceRight(IdeaList.empty(), (elem, accum) -> concat(elem.value(), accum));
@@ -715,7 +710,7 @@ public abstract class IdeaList<E> implements Iterable<E> {
 
         @Override
         protected OptionalInt indexOfFirstHelper(Predicate<E> predicate, int index) {
-            return predicate.test(value.value()) ? OptionalInt.of(index) : indexOfFirstHelper(predicate, index + 1);
+            return predicate.test(value.value()) ? OptionalInt.of(index) : tail.value().indexOfFirstHelper(predicate, index + 1);
         }
 
         @Override
