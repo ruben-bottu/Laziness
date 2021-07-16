@@ -2,17 +2,13 @@ package idealist;
 
 import idealist.function.IndexedBiFunction;
 import idealist.function.TriFunction;
-import idealist.range.Range;
-import idealist.tuple.IndexElement;
 import idealist.tuple.Pair;
 import idealist.tuple.Triplet;
 
+import java.lang.reflect.Array;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.BiFunction;
-import java.util.function.BinaryOperator;
-import java.util.function.Function;
-import java.util.function.Predicate;
+import java.util.function.*;
 
 import static java.util.function.Predicate.isEqual;
 
@@ -367,4 +363,55 @@ public final class Enumerable {
         elements.forEach(list::add);
         return list;
     }
+
+    /*static <E> IdeaList<E> sort(Comparator<E> comparator, IdeaList<E> elements) {
+        MutableList<E>[] temp = (MutableList<E>[]) new MutableList[NODE_REFERENCE_ARRAY_SIZE];*/
+
+    /*private E[] createArrayWithSameTypeAndSizeAsThisList() {
+        return (E[]) Array.newInstance(value.value().getClass(), length());
+    }*/
+
+    /*public E get2(int index) {
+        Lazy<E>[] previousValues = (Lazy<E>[]) new Lazy[-index-1]; // length = 3*/
+
+    /*@SuppressWarnings("unchecked")
+    public static <T> T[] newArray(Class<T> type, int length) {
+        return (T[]) Array.newInstance(type, length);
+    }*/
+
+    @SuppressWarnings("unchecked")
+    public static <E> E[] arrayOf(E elementType, int length) {
+        return (E[]) Array.newInstance(elementType.getClass(), length);
+    }
+
+    /*@SuppressWarnings("unchecked")
+    public static <T> T[] arrayOf(T staticType, Class<?> componentType, int length) {
+        return (T[]) Array.newInstance(componentType, length);
+    }*/
+
+    // TODO test to see if this works as it should (no ClassCastException)
+    // If it works properly, then this is what we need.
+    @SuppressWarnings("unchecked")
+    public static <E> E[] unsafeArrayOf(Class<?> elementType, int length) {
+        return (E[]) Array.newInstance(elementType, length);
+    }
+
+    public static <A> A[] arrayOf(IntFunction<A[]> generator, int length) {
+        return generator.apply(length);
+    }
+
+    /*@SuppressWarnings("unchecked")
+    public static <T> T[] newArray(Class<T> type, int length) {
+        return (T[]) Array.newInstance(type, length);
+    }*/
+
+    @SuppressWarnings("unchecked")
+    public static <T> T[] arrayOf(Class<T> type, int length) {
+        return (T[]) Array.newInstance(type, length);
+    }
+
+    /*@SuppressWarnings("unchecked")
+    public static <T> T[] newArray2(Class<T> type, int length) {
+        return type.getCanonicalName();
+    }*/
 }

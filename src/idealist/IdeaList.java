@@ -6,7 +6,7 @@ import idealist.tuple.IndexElement;
 import idealist.tuple.Pair;
 import idealist.tuple.Triplet;
 
-import java.lang.reflect.Array;
+import java.lang.reflect.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.*;
@@ -72,11 +72,6 @@ public abstract class IdeaList<E> implements Iterable<E> {
         return concat(elements.iterator(), other, Function.identity());
     }
 
-    static <E> IdeaList<E> of(MutableList<E> elements) {
-        if (elements.isEmpty()) return IdeaList.empty();
-        return IdeaList.create(elements.value, Lazy.of(() -> of(elements.tail)));
-    }
-
     public static <E> IdeaList<E> of(Iterable<E> elements) {
         return constructIdeaListFromIterator(elements.iterator());
     }
@@ -103,6 +98,11 @@ public abstract class IdeaList<E> implements Iterable<E> {
     @SafeVarargs
     public static <E> IdeaList<E> ofDirect(E... elements) {
         return constructIdeaListFromIterator(Enumerator.of(elements));
+    }
+
+    static <E> IdeaList<E> of(MutableList<E> elements) {
+        if (elements.isEmpty()) return IdeaList.empty();
+        return IdeaList.create(elements.value, Lazy.of(() -> of(elements.tail)));
     }
 
     private static IdeaList<Integer> rangeLength(int from, int length) {
@@ -152,6 +152,22 @@ public abstract class IdeaList<E> implements Iterable<E> {
     // Getters ======================================================================================
     public abstract E get(int index);
 
+    /*public E get2(int index) { // [d, b, c]
+        if (index < 0) {
+            @SuppressWarnings("unchecked")
+            Lazy<E>[] previousValues = (Lazy<E>[]) new Lazy[-index-1]; // length = 3
+            Lazy<E>[] previousValues2 = Enumerable.arrayOf(value, -index - 1);
+            Lazy<E>[] previousValues3 = Enumerable.arrayOf(Lazy.class, -index - 1);
+            int firstValue = 0;
+
+            if (tail.value().isEmpty()) {
+                return previousValues[0].value();
+            } else {
+                previousValues[firstValue++] = value;
+            }
+        }
+    }*/
+
     /*public E get(int index) {
         if (index < 0) return get(toPositiveIndex(index));
         return withIndex().findFirst(pair -> pair.index == index)
@@ -159,6 +175,8 @@ public abstract class IdeaList<E> implements Iterable<E> {
                 .element;
     }
 
+    // findFirstIndexed() will unnecessarily evaluate values, even when they will never be used
+    // see predicate.test(value.value()) in findFirst()
     public E get2(int index) {
         if (index < 0) return get(toPositiveIndex(index));
         return findFirstIndexed((idx, elem) -> idx == index)
@@ -171,10 +189,12 @@ public abstract class IdeaList<E> implements Iterable<E> {
 
     public abstract E last();
 
+    // TODO benchmark against variant with RANDOM constant
     public E random() {
         return get(new Random().nextInt(length()));
     }
 
+    // X checking tests
     public abstract Optional<E> findFirst(Predicate<E> predicate);
 
     public Optional<E> findFirstIndexed(BiPredicate<Integer, E> predicate) {
@@ -239,6 +259,54 @@ public abstract class IdeaList<E> implements Iterable<E> {
 
     public E[] toArray() {
         E[] result = createArrayWithSameTypeAndSizeAsThisList();
+        forEachIndexed((index, elem) -> result[index] = elem);
+        return result;
+    }
+
+    public E[] toArray2() {
+        E[] result = Enumerable.arrayOf(value.value(), length());
+        //E[] result2 = Enumerable.arrayOf((E) null, length());
+        E[] result3 = Enumerable.unsafeArrayOf(value.value().getClass(), length());
+        forEachIndexed((index, elem) -> result[index] = elem);
+        return result;
+    }
+
+    public E[] toArray3() throws NoSuchFieldException {
+        Field valueField = IdeaList.class.getDeclaredField("value");
+        ParameterizedType valueType = (ParameterizedType) valueField.getGenericType();
+        Class<?> valueClass = (Class<?>) valueType.getActualTypeArguments()[0];
+        @SuppressWarnings("unchecked")
+        E[] array = (E[]) Array.newInstance(valueClass, length());
+        return array;
+    }
+
+    /*Field stringListField = Test.class.getDeclaredField("stringList");
+        ParameterizedType stringListType = (ParameterizedType) stringListField.getGenericType();
+        Class<?> stringListClass = (Class<?>) stringListType.getActualTypeArguments()[0];
+        System.out.println(stringListClass); // class java.lang.String.*/
+
+    /*@SuppressWarnings("unchecked")
+    public E[] toArray4() throws NoSuchFieldException {
+        Class entityBeanType = ((Class) ((ParameterizedType) getClass()
+                .getGenericSuperclass()).getActualTypeArguments()[0]);
+        return null;
+    }*/
+
+    /*public E[] toArray() {
+        E[] result = createArrayWithSameTypeAndSizeAsThisList();
+        int index = 0;
+        for (E element : this) result[index++] = element;
+        return result;
+    }*/
+
+    public E[] toArray5(IntFunction<E[]> generator) {
+        E[] result = generator.apply(length());
+        forEachIndexed((index, elem) -> result[index] = elem);
+        return result;
+    }
+
+    public E[] toArray6(Class<E> elementType) {
+        E[] result = Enumerable.arrayOf(elementType, length());
         forEachIndexed((index, elem) -> result[index] = elem);
         return result;
     }
@@ -401,6 +469,13 @@ public abstract class IdeaList<E> implements Iterable<E> {
     public IdeaList<E> removeAll(@Nullable E element) {
         return where(elem -> !Objects.equals(elem, element));
     }
+
+    @Override
+    public void forEach(Consumer<? super E> action) {
+        for (E element : this) action.accept(element);
+    }
+
+    public abstract void forEach2(Consumer<? super E> action);
 
     public void forEachIndexed(BiConsumer<Integer, E> action) {
         var index = new AtomicInteger();
@@ -576,6 +651,43 @@ public abstract class IdeaList<E> implements Iterable<E> {
         if (containsNestedIdeaLists()) return concatNestedIdeaLists((IdeaList<IdeaList<N>>) this);
         if (isNested()) return concatNestedIterables((IdeaList<Iterable<N>>) this);
         throw new UnsupportedOperationException("List contains elements that are not Iterable");
+    }
+
+    /*@SuppressWarnings("unchecked") // Cast is safe because isNested() first checks if list does in fact contain nested iterables
+    private <N> IdeaList<N> concatNestedIdeaLists() {
+        return lazyReduceRight(IdeaList.empty(), (elem, list) -> concat((IdeaList<N>) elem.value(), list));
+    }*/
+
+    @SuppressWarnings("unchecked")
+    public <N> IdeaList<N> flatten2() {
+        return lazyReduceRight(IdeaList.empty(), (elem, list) ->
+                elem.value() instanceof IdeaList
+                        ? concat((IdeaList<N>) elem.value(), list)
+                        : concat((Iterable<N>) elem.value(), list));
+    }
+
+    private static boolean isInstanceOfNormalNode(Object object) {
+        return object.getClass() == IdeaList.NormalNode.class;
+    }
+
+    // What about EndNode? Just return list
+    @SuppressWarnings("unchecked")
+    private static <N> IdeaList<N> concatContainerToList(Lazy<?> container, Lazy<IdeaList<N>> list) {
+        return isInstanceOfNormalNode(container.value())
+                ? concat((IdeaList<N>) container.value(), list)
+                : concat((Iterable<N>) container.value(), list);
+    }
+
+    /*@SuppressWarnings("unchecked")
+    public <N> IdeaList<N> flatten3() {
+        return lazyReduceRight(IdeaList.empty(), (elem, list) ->
+                elem.value().getClass() == IdeaList.NormalNode.class
+                        ? concat((IdeaList<N>) elem.value(), list)
+                        : concat((Iterable<N>) elem.value(), list));
+    }*/
+
+    public <N> IdeaList<N> flatten3() {
+        return lazyReduceRight(IdeaList.empty(), IdeaList::concatContainerToList);
     }
 
     /*public <N> IdeaList<N> flatten() {
@@ -790,6 +902,16 @@ public abstract class IdeaList<E> implements Iterable<E> {
             return index == 0 ? tail.value() : keepValueAndTransformTail(tail -> tail.removeAt(index - 1));
         }
 
+        /*@Override
+        public Optional<E> findFirst(Predicate<E> predicate) {
+            return predicate.test(value.value()) ? Optional.of(value.value()) : tail.value().findFirst(predicate);
+        }*/
+
+        @Override
+        public void forEach2(Consumer<? super E> action) {
+            action.accept(value.value());
+            tail.value().forEach2(action);
+        }
 
         // List operations ==============================================================================
         @Override
@@ -906,6 +1028,8 @@ public abstract class IdeaList<E> implements Iterable<E> {
             throw indexTooBigException();
         }
 
+        @Override
+        public void forEach2(Consumer<? super E> action) {}
 
         // List operations ==============================================================================
         @Override
