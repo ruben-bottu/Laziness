@@ -11,6 +11,8 @@ import java.time.LocalDate;
 import java.util.*;
 
 import static idealist.Enumerable.isContentEqual;
+import static idealist.Lambda.alwaysFalse;
+import static idealist.Lambda.alwaysTrue;
 import static idealist.TestUtils.assertContentEqual;
 import static idealist.TestUtils.assertEmpty;
 import static java.util.Arrays.asList;
@@ -372,13 +374,18 @@ public class IdeaListTest {
 
     @Test
     public void findFirst_Returns_empty_Optional_instance_if_list_is_empty() {
-        assertEmpty( IdeaList.empty().findFirst(e -> true) );
+        assertEmpty( IdeaList.empty().findFirst(alwaysTrue()) );
     }
 
-    @Test
+    /*@Test
     public void findFirst_Returns_empty_Optional_instance_if_no_element_matches_given_predicate() {
         assertEmpty( integerIdeaList.findFirst(integer -> integer > 75 && integer < 100) );
         assertEmpty( dogIdeaList.findFirst(animal -> animal.getAge() > 13) );
+    }*/
+
+    @Test
+    public void findFirst_Returns_empty_Optional_instance_if_no_element_matches_given_predicate() {
+        assertEmpty( integerIdeaList.findFirst(alwaysFalse()) );
     }
 
     /*@Test
@@ -409,13 +416,12 @@ public class IdeaListTest {
 
     @Test
     public void first_Returns_empty_Optional_instance_if_list_is_empty() {
-        assertEmpty( IdeaList.empty().first(e -> true) );
+        assertEmpty( IdeaList.empty().first(alwaysTrue()) );
     }
 
     @Test
     public void first_Returns_empty_Optional_instance_if_no_element_matches_given_predicate() {
-        assertEmpty( integerIdeaList.first(integer -> integer > 75 && integer < 100) );
-        assertEmpty( dogIdeaList.first(animal -> animal.getAge() > 13) );
+        assertEmpty( integerIdeaList.first(alwaysFalse()) );
     }
 
     @Test(expected = NullPointerException.class)

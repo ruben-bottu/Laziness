@@ -64,13 +64,25 @@ public abstract class IdeaList<E> implements Iterable<E> {
         return toIdeaList.apply(other);
     }
 
+    private static <E, O> IdeaList<E> concat(Iterable<E> elements, O other, Function<O, IdeaList<E>> toIdeaList) {
+        return concat(elements.iterator(), other, toIdeaList);
+    }
+
     private static <E> IdeaList<E> concat(Iterable<E> elements, Lazy<IdeaList<E>> other) {
+        return concat(elements, other, Lazy::value);
+    }
+
+    private static <E> IdeaList<E> concat(Iterable<E> elements, IdeaList<E> other) {
+        return concat(elements, other, Function.identity());
+    }
+
+    /*private static <E> IdeaList<E> concat(Iterable<E> elements, Lazy<IdeaList<E>> other) {
         return concat(elements.iterator(), other, Lazy::value);
     }
 
     private static <E> IdeaList<E> concat(Iterable<E> elements, IdeaList<E> other) {
         return concat(elements.iterator(), other, Function.identity());
-    }
+    }*/
 
     public static <E> IdeaList<E> of(Iterable<E> elements) {
         return constructIdeaListFromIterator(elements.iterator());
@@ -194,6 +206,10 @@ public abstract class IdeaList<E> implements Iterable<E> {
         return get(new Random().nextInt(length()));
     }
 
+    /*public E random() {
+        return get(RANDOM.nextInt(length()));
+    }*/
+
     // X checking tests
     public abstract Optional<E> findFirst(Predicate<E> predicate);
 
@@ -204,6 +220,10 @@ public abstract class IdeaList<E> implements Iterable<E> {
 
     public Optional<E> first(Predicate<E> predicate) {
         return findFirst(predicate);
+    }
+
+    public Optional<E> firstIndexed(BiPredicate<Integer, E> predicate) {
+        return findFirstIndexed(predicate);
     }
 
     protected abstract OptionalInt indexOfFirstHelper(Predicate<E> predicate, int index);
@@ -670,12 +690,23 @@ public abstract class IdeaList<E> implements Iterable<E> {
         return object.getClass() == IdeaList.NormalNode.class;
     }
 
+    private static boolean isInstanceOfEndNode(Object object) {
+        return object.getClass() == IdeaList.EndNode.class;
+    }
+
     // What about EndNode? Just return list
     @SuppressWarnings("unchecked")
     private static <N> IdeaList<N> concatContainerToList(Lazy<?> container, Lazy<IdeaList<N>> list) {
         return isInstanceOfNormalNode(container.value())
                 ? concat((IdeaList<N>) container.value(), list)
                 : concat((Iterable<N>) container.value(), list);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <N> IdeaList<N> concatContainerToList2(Lazy<?> container, Lazy<IdeaList<N>> list) {
+        if (isInstanceOfNormalNode(container.value())) return concat((IdeaList<N>) container.value(), list);
+        if (isInstanceOfEndNode(container.value())) return list.value();
+        return concat((Iterable<N>) container.value(), list);
     }
 
     /*@SuppressWarnings("unchecked")
@@ -690,16 +721,16 @@ public abstract class IdeaList<E> implements Iterable<E> {
         return lazyReduceRight(IdeaList.empty(), IdeaList::concatContainerToList);
     }
 
-    /*public <N> IdeaList<N> flatten() {
-        // maybe put result of concatNestedIdeaLists() in variable for more precise @SuppressWarnings("unchecked")
-        if (isNestedIdeaLists()) {
-            @SuppressWarnings("unchecked") // Cast is safe because isNested() first checks if list does in fact contain nested iterables
-            var list = concatNestedIdeaLists((IdeaList<IdeaList<N>>) this);
-            return list;
-        }
-        // if (isNested()) return concatNestedIterables();
-        throw new UnsupportedOperationException("List contains elements that are not Iterable");
-    }*/
+    @SuppressWarnings("unchecked") // This implementation also takes nested empty IdeaLists into account
+    private static <N> IdeaList<N> concatContainerToList3(Lazy<?> container, Lazy<IdeaList<N>> list) {
+        return container.value() instanceof IdeaList
+                ? concat((IdeaList<N>) container.value(), list)
+                : concat((Iterable<N>) container.value(), list);
+    }
+
+    public <N> IdeaList<N> flatten4() {
+        return lazyReduceRight(IdeaList.empty(), IdeaList::concatContainerToList3);
+    }
 
     public <A, B> IdeaList<Triplet<E, A, B>> zipWith(Iterable<A> other, Iterable<B> other2) {
         return Enumerable.zip(this, other, other2);

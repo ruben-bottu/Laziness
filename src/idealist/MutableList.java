@@ -50,12 +50,11 @@ abstract class MutableList<E> implements Iterable<Lazy<E>> {
         return !any();
     }
 
-    abstract void toStringHelper(StringBuilder builder);
-
     @Override
     public String toString() {
-        StringBuilder builder = new StringBuilder("[");
-        toStringHelper(builder);
+        //StringBuilder builder = new StringBuilder("[" + value.value());
+        StringBuilder builder = new StringBuilder("[").append(value.value());
+        tail.forEach(elem -> builder.append(", ").append(elem.value()));
         return builder.append("]").toString();
     }
 
@@ -81,13 +80,6 @@ abstract class MutableList<E> implements Iterable<Lazy<E>> {
         public boolean any() {
             return true;
         }
-
-        @Override
-        void toStringHelper(StringBuilder builder) {
-            builder.append(value.value());
-            if (tail.any()) builder.append(", ");
-            tail.toStringHelper(builder);
-        }
     }
 
 
@@ -112,8 +104,5 @@ abstract class MutableList<E> implements Iterable<Lazy<E>> {
         public boolean any() {
             return false;
         }
-
-        @Override
-        void toStringHelper(StringBuilder builder) { }
     }
 }
