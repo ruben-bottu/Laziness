@@ -400,18 +400,50 @@ public class IdeaListTest {
     }
 
     @Test
-    @SuppressWarnings("all") // In this test case it is certain that the Optional object will contain a value
     public void findFirst_Returns_first_element_matching_given_predicate_in_list_with_nulls() {
         IdeaList<Dog> input = IdeaList.of(d2, d3, d3, null, d6, d5, null);
-        assertEquals(d5, input.findFirst(dog -> Objects.equals(dog, d5)).get());
+        assertEquals(d5, input.findFirst(dog -> Objects.equals(dog, d5)).orElseThrow());
+    }
+
+    // Is this test case necessary / useful?
+    @Test
+    public void findFirst_Returns_only_element_in_singleton_list() {
+        assertEquals(p2, IdeaList.of(p2).findFirst(alwaysTrue()).orElseThrow());
     }
 
     @Test
-    @SuppressWarnings("all") // In these test cases it is certain that all Optional objects will contain values
     public void findFirst_Returns_first_element_matching_given_predicate() {
-        assertEquals(i8, integerIdeaList.findFirst(integer -> integer > 100).get().intValue());
-        assertEquals(p3, personIdeaList.findFirst(person -> person.getFirstName().contains("t")).get());
-        assertEquals(l4, localDateIdeaList.findFirst(localDate -> localDate.getMonthValue() < 3).get());
+        assertEquals(i8, integerIdeaList.findFirst(integer -> integer > 100).orElseThrow().intValue());
+        assertEquals(p3, personIdeaList.findFirst(person -> person.getFirstName().contains("t")).orElseThrow());
+        assertEquals(l4, localDateIdeaList.findFirst(localDate -> localDate.getMonthValue() < 3).orElseThrow());
+    }
+
+    @Test
+    public void findFirstIndexed_Returns_empty_Optional_instance_if_list_is_empty() {
+        assertEmpty( IdeaList.empty().findFirstIndexed((index, elem) -> true) );
+    }
+
+    @Test
+    public void findFirstIndexed_Returns_empty_Optional_instance_if_no_element_matches_given_predicate() {
+        assertEmpty( integerIdeaList.findFirstIndexed((index, integer) -> false) );
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void findFirstIndexed_Throws_exception_if_null_satisfies_given_predicate() {
+        IdeaList.of(p1, p1, p2, null, p3, p3, null).findFirstIndexed((index, person) -> person == null);
+    }
+
+    /*@Test
+    public void findFirstIndexed_Returns_first_element_matching_given_predicate_in_list_with_nulls() {
+        IdeaList<Dog> input = IdeaList.of(d2, d3, d3, null, d6, d5, null);
+        assertEquals(d5, input.findFirstIndexed(dog -> Objects.equals(dog, d5)).orElseThrow());
+    }*/
+
+    @Test
+    public void findFirstIndexed_Returns_first_element_matching_given_predicate() {
+        assertEquals(i5, integerIdeaList.findFirstIndexed((index, integer) -> index > 0 && integer > 2).orElseThrow().intValue());
+        assertEquals(p5, personIdeaList.findFirstIndexed((index, person) -> index > 2 && person.getSecondName().contains("n")).orElseThrow());
+        assertEquals(l7, localDateIdeaList.findFirstIndexed((index, localDate) -> index > 5 && localDate.getYear() < 2000).orElseThrow());
     }
 
     @Test
@@ -430,47 +462,48 @@ public class IdeaListTest {
     }
 
     @Test
-    @SuppressWarnings("all") // In this test case it is certain that the Optional object will contain a value
     public void first_Returns_first_element_matching_given_predicate_in_list_with_nulls() {
         IdeaList<Dog> input = IdeaList.of(d2, d3, d3, null, d6, d5, null);
-        assertEquals(d5, input.first(dog -> Objects.equals(dog, d5)).get());
+        assertEquals(d5, input.first(dog -> Objects.equals(dog, d5)).orElseThrow());
     }
 
     @Test
-    @SuppressWarnings("all") // In these test cases it is certain that all Optional objects will contain values
     public void first_Returns_first_element_matching_given_predicate() {
-        assertEquals(i8, integerIdeaList.first(integer -> integer > 100).get().intValue());
-        assertEquals(p3, personIdeaList.first(person -> person.getFirstName().contains("t")).get());
-        assertEquals(l4, localDateIdeaList.first(localDate -> localDate.getMonthValue() < 3).get());
+        assertEquals(i8, integerIdeaList.first(integer -> integer > 100).orElseThrow().intValue());
+        assertEquals(p3, personIdeaList.first(person -> person.getFirstName().contains("t")).orElseThrow());
+        assertEquals(l4, localDateIdeaList.first(localDate -> localDate.getMonthValue() < 3).orElseThrow());
     }
 
     @Test
     public void indexOfFirst_predicate_Returns_empty_OptionalInt_if_list_is_empty() {
-        assertEquals(OptionalInt.empty(), IdeaList.empty().indexOfFirst(e -> true));
+        assertEquals(OptionalInt.empty(), IdeaList.empty().indexOfFirst(alwaysTrue()));
     }
 
-    @Test
+    /*@Test
     public void indexOfFirst_predicate_Returns_empty_OptionalInt_if_no_element_matches_given_predicate() {
         assertEquals(OptionalInt.empty(), integerIdeaList.indexOfFirst(integer -> integer == 2));
         assertEquals(OptionalInt.empty(), personIdeaList.indexOfFirst(person -> person.getFirstName().contains("b") || person.getSecondName().contains("b")));
         assertEquals(OptionalInt.empty(), dogIdeaList.indexOfFirst(animal -> animal.getAge() > 13));
         assertEquals(OptionalInt.empty(), localDateIdeaList.indexOfFirst(localDate -> localDate.getYear() > 2020 && localDate.getYear() < 4058));
+    }*/
+
+    @Test
+    public void indexOfFirst_predicate_Returns_empty_OptionalInt_if_no_element_matches_given_predicate() {
+        assertEquals(OptionalInt.empty(), personIdeaList.indexOfFirst(alwaysFalse()));
     }
 
     @Test
-    @SuppressWarnings("all") // In this test case it is certain that the OptionalInt object will contain a value
     public void indexOfFirst_predicate_Returns_index_of_first_element_that_matches_given_predicate_in_list_with_nulls() {
         IdeaList<Person> input = IdeaList.of(p1, p1, p2, null, p3, p3, null);
-        assertEquals(3, input.indexOfFirst(Objects::isNull).getAsInt());
+        assertEquals(3, input.indexOfFirst(Objects::isNull).orElseThrow());
     }
 
     @Test
-    @SuppressWarnings("all") // In this test case it is certain that the OptionalInt object will contain a value
     public void indexOfFirst_predicate_Returns_index_of_first_element_that_matches_given_predicate() {
-        assertEquals(7, integerIdeaList.indexOfFirst(integer -> integer > 75).getAsInt());
-        assertEquals(1, personIdeaList.indexOfFirst(person -> person.getSecondName().contains("h")).getAsInt());
-        assertEquals(4, dogIdeaList.indexOfFirst(animal -> animal.getAge() > 6).getAsInt());
-        assertEquals(0, localDateIdeaList.indexOfFirst(localDate -> true).getAsInt());
+        assertEquals(7, integerIdeaList.indexOfFirst(integer -> integer > 75).orElseThrow());
+        assertEquals(1, personIdeaList.indexOfFirst(person -> person.getSecondName().contains("h")).orElseThrow());
+        assertEquals(4, dogIdeaList.indexOfFirst(animal -> animal.getAge() > 6).orElseThrow());
+        assertEquals(0, localDateIdeaList.indexOfFirst(alwaysTrue()).orElseThrow());
     }
 
     @Test
@@ -487,19 +520,17 @@ public class IdeaListTest {
     }
 
     @Test
-    @SuppressWarnings("all") // In this test case it is certain that the OptionalInt object will contain a value
     public void indexOfFirst_element_Returns_index_of_first_occurrence_of_given_element_in_this_list_containing_nulls() {
         IdeaList<LocalDate> input = IdeaList.of(l7, l7, l6, l1, l2, l3, null, l7);
-        assertEquals(6, input.indexOfFirst((LocalDate) null).getAsInt());
+        assertEquals(6, input.indexOfFirst((LocalDate) null).orElseThrow());
     }
 
     @Test
-    @SuppressWarnings("all") // In this test case it is certain that the OptionalInt object will contain a value
     public void indexOfFirst_element_Returns_index_of_first_occurrence_of_given_element_in_this_list() {
-        assertEquals(0, integerIdeaList.indexOfFirst(i1).getAsInt());
-        assertEquals(4, personIdeaList.indexOfFirst(p5).getAsInt());
-        assertEquals(2, dogIdeaList.indexOfFirst(d3).getAsInt());
-        assertEquals(6, localDateIdeaList.indexOfFirst(l7).getAsInt());
+        assertEquals(0, integerIdeaList.indexOfFirst(i1).orElseThrow());
+        assertEquals(4, personIdeaList.indexOfFirst(p5).orElseThrow());
+        assertEquals(2, dogIdeaList.indexOfFirst(d3).orElseThrow());
+        assertEquals(6, localDateIdeaList.indexOfFirst(l7).orElseThrow());
     }
 
     @Test
@@ -936,7 +967,7 @@ public class IdeaListTest {
 
     @Test
     public void any_predicate_Returns_false_if_list_is_empty() {
-        assertFalse(IdeaList.empty().any(e -> true));
+        assertFalse(IdeaList.empty().any(alwaysTrue()));
     }
 
     @Test
@@ -1653,7 +1684,7 @@ public class IdeaListTest {
 
     @Test
     public void where_Returns_an_empty_list_if_this_list_is_empty() {
-        assertEquals(IdeaList.empty(), IdeaList.<Animal>empty().where(animal -> true));
+        assertEquals(IdeaList.empty(), IdeaList.<Animal>empty().where(alwaysTrue()));
     }
 
     @Test
@@ -1675,7 +1706,7 @@ public class IdeaListTest {
 
     @Test
     public void filter_Returns_an_empty_list_if_this_list_is_empty() {
-        assertEquals(IdeaList.empty(), IdeaList.<Animal>empty().filter(animal -> true));
+        assertEquals(IdeaList.empty(), IdeaList.<Animal>empty().filter(alwaysTrue()));
     }
 
     @Test
@@ -1697,7 +1728,7 @@ public class IdeaListTest {
 
     @Test
     public void findAll_Returns_an_empty_list_if_this_list_is_empty() {
-        assertEquals(IdeaList.empty(), IdeaList.<Animal>empty().findAll(animal -> true));
+        assertEquals(IdeaList.empty(), IdeaList.<Animal>empty().findAll(alwaysTrue()));
     }
 
     @Test

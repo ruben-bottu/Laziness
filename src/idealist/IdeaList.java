@@ -11,6 +11,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.*;
 
+import static idealist.Enumerable.arrayOf;
 import static idealist.Enumerable.isContentEqual;
 import static idealist.Lambda.alwaysTrue;
 import static java.util.Arrays.asList;
@@ -64,25 +65,13 @@ public abstract class IdeaList<E> implements Iterable<E> {
         return toIdeaList.apply(other);
     }
 
-    private static <E, O> IdeaList<E> concat(Iterable<E> elements, O other, Function<O, IdeaList<E>> toIdeaList) {
-        return concat(elements.iterator(), other, toIdeaList);
-    }
-
     private static <E> IdeaList<E> concat(Iterable<E> elements, Lazy<IdeaList<E>> other) {
-        return concat(elements, other, Lazy::value);
-    }
-
-    private static <E> IdeaList<E> concat(Iterable<E> elements, IdeaList<E> other) {
-        return concat(elements, other, Function.identity());
-    }
-
-    /*private static <E> IdeaList<E> concat(Iterable<E> elements, Lazy<IdeaList<E>> other) {
         return concat(elements.iterator(), other, Lazy::value);
     }
 
     private static <E> IdeaList<E> concat(Iterable<E> elements, IdeaList<E> other) {
         return concat(elements.iterator(), other, Function.identity());
-    }*/
+    }
 
     public static <E> IdeaList<E> of(Iterable<E> elements) {
         return constructIdeaListFromIterator(elements.iterator());
@@ -210,7 +199,6 @@ public abstract class IdeaList<E> implements Iterable<E> {
         return get(RANDOM.nextInt(length()));
     }*/
 
-    // X checking tests
     public abstract Optional<E> findFirst(Predicate<E> predicate);
 
     public Optional<E> findFirstIndexed(BiPredicate<Integer, E> predicate) {
@@ -228,6 +216,7 @@ public abstract class IdeaList<E> implements Iterable<E> {
 
     protected abstract OptionalInt indexOfFirstHelper(Predicate<E> predicate, int index);
 
+    // X checking tests
     public OptionalInt indexOfFirst(Predicate<E> predicate) {
         return indexOfFirstHelper(predicate, 0);
     }
@@ -283,13 +272,13 @@ public abstract class IdeaList<E> implements Iterable<E> {
         return result;
     }
 
-    public E[] toArray2() {
+    /*public E[] toArray2() {
         E[] result = Enumerable.arrayOf(value.value(), length());
         //E[] result2 = Enumerable.arrayOf((E) null, length());
         E[] result3 = Enumerable.unsafeArrayOf(value.value().getClass(), length());
         forEachIndexed((index, elem) -> result[index] = elem);
         return result;
-    }
+    }*/
 
     public E[] toArray3() throws NoSuchFieldException {
         Field valueField = IdeaList.class.getDeclaredField("value");
@@ -326,7 +315,7 @@ public abstract class IdeaList<E> implements Iterable<E> {
     }
 
     public E[] toArray6(Class<E> elementType) {
-        E[] result = Enumerable.arrayOf(elementType, length());
+        E[] result = arrayOf(elementType, length());
         forEachIndexed((index, elem) -> result[index] = elem);
         return result;
     }

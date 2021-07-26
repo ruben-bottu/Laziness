@@ -14,7 +14,7 @@ class MergeSort {
         @SuppressWarnings("unchecked")
         MutableList<E>[] temp = (MutableList<E>[]) new MutableList[NODE_REFERENCE_ARRAY_SIZE];
         //MutableList<E>[] temp2 = Enumerable.arrayOf(MutableList.empty(), NODE_REFERENCE_ARRAY_SIZE);
-        MutableList<E>[] temp2 = Enumerable.arrayOf(MutableList[]::new, NODE_REFERENCE_ARRAY_SIZE);
+        //MutableList<E>[] temp2 = Enumerable.arrayOf(MutableList[]::new, NODE_REFERENCE_ARRAY_SIZE);
         MutableList<E>[] temp3 = Enumerable.unsafeArrayOf(MutableList.class, NODE_REFERENCE_ARRAY_SIZE);
         //Comparator<Lazy<E>> lazyComparator = Comparator.comparing(Lazy::value, comparator);
         int requiredSizeForMerge = 2;
