@@ -10,7 +10,6 @@ import org.junit.Test;
 import java.time.LocalDate;
 import java.util.*;
 
-import static idealist.Enumerable.isContentEqual;
 import static idealist.Lambda.alwaysFalse;
 import static idealist.Lambda.alwaysTrue;
 import static idealist.TestUtils.assertContentEqual;
@@ -22,6 +21,7 @@ public class IdeaListTest {
     private int i1, i2, i3, i4, i5, i6, i7, i8;
     private Person p1, p2, p3, p4, p5, p6;
     private Dog d1, d2, d3, d4, d5, d6;
+    private Cat c1, c2, c3, c4;
     private LocalDate l1, l2, l3, l4, l5, l6, l7;
 
     private IdeaList<Integer> integerIdeaList;
@@ -37,6 +37,7 @@ public class IdeaListTest {
         initialiseIntegers();
         initialisePeople();
         initialiseDogs();
+        initialiseCats();
         initialiseLocalDates();
         initialiseIterables();
     }
@@ -68,6 +69,13 @@ public class IdeaListTest {
         d4 = new Dog(4, "Shiba");
         d5 = new Dog(13, "Floof");
         d6 = new Dog(9, "Paula");
+    }
+
+    private void initialiseCats() {
+        c1 = new Cat(105, "Bella");
+        c2 = new Cat(0, "Kitty");
+        c3 = new Cat(7, "Lily");
+        c4 = new Cat(4, "Charlie");
     }
 
     private void initialiseLocalDates() {
@@ -533,6 +541,19 @@ public class IdeaListTest {
         assertEquals(6, localDateIdeaList.indexOfFirst(l7).orElseThrow());
     }
 
+    /*@Test
+    public void lastIndex_Returns_minus_one_if_list_is_empty() {
+        assertEquals(-1, IdeaList.empty().lastIndex());
+        assertEquals(-1, IdeaList.empty().lastIndex());
+        assertEquals(-1, IdeaList.empty().lastIndex());
+        assertEquals(-1, IdeaList.empty().lastIndex());
+    }*/
+
+    @Test(expected = UnsupportedOperationException.class)
+    public void lastIndex_Throws_UnsupportedOperationException_if_list_is_empty() {
+        IdeaList.empty().lastIndex();
+    }
+
     @Test
     public void lastIndex_Returns_index_of_last_element_in_list_containing_nulls() {
         IdeaList<Person> input = IdeaList.of(p4, null, p4, p5, null, null, p2, p3, p2, null);
@@ -540,15 +561,8 @@ public class IdeaListTest {
     }
 
     @Test
-    public void lastIndex_Returns_minus_one_if_list_is_empty() {
-        assertEquals(-1, IdeaList.empty().lastIndex());
-        assertEquals(-1, IdeaList.empty().lastIndex());
-        assertEquals(-1, IdeaList.empty().lastIndex());
-        assertEquals(-1, IdeaList.empty().lastIndex());
-    }
-
-    @Test
     public void lastIndex_Returns_index_of_last_element() {
+        assertEquals(0, IdeaList.of(i1).lastIndex());
         assertEquals(7, integerIdeaList.lastIndex());
         assertEquals(5, personIdeaList.lastIndex());
         assertEquals(5, dogIdeaList.lastIndex());
@@ -556,7 +570,7 @@ public class IdeaListTest {
     }
 
     @Test(expected = UnsupportedOperationException.class)
-    public void indices_Throws_exception_if_list_is_empty() {
+    public void indices_Throws_UnsupportedOperationException_if_list_is_empty() {
         IdeaList.empty().indices();
     }
 
@@ -609,6 +623,30 @@ public class IdeaListTest {
 
         assertEquals(personList, IdeaList.of(personList).toList());
         assertEquals(dogList, IdeaList.of(dogList).toList());
+    }
+
+    @Test
+    public void toArray_Returns_empty_array_if_this_list_is_empty() {
+        assertArrayEquals(new Person[0], IdeaList.<Person>empty().toArray(Person.class));
+    }
+
+    // TODO change name
+    @Test
+    public void toArray_Transforms_IdeaList_into_polymorphic_array() {
+        Animal[] animalArray = {d1, c4, c1, c1, c2};
+        Animal[] animalArray2 = {c2, d5, c4, c4, d1, c3, d2};
+
+        assertArrayEquals(animalArray, IdeaList.of(animalArray).toArray(Animal.class));
+        assertArrayEquals(animalArray2, IdeaList.of(animalArray2).toArray(Animal.class));
+    }
+
+    @Test
+    public void toArray_Transforms_IdeaList_into_array() {
+        Person[] personList = {p1, p2, p3, p4, p5, p6};
+        Dog[] dogList = {d1, d2, d3, d4, d5, d6};
+
+        assertArrayEquals(personList, IdeaList.of(personList).toArray(Person.class));
+        assertArrayEquals(dogList, IdeaList.of(dogList).toArray(Dog.class));
     }
 
     @Test

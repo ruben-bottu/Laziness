@@ -151,7 +151,9 @@ public abstract class IntIdeaList implements Iterable<Integer> {
 
     public abstract int reduce(IntBinaryOperator operation);
 
-    // reduce(0, Integer::sum); or reduce(Integer::sum); ?
+    // TODO change to reduce(Integer::sum);
+    // Throws exception when list is empty. When the list is empty
+    // there is nothing to add up
     public int sum() {
         return reduce(0, Integer::sum);
     }

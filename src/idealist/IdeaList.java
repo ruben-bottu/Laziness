@@ -216,7 +216,6 @@ public abstract class IdeaList<E> implements Iterable<E> {
 
     protected abstract OptionalInt indexOfFirstHelper(Predicate<E> predicate, int index);
 
-    // X checking tests
     public OptionalInt indexOfFirst(Predicate<E> predicate) {
         return indexOfFirstHelper(predicate, 0);
     }
@@ -235,9 +234,7 @@ public abstract class IdeaList<E> implements Iterable<E> {
         return indexOfFirst(isEqual(element));
     }
 
-    public int lastIndex() {
-        return length() - 1;
-    }
+    public abstract int lastIndex();
 
     // Should return IntIdeaList
     public abstract IdeaList<Integer> indices();
@@ -254,72 +251,13 @@ public abstract class IdeaList<E> implements Iterable<E> {
         return Enumerable.toList(this);
     }
 
-    @SuppressWarnings("unchecked") // Since we take the class of "value" and value is of type E, the cast is safe
-    private E[] createArrayWithSameTypeAndSizeAsThisList() {
-        return (E[]) Array.newInstance(value.value().getClass(), length());
-    }
-
-    /*public E[] toArray() {
-        E[] result = createArrayWithSameTypeAndSizeAsThisList();
-        int index = 0;
-        for (E element : this) result[index++] = element;
-        return result;
-    }*/
-
-    public E[] toArray() {
-        E[] result = createArrayWithSameTypeAndSizeAsThisList();
-        forEachIndexed((index, elem) -> result[index] = elem);
-        return result;
-    }
-
-    /*public E[] toArray2() {
-        E[] result = Enumerable.arrayOf(value.value(), length());
-        //E[] result2 = Enumerable.arrayOf((E) null, length());
-        E[] result3 = Enumerable.unsafeArrayOf(value.value().getClass(), length());
-        forEachIndexed((index, elem) -> result[index] = elem);
-        return result;
-    }*/
-
-    public E[] toArray3() throws NoSuchFieldException {
-        Field valueField = IdeaList.class.getDeclaredField("value");
-        ParameterizedType valueType = (ParameterizedType) valueField.getGenericType();
-        Class<?> valueClass = (Class<?>) valueType.getActualTypeArguments()[0];
-        @SuppressWarnings("unchecked")
-        E[] array = (E[]) Array.newInstance(valueClass, length());
-        return array;
-    }
-
-    /*Field stringListField = Test.class.getDeclaredField("stringList");
-        ParameterizedType stringListType = (ParameterizedType) stringListField.getGenericType();
-        Class<?> stringListClass = (Class<?>) stringListType.getActualTypeArguments()[0];
-        System.out.println(stringListClass); // class java.lang.String.*/
-
-    /*@SuppressWarnings("unchecked")
-    public E[] toArray4() throws NoSuchFieldException {
-        Class entityBeanType = ((Class) ((ParameterizedType) getClass()
-                .getGenericSuperclass()).getActualTypeArguments()[0]);
-        return null;
-    }*/
-
-    /*public E[] toArray() {
-        E[] result = createArrayWithSameTypeAndSizeAsThisList();
-        int index = 0;
-        for (E element : this) result[index++] = element;
-        return result;
-    }*/
-
-    public E[] toArray5(IntFunction<E[]> generator) {
-        E[] result = generator.apply(length());
-        forEachIndexed((index, elem) -> result[index] = elem);
-        return result;
-    }
-
-    public E[] toArray6(Class<E> elementType) {
+    public E[] toArray(Class<E> elementType) {
         E[] result = arrayOf(elementType, length());
         forEachIndexed((index, elem) -> result[index] = elem);
         return result;
     }
 
+    // X checking tests
     @Override
     public int hashCode() {
         return Objects.hash(value, tail);
@@ -846,6 +784,11 @@ public abstract class IdeaList<E> implements Iterable<E> {
         }
 
         @Override
+        public int lastIndex() {
+            return length() - 1;
+        }
+
+        @Override
         public IdeaList<Integer> indices() {
             return Range.from(0).upToAndIncluding(lastIndex());
         }
@@ -992,6 +935,11 @@ public abstract class IdeaList<E> implements Iterable<E> {
         @Override
         protected OptionalInt indexOfFirstHelper(Predicate<E> predicate, int index) {
             return OptionalInt.empty();
+        }
+
+        @Override
+        public int lastIndex() {
+            throw new UnsupportedOperationException("Empty list has no indices");
         }
 
         @Override
