@@ -6,7 +6,6 @@ import idealist.tuple.IndexElement;
 import idealist.tuple.Pair;
 import idealist.tuple.Triplet;
 
-import java.lang.reflect.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.*;
@@ -257,10 +256,22 @@ public abstract class IdeaList<E> implements Iterable<E> {
         return result;
     }
 
-    // X checking tests
     @Override
     public int hashCode() {
-        return Objects.hash(value, tail);
+        var hashCode = new AtomicInteger(1);
+        IntBinaryOperator accumulatorFunction = (accum, elem) -> 31 * accum + elem;
+        // forEach(elem -> hashCode.accumulateAndGet(elem.hashCode(), accumulatorFunction));
+        forEach(elem -> hashCode.accumulateAndGet((elem == null ? 0 : elem.hashCode()), accumulatorFunction));
+        return hashCode.get();
+    }
+
+    // If this is most efficient one -> move to Enumerable
+    public int hashCode2() {
+        int hashCode = 1;
+        for (E element : this) {
+            hashCode = 31 * hashCode + (element == null ? 0 : element.hashCode());
+        }
+        return hashCode;
     }
 
     @Override
@@ -275,6 +286,7 @@ public abstract class IdeaList<E> implements Iterable<E> {
 
 
     // Checks =======================================================================================
+    // X checking tests
     @Override
     public boolean equals(@Nullable Object o) {
         if (this == o) return true;
@@ -432,6 +444,47 @@ public abstract class IdeaList<E> implements Iterable<E> {
     public void forEachIndexed2(BiConsumer<Integer, E> action) {
         int index = 0;
         for (E element : this) action.accept(index++, element);
+    }
+
+    /*public IdeaList<E> takeLast(int n) {
+
+    }*/
+
+    /*@Override
+    protected <I> IdeaList<E> insertAtHelper(int index, I elements, BiFunction<I, IdeaList<E>, IdeaList<E>> concat) {
+        if (index < 0) return insertAtHelper(toPositiveIndex(index), elements, concat);
+        return index == 0
+                ? concat.apply(elements, this)
+                : keepValueAndTransformTail(tail -> tail.insertAtHelper(index - 1, elements, concat));
+    }
+
+    @Override
+    public IdeaList<E> removeFirst(@Nullable E element) {
+        return Objects.equals(value.value(), element) ? tail.value() : keepValueAndTransformTail(tail -> tail.removeFirst(element));
+    }
+
+    @Override
+    public IdeaList<E> removeAt(int index) {
+        if (index < 0) return removeAt(toPositiveIndex(index));
+        return index == 0 ? tail.value() : keepValueAndTransformTail(tail -> tail.removeAt(index - 1));
+    }*/
+
+    private IdeaList<E> keepValueAndTransformTail(UnaryOperator<IdeaList<E>> function) {
+        return IdeaList.create(value, Lazy.of(() -> function.apply(tail.value())));
+    }
+
+    /*protected IdeaList<E> helperIndexed(int index, BiPredicate<Integer, Lazy<E>> predicate, Function<IdeaList<E>, IdeaList<E>> getRest) {
+        return predicate.test(index, value) ? getRest.apply(this) : IdeaList.create(value, Lazy.of(() -> tail.value().helperIndexed(index - 1, predicate, getRest)));
+    }
+
+    protected IdeaList<E> helperIndexed(int index, BiPredicate<Integer, Lazy<E>> predicate, Function<IdeaList<E>, IdeaList<E>> getRest) {
+        return predicate.test(index, value) ? getRest.apply(this) : keepValueAndTransformTail(tail -> tail.helperIndexed(index - 1, predicate, getRest));
+    }*/
+
+    protected abstract IdeaList<E> helperIndexed(int index, BiPredicate<Integer, Lazy<E>> predicate, Function<IdeaList<E>, IdeaList<E>> getRest, Supplier<IdeaList<E>> endSupplier);
+
+    private IdeaList<E> helper(BiPredicate<Integer, Lazy<E>> predicate, Function<IdeaList<E>, IdeaList<E>> getRest, Supplier<IdeaList<E>> endSupplier) {
+        return helperIndexed(0, predicate, getRest, endSupplier);
     }
 
 
@@ -865,6 +918,14 @@ public abstract class IdeaList<E> implements Iterable<E> {
             return index == 0 ? tail.value() : keepValueAndTransformTail(tail -> tail.removeAt(index - 1));
         }
 
+        protected IdeaList<E> helperIndexed(int index, BiPredicate<Integer, Lazy<E>> predicate, Function<IdeaList<E>, IdeaList<E>> getRest, Supplier<IdeaList<E>> endSupplier) {
+            return predicate.test(index, value) ? getRest.apply(this) : IdeaList.create(value, Lazy.of(() -> tail.value().helperIndexed(index - 1, predicate, getRest, endSupplier)));
+        }
+
+        /*protected IdeaList<E> helperIndexed(int index, BiPredicate<Integer, Lazy<E>> predicate, Function<IdeaList<E>, IdeaList<E>> getRest) {
+            return predicate.test(index, value) ? getRest.apply(this) : keepValueAndTransformTail(tail -> tail.helperIndexed(index - 1, predicate, getRest));
+        }*/
+
         /*@Override
         public Optional<E> findFirst(Predicate<E> predicate) {
             return predicate.test(value.value()) ? Optional.of(value.value()) : tail.value().findFirst(predicate);
@@ -994,6 +1055,11 @@ public abstract class IdeaList<E> implements Iterable<E> {
         @Override
         public IdeaList<E> removeAt(int index) {
             throw indexTooBigException();
+        }
+
+        @Override
+        protected IdeaList<E> helperIndexed(int index, BiPredicate<Integer, Lazy<E>> predicate, Function<IdeaList<E>, IdeaList<E>> getRest, Supplier<IdeaList<E>> endSupplier) {
+            return endSupplier.get();
         }
 
         @Override

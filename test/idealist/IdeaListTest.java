@@ -650,12 +650,41 @@ public class IdeaListTest {
     }
 
     @Test
+    public void hashCode_Returns_1_if_list_is_empty() {
+        assertEquals(1, IdeaList.empty().hashCode());
+    }
+
+    @Test
+    public void hashCode_Always_returns_the_same_hash_code_for_the_same_list() {
+        assertEquals(integerIdeaList.hashCode(), integerIdeaList.hashCode());
+        assertEquals(personIdeaList.hashCode(), personIdeaList.hashCode());
+        assertEquals(dogIdeaList.hashCode(), dogIdeaList.hashCode());
+        assertEquals(localDateIdeaList.hashCode(), localDateIdeaList.hashCode());
+    }
+
+    @Test
+    public void hashCode_Returns_same_hash_code_if_lists_are_equal() {
+        IdeaList<Dog> dogs = IdeaList.of(d1, d2, d3, d4, d5, d6);
+        assertEquals(dogIdeaList.hashCode(), dogs.hashCode());
+    }
+
+    @Test
+    public void toString_Returns_String_containing_opening_and_closing_square_brackets_if_list_is_empty() {
+        assertEquals("[]", IdeaList.empty().toString());
+    }
+
+    @Test
+    public void toString_Returns_String_representation_of_each_element_surrounded_by_opening_and_closing_square_brackets() {
+        assertEquals("[5, -7, 101, 0]", IdeaList.of(5, -7, 101, 0).toString());
+    }
+
+    @Test
     public void iterator_Returns_an_iterator_with_no_elements_if_list_is_empty() {
         Iterator<LocalDate> it = IdeaList.<LocalDate>empty().iterator();
         assertFalse(it.hasNext());
     }
 
-    @Test
+    /*@Test
     public void iterator_Returns_Iterator_that_loops_through_this_list() {
         Iterator<Dog> it = dogIdeaList.iterator();
         assertEquals(d1, it.next());
@@ -664,7 +693,7 @@ public class IdeaListTest {
         assertEquals(d4, it.next());
         assertEquals(d5, it.next());
         assertEquals(d6, it.next());
-    }
+    }*/
 
     @Test
     public void iterator_Returns_Iterator_that_loops_through_this_list_containing_nulls() {
@@ -691,6 +720,24 @@ public class IdeaListTest {
     }
 
     @Test
+    public void iterator_Returns_Iterator_that_loops_through_this_list() {
+        Iterator<Dog> it = dogIdeaList.iterator();
+        assertTrue(it.hasNext());
+        assertEquals(d1, it.next());
+        assertTrue(it.hasNext());
+        assertEquals(d2, it.next());
+        assertTrue(it.hasNext());
+        assertEquals(d3, it.next());
+        assertTrue(it.hasNext());
+        assertEquals(d4, it.next());
+        assertTrue(it.hasNext());
+        assertEquals(d5, it.next());
+        assertTrue(it.hasNext());
+        assertEquals(d6, it.next());
+        assertFalse(it.hasNext());
+    }
+
+    /*@Test
     public void iterator_Returns_Iterator_that_loops_through_this_and_correctly_indicates_whether_this_list_has_more_elements() {
         Iterator<Integer> it = IdeaList.of(6, 0, 1, 7, 5, 4).iterator();
         assertTrue(it.hasNext());
@@ -706,7 +753,7 @@ public class IdeaListTest {
         assertTrue(it.hasNext());
         assertEquals(4, it.next().intValue());
         assertFalse(it.hasNext());
-    }
+    }*/
 
 
     // Checks =======================================================================================
