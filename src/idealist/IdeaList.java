@@ -152,6 +152,20 @@ public abstract class IdeaList<E> implements Iterable<E> {
     // Getters ======================================================================================
     public abstract E get(int index);
 
+    /*public E get2(int index) {
+        if (index < 0) return takeLast(-index).first();
+        return findFirstIndexed((idx, __) -> idx == index)
+                .orElseThrow(IdeaList::indexTooBigException);
+    }*/
+
+    // or even better: (not every value needs to get evaluated)
+    /*public E get2(int index) {
+        if (index < 0) return takeLast(-index).first();
+        return lazyFindFirstIndexed((idx, __) -> idx == index)
+                .orElseThrow(IdeaList::indexTooBigException)
+                .value(); // this is optional, lazyFindFirst() can already calc the value
+    }*/
+
     /*public E get2(int index) { // [d, b, c]
         if (index < 0) {
             @SuppressWarnings("unchecked")
@@ -187,6 +201,7 @@ public abstract class IdeaList<E> implements Iterable<E> {
 
     public abstract E single();
 
+    // return get(-1);
     public abstract E last();
 
     // TODO benchmark against variant with RANDOM constant
@@ -282,6 +297,58 @@ public abstract class IdeaList<E> implements Iterable<E> {
     @Override
     public Iterator<E> iterator() {
         return Enumerator.of(this);
+    }
+
+    protected abstract Optional<IndexElement<IdeaList<E>>> findFirstIndexedNodeHelper(int index, BiPredicate<Integer, Lazy<E>> predicate);
+
+    private Optional<IndexElement<IdeaList<E>>> findFirstIndexedNode(BiPredicate<Integer, Lazy<E>> predicate) {
+        return findFirstIndexedNodeHelper(0, predicate);
+    }
+
+    protected abstract IndexElement<IdeaList<E>> findFirstIndexedNodeHelper2(int index, BiPredicate<Integer, Lazy<E>> predicate);
+
+    // !!!!! MAY RETURN NULL !!!!!
+    private IndexElement<IdeaList<E>> findFirstIndexedNode2(BiPredicate<Integer, Lazy<E>> predicate) {
+        return findFirstIndexedNodeHelper2(0, predicate);
+    }
+
+    public E get2(int index) {
+        if (index < 0) return get(toPositiveIndex(index));
+        return findFirstIndexedNode((idx, __) -> idx == index)
+                .orElseThrow(IdeaList::indexTooBigException)
+                .element
+                .first();
+    }
+
+    public E get3(int index) {
+        if (index < 0) return get(toPositiveIndex(index));
+        var indexedNode = findFirstIndexedNode2((idx, __) -> idx == index);
+        return indexedNode == null ? throwIndexTooBigException() : indexedNode.element.first();
+    }
+
+    /*public Optional<E> findFirst2(Predicate<E> predicate) {
+        return findFirstIndexedNode((__, value) -> predicate.test(value.value()))
+                .map(idxElem -> idxElem.element.first());
+    }*/
+
+    public Optional<E> findFirst2(Predicate<E> predicate) {
+        return findFirstIndexed2((__, elem) -> predicate.test(elem));
+    }
+
+    public Optional<E> findFirstIndexed2(BiPredicate<Integer, E> predicate) {
+        return findFirstIndexedNode((index, value) -> predicate.test(index, value.value()))
+                .map(idxList -> idxList.element.first());
+    }
+
+    public Optional<Integer> indexOfFirst4(Predicate<E> predicate) {
+        return findFirstIndexedNode((__, value) -> predicate.test(value.value()))
+                .map(idxList -> idxList.index);
+    }
+
+    public OptionalInt indexOfFirst5(Predicate<E> predicate) {
+        return findFirstIndexedNode((__, value) -> predicate.test(value.value()))
+                .map(idxList -> OptionalInt.of(idxList.index))
+                .orElseGet(OptionalInt::empty);
     }
 
 
@@ -460,7 +527,7 @@ public abstract class IdeaList<E> implements Iterable<E> {
 
     @Override
     public IdeaList<E> removeFirst(@Nullable E element) {
-        return Objects.equals(value.value(), element) ? tail.value() : keepValueAndTransformTail(tail -> tail.removeFirst(element));
+        return Objects.equals(first(), element) ? tail.value() : keepValueAndTransformTail(tail -> tail.removeFirst(element));
     }
 
     @Override
@@ -479,7 +546,11 @@ public abstract class IdeaList<E> implements Iterable<E> {
         return concatWhenHelper(0, predicate, listAtMatchToNewList, ifNoMatchReturn);
     }
 
-    private static <E> IdeaList<E> throwIndexTooBigException() {
+    /*private static <E> IdeaList<E> throwIndexTooBigException() {
+        throw indexTooBigException();
+    }*/
+
+    private static <A> A throwIndexTooBigException() {
         throw indexTooBigException();
     }
 
@@ -498,7 +569,7 @@ public abstract class IdeaList<E> implements Iterable<E> {
 
     /*@Override
     public IdeaList<E> removeFirst(@Nullable E element) {
-        return Objects.equals(value.value(), element) ? tail.value() : keepValueAndTransformTail(tail -> tail.removeFirst(element));
+        return Objects.equals(first(), element) ? tail.value() : keepValueAndTransformTail(tail -> tail.removeFirst(element));
     }*/
 
     public IdeaList<E> removeFirst2(@Nullable E element) {
@@ -836,7 +907,7 @@ public abstract class IdeaList<E> implements Iterable<E> {
         @Override
         public E get(int index) {
             if (index < 0) return get(toPositiveIndex(index));
-            return index == 0 ? value.value() : tail.value().get(index - 1);
+            return index == 0 ? first() : tail.value().get(index - 1);
         }
 
         @Override
@@ -852,17 +923,17 @@ public abstract class IdeaList<E> implements Iterable<E> {
 
         @Override
         public E last() {
-            return tail.value().isEmpty() ? value.value() : tail.value().last();
+            return tail.value().isEmpty() ? first() : tail.value().last();
         }
 
         @Override
         public Optional<E> findFirst(Predicate<E> predicate) {
-            return predicate.test(value.value()) ? Optional.of(value.value()) : tail.value().findFirst(predicate);
+            return predicate.test(first()) ? Optional.of(first()) : tail.value().findFirst(predicate);
         }
 
         @Override
         protected OptionalInt indexOfFirstHelper(Predicate<E> predicate, int index) {
-            return predicate.test(value.value()) ? OptionalInt.of(index) : tail.value().indexOfFirstHelper(predicate, index + 1);
+            return predicate.test(first()) ? OptionalInt.of(index) : tail.value().indexOfFirstHelper(predicate, index + 1);
         }
 
         @Override
@@ -875,16 +946,25 @@ public abstract class IdeaList<E> implements Iterable<E> {
             return Range.from(0).upToAndIncluding(lastIndex());
         }
 
+        @Override
+        protected Optional<IndexElement<IdeaList<E>>> findFirstIndexedNodeHelper(int index, BiPredicate<Integer, Lazy<E>> predicate) {
+            return predicate.test(index, value) ? Optional.of(IndexElement.of(index, this)) : tail.value().findFirstIndexedNodeHelper(index + 1, predicate);
+        }
+
+        @Override
+        protected IndexElement<IdeaList<E>> findFirstIndexedNodeHelper2(int index, BiPredicate<Integer, Lazy<E>> predicate) {
+            return predicate.test(index, value) ? IndexElement.of(index, this) : tail.value().findFirstIndexedNodeHelper2(index + 1, predicate);
+        }
 
         // Checks =======================================================================================
         @Override
         public boolean isNested() {
-            return value.value() instanceof Iterable;
+            return first() instanceof Iterable;
         }
 
         @Override
         public boolean containsNestedIdeaLists() {
-            return value.value() instanceof IdeaList;
+            return first() instanceof IdeaList;
         }
 
         @Override
@@ -938,7 +1018,7 @@ public abstract class IdeaList<E> implements Iterable<E> {
 
         @Override
         public IdeaList<E> removeFirst(@Nullable E element) {
-            return Objects.equals(value.value(), element) ? tail.value() : keepValueAndTransformTail(tail -> tail.removeFirst(element));
+            return Objects.equals(first(), element) ? tail.value() : keepValueAndTransformTail(tail -> tail.removeFirst(element));
         }
 
         @Override
@@ -948,7 +1028,7 @@ public abstract class IdeaList<E> implements Iterable<E> {
         }
 
         protected IdeaList<E> concatWhenHelper(int index, BiPredicate<Integer, Lazy<E>> predicate, Function<IdeaList<E>, IdeaList<E>> listAtMatchToNewList, Supplier<IdeaList<E>> ifNoMatchReturn) {
-            return predicate.test(index, value) ? listAtMatchToNewList.apply(this) : IdeaList.create(value, Lazy.of(() -> tail.value().concatWhenHelper(index - 1, predicate, listAtMatchToNewList, ifNoMatchReturn)));
+            return predicate.test(index, value) ? listAtMatchToNewList.apply(this) : IdeaList.create(value, Lazy.of(() -> tail.value().concatWhenHelper(index + 1, predicate, listAtMatchToNewList, ifNoMatchReturn)));
         }
 
         /*protected IdeaList<E> helperIndexed(int index, BiPredicate<Integer, Lazy<E>> predicate, Function<IdeaList<E>, IdeaList<E>> getRest) {
@@ -957,12 +1037,12 @@ public abstract class IdeaList<E> implements Iterable<E> {
 
         /*@Override
         public Optional<E> findFirst(Predicate<E> predicate) {
-            return predicate.test(value.value()) ? Optional.of(value.value()) : tail.value().findFirst(predicate);
+            return predicate.test(first()) ? Optional.of(first()) : tail.value().findFirst(predicate);
         }*/
 
         @Override
         public void forEach2(Consumer<? super E> action) {
-            action.accept(value.value());
+            action.accept(first());
             tail.value().forEach2(action);
         }
 
@@ -993,6 +1073,10 @@ public abstract class IdeaList<E> implements Iterable<E> {
 
         private static NoSuchElementException noSuchElementException() {
             return new NoSuchElementException("List is empty");
+        }
+
+        private static UnsupportedOperationException emptyListHasNoIndicesException() {
+            return new UnsupportedOperationException("Empty list has no indices");
         }
 
 
@@ -1029,12 +1113,22 @@ public abstract class IdeaList<E> implements Iterable<E> {
 
         @Override
         public int lastIndex() {
-            throw new UnsupportedOperationException("Empty list has no indices");
+            throw emptyListHasNoIndicesException();
         }
 
         @Override
         public IdeaList<Integer> indices() {
-            throw new UnsupportedOperationException("Empty list has no indices");
+            throw emptyListHasNoIndicesException();
+        }
+
+        @Override
+        protected Optional<IndexElement<IdeaList<E>>> findFirstIndexedNodeHelper(int index, BiPredicate<Integer, Lazy<E>> predicate) {
+            return Optional.empty();
+        }
+
+        @Override
+        protected IndexElement<IdeaList<E>> findFirstIndexedNodeHelper2(int index, BiPredicate<Integer, Lazy<E>> predicate) {
+            return null;
         }
 
 
