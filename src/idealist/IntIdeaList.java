@@ -48,10 +48,19 @@ public abstract class IntIdeaList implements Iterable<Integer> {
         return concat(PrimitiveEnumerator.of(elements), IntIdeaList.empty(), Function.identity());
     }
 
+    // Can potentially increase performance by immediately calculating "to" instead of
+    // continuously calculating length - 1
     private static IntIdeaList rangeLength(int from, int length) {
         return length == 0 ? IntIdeaList.empty() : IntIdeaList.create(
                 LazyInt.of(() -> from),
                 Lazy.of(() -> rangeLength(from + 1, length - 1))
+        );
+    }
+
+    private static IntIdeaList rangeExclusive(int from, int upTo) {
+        return from == upTo ? IntIdeaList.empty() : IntIdeaList.create(
+                LazyInt.of(() -> from),
+                Lazy.of(() -> rangeExclusive(from + 1, upTo))
         );
     }
 
@@ -61,6 +70,7 @@ public abstract class IntIdeaList implements Iterable<Integer> {
 
     public static IntIdeaList initialiseWith(int length, IntUnaryOperator indexToElement) {
         handleNegativeLength(length);
+        // rangeExclusive(0, length)
         return rangeLength(0, length).map(indexToElement);
     }
 
