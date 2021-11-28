@@ -436,13 +436,13 @@ public abstract class IdeaList<E> implements Iterable<E> {
         return insertAtHelper2(index, elements, IdeaList::concat);
     }
 
-    /*public IdeaList<E> insertAt(int index, IdeaList<E> elements) {
+    public IdeaList<E> insertAt4(int index, IdeaList<E> elements) {
         return insertAtHelper3(index, elements, IdeaList::concat);
     }
 
-    public IdeaList<E> insertAt(int index, Iterable<E> elements) {
+    public IdeaList<E> insertAt4(int index, Iterable<E> elements) {
         return insertAtHelper3(index, elements, IdeaList::concat);
-    }*/
+    }
 
     @SafeVarargs
     public final IdeaList<E> insertAt(int index, E... elements) {
@@ -562,21 +562,15 @@ public abstract class IdeaList<E> implements Iterable<E> {
         return concatWhenHelper(0, predicate, listAtMatchToNewList, orElseReturn);
     }
 
-    /*protected abstract IdeaList<E> concatWhenHelper2(int index, BiPredicate<Integer, Lazy<E>> predicate, Function<IdeaList<E>, IdeaList<E>> listAtMatchToNewList);*/
+    protected abstract IdeaList<E> concatWhenHelper2(int index, BiPredicate<Integer, Lazy<E>> predicate, Function<IdeaList<E>, IdeaList<E>> listAtMatchToNewList);
 
-    /*private IdeaList<E> concatWhen2(BiPredicate<Integer, Lazy<E>> predicate, Function<IdeaList<E>, IdeaList<E>> listAtMatchToNewList, Supplier<IdeaList<E>> orElseReturn) {
+    private IdeaList<E> concatWhen2(BiPredicate<Integer, Lazy<E>> predicate, Function<IdeaList<E>, IdeaList<E>> listAtMatchToNewList, Supplier<IdeaList<E>> orElseReturn) {
         try {
-            IdeaList<E> result = concatWhenHelper2(0, predicate, listAtMatchToNewList);
+            return concatWhenHelper2(0, predicate, listAtMatchToNewList);
         } catch (IndexOutOfBoundsException exc) {
-            orElseReturn.get();
+            return orElseReturn.get();
         }
-
-        return result == null ? orElseReturn.get() : result;
-    }*/
-
-    /*private static <E> IdeaList<E> throwIndexTooBigException() {
-        throw indexTooBigException();
-    }*/
+    }
 
     private static <A> A throwIndexTooBigException() {
         throw indexTooBigException();
@@ -595,10 +589,10 @@ public abstract class IdeaList<E> implements Iterable<E> {
         return concatWhen((idx, __) -> idx == index, listAtMatch -> concat.apply(elements, listAtMatch), IdeaList::throwIndexTooBigException);
     }
 
-    /*private <I> IdeaList<E> insertAtHelper3(int index, I elements, BiFunction<I, IdeaList<E>, IdeaList<E>> concat) {
+    private <I> IdeaList<E> insertAtHelper3(int index, I elements, BiFunction<I, IdeaList<E>, IdeaList<E>> concat) {
         if (index < 0) return insertAtHelper3(toPositiveIndex(index), elements, concat);
         return concatWhen2((idx, __) -> idx == index, listAtMatch -> concat.apply(elements, listAtMatch), IdeaList::throwIndexTooBigException);
-    }*/
+    }
 
     /*private <I> IdeaList<E> insertAtHelper4(int index, I elements, BiFunction<I, IdeaList<E>, IdeaList<E>> concat) {
         if (index < 0) return insertAtHelper4(toPositiveIndex(index), elements, concat);
@@ -1076,10 +1070,10 @@ public abstract class IdeaList<E> implements Iterable<E> {
             return predicate.test(index, value) ? listAtMatchToNewList.apply(this) : IdeaList.create(value, Lazy.of(() -> tail.value().concatWhenHelper(index + 1, predicate, listAtMatchToNewList, orElseReturn)));
         }
 
-        /*@Override
+        @Override
         protected IdeaList<E> concatWhenHelper2(int index, BiPredicate<Integer, Lazy<E>> predicate, Function<IdeaList<E>, IdeaList<E>> listAtMatchToNewList) {
             return predicate.test(index, value) ? listAtMatchToNewList.apply(this) : IdeaList.create(value, Lazy.of(() -> tail.value().concatWhenHelper2(index + 1, predicate, listAtMatchToNewList)));
-        }*/
+        }
 
         /*protected IdeaList<E> helperIndexed(int index, BiPredicate<Integer, Lazy<E>> predicate, Function<IdeaList<E>, IdeaList<E>> getRest) {
             return predicate.test(index, value) ? getRest.apply(this) : keepValueAndTransformTail(tail -> tail.helperIndexed(index - 1, predicate, getRest));
@@ -1235,10 +1229,10 @@ public abstract class IdeaList<E> implements Iterable<E> {
             return orElseReturn.get();
         }
 
-        /*@Override
+        @Override
         protected IdeaList<E> concatWhenHelper2(int index, BiPredicate<Integer, Lazy<E>> predicate, Function<IdeaList<E>, IdeaList<E>> listAtMatchToNewList) {
             throw indexTooBigException();
-        }*/
+        }
 
         @Override
         public void forEach2(Consumer<? super E> action) {}
