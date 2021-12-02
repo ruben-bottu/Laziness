@@ -41,6 +41,41 @@ public final class Enumerator {
         };
     }
 
+    public static <E> Iterator<Lazy<E>> ofLazy(IdeaList<E> elements) {
+        return new Iterator<>() {
+            private IdeaList<E> innerList = elements;
+
+            @Override
+            public boolean hasNext() {
+                return innerList.any();
+            }
+
+            @Override
+            public Lazy<E> next() {
+                Lazy<E> next = innerList.value;
+                innerList = innerList.tail.value();
+                return next;
+            }
+        };
+    }
+
+    public static <E> Iterator<Lazy<E>> ofLazy(Iterable<E> elements) {
+        return new Iterator<>() {
+            private final Iterator<E> iterator = elements.iterator();
+
+            @Override
+            public boolean hasNext() {
+                return iterator.hasNext();
+            }
+
+            @Override
+            public Lazy<E> next() {
+                E element = iterator.next();
+                return Lazy.of(() -> element);
+            }
+        };
+    }
+
     public static <E> Iterator<Lazy<E>> of(MutableList<E> elements) {
         return new Iterator<>() {
             private MutableList<E> innerList = elements;
