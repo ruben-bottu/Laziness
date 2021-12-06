@@ -1,5 +1,7 @@
 package idealist;
 
+import idealist.function.IntObjFunction;
+import idealist.function.IntObjPredicate;
 import idealist.function.TriFunction;
 import idealist.range.Range;
 import idealist.tuple.IndexElement;
@@ -62,23 +64,6 @@ public abstract class IdeaList<E> implements Iterable<E> {
 
     private static <E> IdeaList<E> concat(Iterable<E> elements, IdeaList<E> other) {
         return concat(elements.iterator(), other, Function.identity());
-    }
-
-    // TODO benchmark vs concat(Iterator<E> iterator, O other, Function<O, IdeaList<E>> toIdeaList)
-    private static <E> IdeaList<E> concat2(Iterator<E> iterator, Lazy<IdeaList<E>> other) {
-        if (iterator.hasNext()) {
-            E element = iterator.next();
-            return IdeaList.create(Lazy.of(() -> element), Lazy.of(() -> concat2(iterator, other)));
-        }
-        return other.value();
-    }
-
-    private static <E> IdeaList<E> concat2(Iterable<E> elements, Lazy<IdeaList<E>> other) {
-        return concat2(elements.iterator(), other);
-    }
-
-    private static <E> IdeaList<E> concat2(Iterable<E> elements, IdeaList<E> other) {
-        return concat2(elements, Lazy.of(() -> other));
     }
 
     public static <E> IdeaList<E> of(Iterable<E> elements) {
@@ -240,23 +225,9 @@ public abstract class IdeaList<E> implements Iterable<E> {
         return result;
     }
 
-    // reduce??
     @Override
     public int hashCode() {
-        var hashCode = new AtomicInteger(1);
-        IntBinaryOperator accumulatorFunction = (accum, elem) -> 31 * accum + elem;
-        // forEach(elem -> hashCode.accumulateAndGet(elem.hashCode(), accumulatorFunction));
-        forEach(elem -> hashCode.accumulateAndGet((elem == null ? 0 : elem.hashCode()), accumulatorFunction));
-        return hashCode.get();
-    }
-
-    // If this is most efficient one -> move to Enumerable
-    public int hashCode2() {
-        int hashCode = 1;
-        for (E element : this) {
-            hashCode = 31 * hashCode + (element == null ? 0 : element.hashCode());
-        }
-        return hashCode;
+        return mapToInt(Object::hashCode).reduce(1, (accum, hashCode) -> 31 * accum + hashCode);
     }
 
     @Override
@@ -378,7 +349,35 @@ public abstract class IdeaList<E> implements Iterable<E> {
 
 
     // Modifiers ====================================================================================
-    protected abstract <I> IdeaList<E> insertAtHelper(int index, I elements, BiFunction<I, IdeaList<E>, IdeaList<E>> concat);
+    protected abstract IdeaList<E> concatWhenHelper(int index, BiPredicate<Integer, Lazy<E>> predicate, Function<IdeaList<E>, IdeaList<E>> listAtMatchToNewList, Supplier<IdeaList<E>> orElseReturn);
+
+    private IdeaList<E> concatWhen(BiPredicate<Integer, Lazy<E>> predicate, Function<IdeaList<E>, IdeaList<E>> listAtMatchToNewList, Supplier<IdeaList<E>> orElseReturn) {
+        return concatWhenHelper(0, predicate, listAtMatchToNewList, orElseReturn);
+    }
+
+    protected abstract IdeaList<E> concatWhenHelper2(int index, IntObjPredicate<Lazy<E>> predicate, Function<IdeaList<E>, IdeaList<E>> listAtMatchToNewList, Supplier<IdeaList<E>> orElseReturn);
+
+    private IdeaList<E> concatWhen2(IntObjPredicate<Lazy<E>> predicate, Function<IdeaList<E>, IdeaList<E>> listAtMatchToNewList, Supplier<IdeaList<E>> orElseReturn) {
+        return concatWhenHelper2(0, predicate, listAtMatchToNewList, orElseReturn);
+    }
+
+    protected abstract IdeaList<E> concatWhenHelper3(int index, IntObjFunction<Lazy<E>, Boolean> predicate, Function<IdeaList<E>, IdeaList<E>> listAtMatchToNewList, Supplier<IdeaList<E>> orElseReturn);
+
+    private IdeaList<E> concatWhen3(IntObjFunction<Lazy<E>, Boolean> predicate, Function<IdeaList<E>, IdeaList<E>> listAtMatchToNewList, Supplier<IdeaList<E>> orElseReturn) {
+        return concatWhenHelper3(0, predicate, listAtMatchToNewList, orElseReturn);
+    }
+
+    protected abstract IdeaList<E> concatWhenIndexHelper(int index, IntPredicate predicate, Function<IdeaList<E>, IdeaList<E>> listAtMatchToNewList);
+
+    // Did the Integer in BiPredicate<Integer, Lazy<E>> have a big impact on the performance loss?
+    private IdeaList<E> concatWhenIndex(IntPredicate predicate, Function<IdeaList<E>, IdeaList<E>> listAtMatchToNewList) {
+        return concatWhenIndexHelper(0, predicate, listAtMatchToNewList);
+    }
+
+    private <I> IdeaList<E> insertAtHelper(int index, I elements, BiFunction<I, IdeaList<E>, IdeaList<E>> concat) {
+        if (index < 0) return insertAtHelper(toPositiveIndex(index), elements, concat);
+        return concatWhenIndex(idx -> idx == index, listAtMatch -> concat.apply(elements, listAtMatch));
+    }
 
     public IdeaList<E> insertAt(int index, IdeaList<E> elements) {
         return insertAtHelper(index, elements, IdeaList::concat);
@@ -388,28 +387,27 @@ public abstract class IdeaList<E> implements Iterable<E> {
         return insertAtHelper(index, elements, IdeaList::concat);
     }
 
-    public IdeaList<E> insertAtLazy(int index, Iterable<E> elements) {
-        return insertAtHelper(index, elements, IdeaList::concat2);
-    }
-
-    public IdeaList<E> insertAt2(int index, IdeaList<E> elements) {
-        return insertAtHelper2(index, elements, IdeaList::concat);
+    private <I> IdeaList<E> insertAtHelper2(int index, I elements, BiFunction<I, IdeaList<E>, IdeaList<E>> concat) {
+        if (index < 0) return insertAtHelper2(toPositiveIndex(index), elements, concat);
+        return concatWhen((idx, __) -> idx == index, listAtMatch -> concat.apply(elements, listAtMatch), IdeaList::throwIndexTooBigException);
     }
 
     public IdeaList<E> insertAt2(int index, Iterable<E> elements) {
         return insertAtHelper2(index, elements, IdeaList::concat);
     }
 
-    public IdeaList<E> insertAt3(int index, IdeaList<E> elements) {
-        return insertAtHelper3(index, elements, IdeaList::concat);
+    private <I> IdeaList<E> insertAtHelper3(int index, I elements, BiFunction<I, IdeaList<E>, IdeaList<E>> concat) {
+        if (index < 0) return insertAtHelper3(toPositiveIndex(index), elements, concat);
+        return concatWhen2((idx, __) -> idx == index, listAtMatch -> concat.apply(elements, listAtMatch), IdeaList::throwIndexTooBigException);
     }
 
     public IdeaList<E> insertAt3(int index, Iterable<E> elements) {
         return insertAtHelper3(index, elements, IdeaList::concat);
     }
 
-    public IdeaList<E> insertAt4(int index, IdeaList<E> elements) {
-        return insertAtHelper4(index, elements, IdeaList::concat);
+    private <I> IdeaList<E> insertAtHelper4(int index, I elements, BiFunction<I, IdeaList<E>, IdeaList<E>> concat) {
+        if (index < 0) return insertAtHelper4(toPositiveIndex(index), elements, concat);
+        return concatWhen3((idx, __) -> idx == index, listAtMatch -> concat.apply(elements, listAtMatch), IdeaList::throwIndexTooBigException);
     }
 
     public IdeaList<E> insertAt4(int index, Iterable<E> elements) {
@@ -418,11 +416,6 @@ public abstract class IdeaList<E> implements Iterable<E> {
 
     @SafeVarargs
     public final IdeaList<E> insertAt(int index, E... elements) {
-        return insertAt(index, IdeaList.of(elements));
-    }
-
-    @SafeVarargs
-    public final IdeaList<E> insertAt2(int index, E... elements) {
         return insertAt(index, asList(elements));
     }
 
@@ -440,11 +433,6 @@ public abstract class IdeaList<E> implements Iterable<E> {
     }
 
     @SafeVarargs
-    public final IdeaList<E> add2(E... elements) {
-        return concatWith(asList(elements));
-    }
-
-    @SafeVarargs
     public final IdeaList<E> append(E... elements) {
         return add(elements);
     }
@@ -454,20 +442,11 @@ public abstract class IdeaList<E> implements Iterable<E> {
     }
 
     public IdeaList<E> linkToBackOf(Iterable<E> elements) {
-        return concat(IdeaList.of(elements), this);
-    }
-
-    public IdeaList<E> linkToBackOf2(Iterable<E> elements) {
         return concat(elements, this);
     }
 
     @SafeVarargs
     public final IdeaList<E> addToFront(E... elements) {
-        return linkToBackOf(IdeaList.of(elements));
-    }
-
-    @SafeVarargs
-    public final IdeaList<E> addToFront2(E... elements) {
         return linkToBackOf(asList(elements));
     }
 
@@ -478,7 +457,10 @@ public abstract class IdeaList<E> implements Iterable<E> {
 
     public abstract IdeaList<E> removeFirst(@Nullable E element);
 
-    public abstract IdeaList<E> removeAt(int index);
+    public IdeaList<E> removeAt(int index) {
+        if (index < 0) return removeAt(toPositiveIndex(index));
+        return concatWhenIndex(idx -> idx == index, listAtMatch -> listAtMatch.tail.value());
+    }
 
     public IdeaList<E> removeAll(@Nullable E element) {
         return where(elem -> !Objects.equals(elem, element));
@@ -487,6 +469,10 @@ public abstract class IdeaList<E> implements Iterable<E> {
     @Override
     public void forEach(Consumer<? super E> action) {
         for (E element : this) action.accept(element);
+    }
+
+    public void forEach2(Consumer<? super E> action) {
+        forEach2((Function<E, Void>) action);
     }
 
     public abstract Void forEach2(Function<E, Void> action);
@@ -501,8 +487,8 @@ public abstract class IdeaList<E> implements Iterable<E> {
         for (E element : this) action.accept(index++, element);
     }
 
-    public Void forEachIndexed3(BiFunction<Integer, E, Void> action) {
-        return createIndexed(IdeaList::forEach2, action);
+    public void forEachIndexed3(BiFunction<Integer, E, Void> action) {
+        createIndexed(IdeaList::forEach2, action);
     }
 
     /*public IdeaList<E> takeLast(int n) {
@@ -528,66 +514,9 @@ public abstract class IdeaList<E> implements Iterable<E> {
         return index == 0 ? tail.value() : keepValueAndTransformTail(tail -> tail.removeAt(index - 1));
     }*/
 
-    protected abstract IdeaList<E> concatWhenHelper(int index, BiPredicate<Integer, Lazy<E>> predicate, Function<IdeaList<E>, IdeaList<E>> listAtMatchToNewList, Supplier<IdeaList<E>> orElseReturn);
-
-    private IdeaList<E> concatWhen(BiPredicate<Integer, Lazy<E>> predicate, Function<IdeaList<E>, IdeaList<E>> listAtMatchToNewList, Supplier<IdeaList<E>> orElseReturn) {
-        return concatWhenHelper(0, predicate, listAtMatchToNewList, orElseReturn);
-    }
-
-    protected abstract IdeaList<E> concatWhenIndexHelper(int index, IntPredicate predicate, Function<IdeaList<E>, IdeaList<E>> listAtMatchToNewList, Supplier<IdeaList<E>> orElseReturn);
-
-    private IdeaList<E> concatWhenIndex(IntPredicate predicate, Function<IdeaList<E>, IdeaList<E>> listAtMatchToNewList, Supplier<IdeaList<E>> orElseReturn) {
-        return concatWhenIndexHelper(0, predicate, listAtMatchToNewList, orElseReturn);
-    }
-
-    protected abstract IdeaList<E> concatWhenIndexHelper2(int index, IntPredicate predicate, Function<IdeaList<E>, IdeaList<E>> listAtMatchToNewList);
-
-    private IdeaList<E> concatWhenIndex2(IntPredicate predicate, Function<IdeaList<E>, IdeaList<E>> listAtMatchToNewList) {
-        return concatWhenIndexHelper2(0, predicate, listAtMatchToNewList);
-    }
-
-
-    /*@Override
-    protected <I> IdeaList<E> insertAtHelper(int index, I elements, BiFunction<I, IdeaList<E>, IdeaList<E>> concat) {
-        if (index < 0) return insertAtHelper(toPositiveIndex(index), elements, concat);
-        return index == 0
-                ? concat.apply(elements, this)
-                : keepValueAndTransformTail(tail -> tail.insertAtHelper(index - 1, elements, concat));
-    }*/
-
-    private <I> IdeaList<E> insertAtHelper2(int index, I elements, BiFunction<I, IdeaList<E>, IdeaList<E>> concat) {
-        if (index < 0) return insertAtHelper2(toPositiveIndex(index), elements, concat);
-        return concatWhen((idx, __) -> idx == index, listAtMatch -> concat.apply(elements, listAtMatch), IdeaList::throwIndexTooBigException);
-    }
-
-    private <I> IdeaList<E> insertAtHelper3(int index, I elements, BiFunction<I, IdeaList<E>, IdeaList<E>> concat) {
-        if (index < 0) return insertAtHelper3(toPositiveIndex(index), elements, concat);
-        return concatWhenIndex(idx -> idx == index, listAtMatch -> concat.apply(elements, listAtMatch), IdeaList::throwIndexTooBigException);
-    }
-
-    private <I> IdeaList<E> insertAtHelper4(int index, I elements, BiFunction<I, IdeaList<E>, IdeaList<E>> concat) {
-        if (index < 0) return insertAtHelper4(toPositiveIndex(index), elements, concat);
-        return concatWhenIndex2(idx -> idx == index, listAtMatch -> concat.apply(elements, listAtMatch));
-    }
-
-    /*@Override
-    public IdeaList<E> removeFirst(@Nullable E element) {
-        return Objects.equals(first(), element) ? tail.value() : keepValueAndTransformTail(tail -> tail.removeFirst(element));
-    }*/
 
     public IdeaList<E> removeFirst2(@Nullable E element) {
         return concatWhen((__, value) -> Objects.equals(value.value(), element), listAtMatch -> listAtMatch.tail.value(), IdeaList::empty);
-    }
-
-    /*@Override
-    public IdeaList<E> removeAt(int index) {
-        if (index < 0) return removeAt(toPositiveIndex(index));
-        return index == 0 ? tail.value() : keepValueAndTransformTail(tail -> tail.removeAt(index - 1));
-    }*/
-
-    public IdeaList<E> removeAt2(int index) {
-        if (index < 0) return removeAt(toPositiveIndex(index));
-        return concatWhen((idx, __) -> idx == index, listAtMatch -> listAtMatch.tail.value(), IdeaList::throwIndexTooBigException);
     }
 
 
@@ -685,14 +614,14 @@ public abstract class IdeaList<E> implements Iterable<E> {
         return lazyReduceRight(IdeaList.empty(), prependElemIfMatch);
     }
 
-    public IdeaList<E> where2(Function<E, Boolean> predicate) {
-        BiFunction<Lazy<E>, Lazy<IdeaList<E>>, IdeaList<E>> prependElemIfMatch = (elem, list) -> predicate.apply(elem.value()) ? IdeaList.create(elem, list) : list.value();
-        return lazyReduceRight(IdeaList.empty(), prependElemIfMatch);
-    }
-
     public IdeaList<E> whereIndexed(BiPredicate<Integer, E> predicate) {
         var index = new AtomicInteger();
         return where(elem -> predicate.test(index.getAndIncrement(), elem));
+    }
+
+    public IdeaList<E> where2(Function<E, Boolean> predicate) {
+        BiFunction<Lazy<E>, Lazy<IdeaList<E>>, IdeaList<E>> prependElemIfMatch = (elem, list) -> predicate.apply(elem.value()) ? IdeaList.create(elem, list) : list.value();
+        return lazyReduceRight(IdeaList.empty(), prependElemIfMatch);
     }
 
     public IdeaList<E> whereIndexed2(BiFunction<Integer, E, Boolean> predicate) {
@@ -1003,22 +932,8 @@ public abstract class IdeaList<E> implements Iterable<E> {
 
         // Modifiers ====================================================================================
         @Override
-        protected <I> IdeaList<E> insertAtHelper(int index, I elements, BiFunction<I, IdeaList<E>, IdeaList<E>> concat) {
-            if (index < 0) return insertAtHelper(toPositiveIndex(index), elements, concat);
-            return index == 0
-                    ? concat.apply(elements, this)
-                    : keepValueAndTransformTail(tail -> tail.insertAtHelper(index - 1, elements, concat));
-        }
-
-        @Override
         public IdeaList<E> removeFirst(@Nullable E element) {
             return Objects.equals(first(), element) ? tail.value() : keepValueAndTransformTail(tail -> tail.removeFirst(element));
-        }
-
-        @Override
-        public IdeaList<E> removeAt(int index) {
-            if (index < 0) return removeAt(toPositiveIndex(index));
-            return index == 0 ? tail.value() : keepValueAndTransformTail(tail -> tail.removeAt(index - 1));
         }
 
         // If concatWhen() and concatWhenIndex() remain separate, the orElseReturn parameter of concatWhen() can be removed and IdeaList.empty() can be used in EndNode
@@ -1028,13 +943,18 @@ public abstract class IdeaList<E> implements Iterable<E> {
         }
 
         @Override
-        protected IdeaList<E> concatWhenIndexHelper(int index, IntPredicate predicate, Function<IdeaList<E>, IdeaList<E>> listAtMatchToNewList, Supplier<IdeaList<E>> orElseReturn) {
-            return predicate.test(index) ? listAtMatchToNewList.apply(this) : IdeaList.create(value, Lazy.of(() -> tail.value().concatWhenIndexHelper(index + 1, predicate, listAtMatchToNewList, orElseReturn)));
+        protected IdeaList<E> concatWhenHelper2(int index, IntObjPredicate<Lazy<E>> predicate, Function<IdeaList<E>, IdeaList<E>> listAtMatchToNewList, Supplier<IdeaList<E>> orElseReturn) {
+            return predicate.test(index, value) ? listAtMatchToNewList.apply(this) : IdeaList.create(value, Lazy.of(() -> tail.value().concatWhenHelper2(index + 1, predicate, listAtMatchToNewList, orElseReturn)));
         }
 
         @Override
-        protected IdeaList<E> concatWhenIndexHelper2(int index, IntPredicate predicate, Function<IdeaList<E>, IdeaList<E>> listAtMatchToNewList) {
-            return predicate.test(index) ? listAtMatchToNewList.apply(this) : IdeaList.create(value, Lazy.of(() -> tail.value().concatWhenIndexHelper2(index + 1, predicate, listAtMatchToNewList)));
+        protected IdeaList<E> concatWhenHelper3(int index, IntObjFunction<Lazy<E>, Boolean> predicate, Function<IdeaList<E>, IdeaList<E>> listAtMatchToNewList, Supplier<IdeaList<E>> orElseReturn) {
+            return predicate.apply(index, value) ? listAtMatchToNewList.apply(this) : IdeaList.create(value, Lazy.of(() -> tail.value().concatWhenHelper3(index + 1, predicate, listAtMatchToNewList, orElseReturn)));
+        }
+
+        @Override
+        protected IdeaList<E> concatWhenIndexHelper(int index, IntPredicate predicate, Function<IdeaList<E>, IdeaList<E>> listAtMatchToNewList) {
+            return predicate.test(index) ? listAtMatchToNewList.apply(this) : IdeaList.create(value, Lazy.of(() -> tail.value().concatWhenIndexHelper(index + 1, predicate, listAtMatchToNewList)));
         }
 
         /*@Override
@@ -1158,18 +1078,8 @@ public abstract class IdeaList<E> implements Iterable<E> {
 
         // Modifiers ====================================================================================
         @Override
-        protected <I> IdeaList<E> insertAtHelper(int index, I elements, BiFunction<I, IdeaList<E>, IdeaList<E>> concat) {
-            throw indexTooBigException();
-        }
-
-        @Override
         public IdeaList<E> removeFirst(@Nullable E element) {
             return this;
-        }
-
-        @Override
-        public IdeaList<E> removeAt(int index) {
-            throw indexTooBigException();
         }
 
         @Override
@@ -1179,12 +1089,17 @@ public abstract class IdeaList<E> implements Iterable<E> {
         }
 
         @Override
-        protected IdeaList<E> concatWhenIndexHelper(int index, IntPredicate predicate, Function<IdeaList<E>, IdeaList<E>> listAtMatchToNewList, Supplier<IdeaList<E>> orElseReturn) {
+        protected IdeaList<E> concatWhenHelper2(int index, IntObjPredicate<Lazy<E>> predicate, Function<IdeaList<E>, IdeaList<E>> listAtMatchToNewList, Supplier<IdeaList<E>> orElseReturn) {
             return orElseReturn.get();
         }
 
         @Override
-        protected IdeaList<E> concatWhenIndexHelper2(int index, IntPredicate predicate, Function<IdeaList<E>, IdeaList<E>> listAtMatchToNewList) {
+        protected IdeaList<E> concatWhenHelper3(int index, IntObjFunction<Lazy<E>, Boolean> predicate, Function<IdeaList<E>, IdeaList<E>> listAtMatchToNewList, Supplier<IdeaList<E>> orElseReturn) {
+            return orElseReturn.get();
+        }
+
+        @Override
+        protected IdeaList<E> concatWhenIndexHelper(int index, IntPredicate predicate, Function<IdeaList<E>, IdeaList<E>> listAtMatchToNewList) {
             throw indexTooBigException();
         }
 
