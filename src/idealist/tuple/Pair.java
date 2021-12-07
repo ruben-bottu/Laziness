@@ -18,6 +18,10 @@ public class Pair<A, B> {
         return new Pair<>(first, second);
     }
 
+    public static <A, B, I> Pair<A, B> ofIgnoreLast(A first, B second, I ignore) {
+        return Pair.of(first, second);
+    }
+
     public <C> Triplet<A, B, C> add(C element) {
         return Triplet.of(first, second, element);
     }

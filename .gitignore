@@ -9,3 +9,7 @@ ui/
 
 # For testing and helper classes
 LazyList UML.xml
+
+# For others
+*.jfr
+*.jar
