@@ -23,4 +23,11 @@ public class Lazy<T> {
         }
         return value;
     }
+
+    @Override
+    public String toString() {
+        return evaluated
+                ? "Lazy{ " + value + " }"
+                : super.toString();
+    }
 }

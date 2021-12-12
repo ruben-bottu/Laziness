@@ -8,7 +8,10 @@ import idealist.tuple.Triplet;
 import java.lang.reflect.Array;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.*;
+import java.util.function.BiFunction;
+import java.util.function.BinaryOperator;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
 import static java.util.function.Predicate.isEqual;
 
@@ -191,6 +194,11 @@ public final class Enumerable {
 
     public static double sumDouble(Iterable<Double> elements) {
         return reduce(0.0d, Double::sum, elements);
+    }*/
+
+    /*public boolean containsAll2(Iterable<E> elements) {
+        for (E element : elements) if (!contains(element)) return false;
+        return true;
     }*/
 
     public static <E> boolean all(Predicate<E> predicate, Iterable<E> elements) {

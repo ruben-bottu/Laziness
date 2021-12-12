@@ -483,8 +483,8 @@ public class IdeaListTest {
     }
 
     @Test
-    public void indexOfFirst_predicate_Returns_empty_OptionalInt_if_list_is_empty() {
-        assertEquals(OptionalInt.empty(), IdeaList.empty().indexOfFirst(alwaysTrue()));
+    public void indexOfFirst_predicate_Returns_empty_Optional_if_list_is_empty() {
+        assertEquals(Optional.empty(), IdeaList.empty().indexOfFirst(alwaysTrue()));
     }
 
     /*@Test
@@ -496,49 +496,49 @@ public class IdeaListTest {
     }*/
 
     @Test
-    public void indexOfFirst_predicate_Returns_empty_OptionalInt_if_no_element_matches_given_predicate() {
-        assertEquals(OptionalInt.empty(), personIdeaList.indexOfFirst(alwaysFalse()));
+    public void indexOfFirst_predicate_Returns_empty_Optional_if_no_element_matches_given_predicate() {
+        assertEquals(Optional.empty(), personIdeaList.indexOfFirst(alwaysFalse()));
     }
 
     @Test
     public void indexOfFirst_predicate_Returns_index_of_first_element_that_matches_given_predicate_in_list_with_nulls() {
         IdeaList<Person> input = IdeaList.of(p1, p1, p2, null, p3, p3, null);
-        assertEquals(3, input.indexOfFirst(Objects::isNull).orElseThrow());
+        assertEquals(3, input.indexOfFirst(Objects::isNull).orElseThrow().intValue());
     }
 
     @Test
     public void indexOfFirst_predicate_Returns_index_of_first_element_that_matches_given_predicate() {
-        assertEquals(7, integerIdeaList.indexOfFirst(integer -> integer > 75).orElseThrow());
-        assertEquals(1, personIdeaList.indexOfFirst(person -> person.getSecondName().contains("h")).orElseThrow());
-        assertEquals(4, dogIdeaList.indexOfFirst(animal -> animal.getAge() > 6).orElseThrow());
-        assertEquals(0, localDateIdeaList.indexOfFirst(alwaysTrue()).orElseThrow());
+        assertEquals(7, integerIdeaList.indexOfFirst(integer -> integer > 75).orElseThrow().intValue());
+        assertEquals(1, personIdeaList.indexOfFirst(person -> person.getSecondName().contains("h")).orElseThrow().intValue());
+        assertEquals(4, dogIdeaList.indexOfFirst(animal -> animal.getAge() > 6).orElseThrow().intValue());
+        assertEquals(0, localDateIdeaList.indexOfFirst(alwaysTrue()).orElseThrow().intValue());
     }
 
     @Test
     public void indexOfFirst_element_Returns_empty_OptionalInt_if_list_is_empty() {
-        assertEquals(OptionalInt.empty(), IdeaList.empty().indexOfFirst(p1));
+        assertEquals(Optional.empty(), IdeaList.empty().indexOfFirst(p1));
     }
 
     @Test
     public void indexOfFirst_element_Returns_empty_OptionalInt_if_list_does_not_contain_given_element() {
-        assertEquals(OptionalInt.empty(), integerIdeaList.indexOfFirst(101));
-        assertEquals(OptionalInt.empty(), personIdeaList.indexOfFirst(new Person("James", "Walker")));
-        assertEquals(OptionalInt.empty(), dogIdeaList.indexOfFirst(new Dog(2, "Bolt")));
-        assertEquals(OptionalInt.empty(), localDateIdeaList.indexOfFirst(LocalDate.of(441, 3, 11)));
+        assertEquals(Optional.empty(), integerIdeaList.indexOfFirst(101));
+        assertEquals(Optional.empty(), personIdeaList.indexOfFirst(new Person("James", "Walker")));
+        assertEquals(Optional.empty(), dogIdeaList.indexOfFirst(new Dog(2, "Bolt")));
+        assertEquals(Optional.empty(), localDateIdeaList.indexOfFirst(LocalDate.of(441, 3, 11)));
     }
 
     @Test
     public void indexOfFirst_element_Returns_index_of_first_occurrence_of_given_element_in_this_list_containing_nulls() {
         IdeaList<LocalDate> input = IdeaList.of(l7, l7, l6, l1, l2, l3, null, l7);
-        assertEquals(6, input.indexOfFirst((LocalDate) null).orElseThrow());
+        assertEquals(6, input.indexOfFirst((LocalDate) null).orElseThrow().intValue());
     }
 
     @Test
     public void indexOfFirst_element_Returns_index_of_first_occurrence_of_given_element_in_this_list() {
-        assertEquals(0, integerIdeaList.indexOfFirst(i1).orElseThrow());
-        assertEquals(4, personIdeaList.indexOfFirst(p5).orElseThrow());
-        assertEquals(2, dogIdeaList.indexOfFirst(d3).orElseThrow());
-        assertEquals(6, localDateIdeaList.indexOfFirst(l7).orElseThrow());
+        assertEquals(0, integerIdeaList.indexOfFirst(i1).orElseThrow().intValue());
+        assertEquals(4, personIdeaList.indexOfFirst(p5).orElseThrow().intValue());
+        assertEquals(2, dogIdeaList.indexOfFirst(d3).orElseThrow().intValue());
+        assertEquals(6, localDateIdeaList.indexOfFirst(l7).orElseThrow().intValue());
     }
 
     /*@Test
@@ -1769,7 +1769,7 @@ public class IdeaListTest {
 
     @Test
     public void where_Returns_an_empty_list_if_this_list_is_empty() {
-        assertEquals(IdeaList.empty(), IdeaList.<Animal>empty().where(alwaysTrue()));
+        assertEquals(IdeaList.empty(), IdeaList.<Animal>empty().where(__ -> true));
     }
 
     @Test
@@ -1791,7 +1791,7 @@ public class IdeaListTest {
 
     @Test
     public void filter_Returns_an_empty_list_if_this_list_is_empty() {
-        assertEquals(IdeaList.empty(), IdeaList.<Animal>empty().filter(alwaysTrue()));
+        assertEquals(IdeaList.empty(), IdeaList.<Animal>empty().filter(__ -> true));
     }
 
     @Test
@@ -1813,7 +1813,7 @@ public class IdeaListTest {
 
     @Test
     public void findAll_Returns_an_empty_list_if_this_list_is_empty() {
-        assertEquals(IdeaList.empty(), IdeaList.<Animal>empty().findAll(alwaysTrue()));
+        assertEquals(IdeaList.empty(), IdeaList.<Animal>empty().findAll(__ -> true));
     }
 
     @Test

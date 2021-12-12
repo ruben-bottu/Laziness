@@ -32,4 +32,12 @@ public class Person {
     public int hashCode() {
         return Objects.hash(firstName, secondName);
     }
+
+    @Override
+    public String toString() {
+        return "Person{" +
+                "firstName='" + firstName + '\'' +
+                ", secondName='" + secondName + '\'' +
+                '}';
+    }
 }

@@ -59,7 +59,7 @@ public final class Enumerator {
         };
     }
 
-    public static <E> Iterator<Lazy<E>> ofLazy(Iterable<E> elements) {
+    /*public static <E> Iterator<Lazy<E>> ofLazy(Iterable<E> elements) {
         return new Iterator<>() {
             private final Iterator<E> iterator = elements.iterator();
 
@@ -74,7 +74,7 @@ public final class Enumerator {
                 return Lazy.of(() -> element);
             }
         };
-    }
+    }*/
 
     public static <E> Iterator<Lazy<E>> of(MutableList<E> elements) {
         return new Iterator<>() {
