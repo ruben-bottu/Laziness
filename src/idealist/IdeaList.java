@@ -1,9 +1,9 @@
 package idealist;
 
+import idealist.function.IndexedBiFunction;
 import idealist.function.IntObjConsumer;
 import idealist.function.IntObjFunction;
 import idealist.function.IntObjPredicate;
-import idealist.function.TriFunction;
 import idealist.range.Range;
 import idealist.tuple.IndexElement;
 import idealist.tuple.Pair;
@@ -371,7 +371,7 @@ public abstract class IdeaList<E> implements Iterable<E> {
         return Enumerable.reduce(initialValue, operation, this);
     }
 
-    public <A> A reduceIndexed(A initialValue, TriFunction<Integer, A, E, A> operation) {
+    public <A> A reduceIndexed(A initialValue, IndexedBiFunction<A, E, A> operation) {
         return Enumerable.reduceIndexed(initialValue, operation, this);
     }
 
@@ -379,7 +379,7 @@ public abstract class IdeaList<E> implements Iterable<E> {
         return Enumerable.reduce(operation, transformFirst, this);
     }
 
-    public <A> A reduceIndexed(TriFunction<Integer, A, E, A> operation, Function<E, A> transformFirst) {
+    public <A> A reduceIndexed(IndexedBiFunction<A, E, A> operation, Function<E, A> transformFirst) {
         return Enumerable.reduceIndexed(operation, transformFirst, this);
     }
 
@@ -392,7 +392,7 @@ public abstract class IdeaList<E> implements Iterable<E> {
         return withIndex().reduce((accum, idxElem) -> IndexElement.of(0, operation.apply(idxElem.index, accum.element, idxElem.element))).element;
     }*/
 
-    public E reduceIndexed(TriFunction<Integer, E, E, E> operation) {
+    public E reduceIndexed(IndexedBiFunction<E, E, E> operation) {
         return Enumerable.reduceIndexed(operation, this);
     }
 
@@ -400,7 +400,7 @@ public abstract class IdeaList<E> implements Iterable<E> {
         return Enumerable.reduceRight(initialValue, operation, this);
     }
 
-    public <A> A reduceRightIndexed(A initialValue, TriFunction<Integer, E, A, A> operation) {
+    public <A> A reduceRightIndexed(A initialValue, IndexedBiFunction<E, A, A> operation) {
         return Enumerable.reduceRightIndexed(initialValue, operation, this);
     }
 
@@ -408,7 +408,7 @@ public abstract class IdeaList<E> implements Iterable<E> {
         return Enumerable.reduceRight(operation, transformLast, this);
     }
 
-    public <A> A reduceRightIndexed(TriFunction<Integer, E, A, A> operation, Function<E, A> transformLast) {
+    public <A> A reduceRightIndexed(IndexedBiFunction<E, A, A> operation, Function<E, A> transformLast) {
         return Enumerable.reduceRightIndexed(operation, transformLast, this);
     }
 
@@ -416,7 +416,7 @@ public abstract class IdeaList<E> implements Iterable<E> {
         return Enumerable.reduceRight(operation, this);
     }
 
-    public E reduceRightIndexed(TriFunction<Integer, E, E, E> operation) {
+    public E reduceRightIndexed(IndexedBiFunction<E, E, E> operation) {
         return Enumerable.reduceRightIndexed(operation, this);
     }
 
