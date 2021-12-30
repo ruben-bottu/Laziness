@@ -40,6 +40,7 @@ public abstract class IdeaList<E> implements Iterable<E> {
     }
 
     private static <E, O> IdeaList<E> concat(IdeaList<E> elements, O other, Function<O, IdeaList<E>> toIdeaList) {
+        //Objects.requireNonNull(other);
         return elements.lazyReduceRight(toIdeaList.apply(other), IdeaList::create);
     }
 
@@ -53,7 +54,7 @@ public abstract class IdeaList<E> implements Iterable<E> {
 
     private static <E, O> IdeaList<E> concat(Iterator<E> iterator, O other, Function<O, IdeaList<E>> toIdeaList) {
         if (iterator.hasNext()) {
-            E element = iterator.next();
+            E element = iterator.next(); // Objects.requireNonNull(iterator.next());
             return IdeaList.create(Lazy.of(() -> element), Lazy.of(() -> concat(iterator, other, toIdeaList)));
         }
         return toIdeaList.apply(other);
@@ -140,6 +141,37 @@ public abstract class IdeaList<E> implements Iterable<E> {
 
 
     // Getters ======================================================================================
+    public int length() {
+        return count(__ -> true);
+    }
+
+    public int length2() {
+        return count(alwaysTrue());
+    }
+
+    public abstract int lastIndex();
+
+    // Change so it can handle null values?
+    @Override
+    public int hashCode() {
+        return mapToInt(Object::hashCode).reduce(1, (accum, hashCode) -> 31 * accum + hashCode);
+    }
+
+    @Override
+    public String toString() {
+        return toList().toString();
+    }
+
+    public abstract E first();
+
+    public abstract E single();
+
+    public abstract E last();
+
+    public E random() {
+        return get(RANDOM.nextInt(length()));
+    }
+
     protected abstract Optional<IndexElement<IdeaList<E>>> findFirstNodeIndexedHelper(int index, IntObjPredicate<Lazy<E>> predicate);
 
     private Optional<IndexElement<IdeaList<E>>> findFirstNodeIndexed(IntObjPredicate<Lazy<E>> predicate) {
@@ -153,17 +185,6 @@ public abstract class IdeaList<E> implements Iterable<E> {
                 .orElseThrow(IdeaList::indexTooBigException)
                 .element
                 .first();
-    }
-
-    public abstract E first();
-
-    public abstract E single();
-
-    // return get(-1);
-    public abstract E last();
-
-    public E random() {
-        return get(RANDOM.nextInt(length()));
     }
 
     public Optional<E> findFirst(Predicate<E> predicate) {
@@ -192,18 +213,8 @@ public abstract class IdeaList<E> implements Iterable<E> {
         return indexOfFirst(isEqual(element));
     }
 
-    public abstract int lastIndex();
-
     // Should return IntIdeaList
     public abstract IdeaList<Integer> indices();
-
-    public int length() {
-        return count(__ -> true);
-    }
-
-    public int length2() {
-        return count(alwaysTrue());
-    }
 
     public List<E> toList() {
         return Enumerable.toList(this);
@@ -213,16 +224,6 @@ public abstract class IdeaList<E> implements Iterable<E> {
         E[] result = arrayOf(elementType, length());
         forEachIndexed((index, elem) -> result[index] = elem);
         return result;
-    }
-
-    @Override
-    public int hashCode() {
-        return mapToInt(Object::hashCode).reduce(1, (accum, hashCode) -> 31 * accum + hashCode);
-    }
-
-    @Override
-    public String toString() {
-        return toList().toString();
     }
 
     @Override
@@ -288,6 +289,7 @@ public abstract class IdeaList<E> implements Iterable<E> {
     }
 
     private <I> IdeaList<E> insertAtHelper(int index, I elements, BiFunction<I, IdeaList<E>, IdeaList<E>> concat) {
+        //Objects.requireNonNull(elements);
         if (index < 0) return insertAtHelper(toPositiveIndex(index), elements, concat);
         return concatWhen((idx, __) -> idx == index,
                 listAtMatch -> concat.apply(elements, listAtMatch),
@@ -312,7 +314,12 @@ public abstract class IdeaList<E> implements Iterable<E> {
     }
 
     public IdeaList<E> concatWith(Iterable<E> elements) {
+        //Objects.requireNonNull(elements);
         return concat(this, Lazy.of(() -> IdeaList.of(elements)));
+    }
+
+    public IdeaList<E> concatWith2(Iterable<E> elements) {
+        return concat(this, IdeaList.of(elements));
     }
 
     @SafeVarargs
@@ -420,23 +427,70 @@ public abstract class IdeaList<E> implements Iterable<E> {
         return Enumerable.reduceRightIndexed(operation, this);
     }
 
-    protected abstract <A> A lazyReduceRight(A initialValue, BiFunction<Lazy<E>, Lazy<A>, A> operation);
+    /*public <R extends Comparable<R>> E maxBy(Function<E, R> selector) {
+        return map(selector).zipWith(this).reduce((accum, compElem) -> accum.first.compareTo(compElem.first) > 0 ? accum : compElem).second;
+    }*/
 
-    private <R, S> R createIndexed(BiFunction<IdeaList<E>, Function<E, S>, R> function, IntObjFunction<E, S> lambda) {
-        var index = new AtomicInteger();
-        return function.apply(this, elem -> lambda.apply(index.getAndIncrement(), elem));
+    /*public <R extends Comparable<R>> E maxBy(Function<E, R> selector) {
+        return map(selector).zipWith(this).reduce((accum, compElem) -> accum.first.compareTo(compElem.first) > 0 ? accum : compElem).second;
+    }*/
+
+    public int sumOf(ToIntFunction<E> selector) {
+        return mapToInt(selector).sum();
     }
 
+    public int count(Predicate<E> predicate) {
+        return sumOf(elem -> predicate.test(elem) ? 1 : 0);
+    }
+
+    public double sumOfDouble(Function<E, Double> selector) {
+        return map(selector).reduce(Double::sum);
+    }
+
+    /*public IdeaList<E> reverse() {
+        return reduce(IdeaList.empty(), IdeaList::prepend);
+    }*/
+
+    /*public IdeaList<E> reverse() {
+        IdeaList<E> result = IdeaList.empty();
+        Iterator<Lazy<E>> iter = Enumerator.ofLazy(this);
+
+        while (iter.hasNext()) {
+            IdeaList<E> intermediateResult = result;
+            result = IdeaList.create(iter.next(), Lazy.of(() -> intermediateResult));
+        }
+        return result;
+    }*/
+
+    public IdeaList<E> reverse() {
+        return Enumerable.reduce(IdeaList.empty(),
+                (accum, elem) -> IdeaList.create(elem, Lazy.of(() -> accum)),
+                Enumerable.ofLazy(this));
+    }
+
+    protected abstract <A> A lazyReduceRight(A initialValue, BiFunction<Lazy<E>, Lazy<A>, A> operation);
+
+    /*private <R, S> R createIndexed(BiFunction<IdeaList<E>, Function<E, S>, R> function, IntObjFunction<E, S> lambda) {
+        var index = new AtomicInteger();
+        return function.apply(this, elem -> lambda.apply(index.getAndIncrement(), elem));
+    }*/
+
     public <R> IdeaList<R> map(Function<E, R> transform) {
+        //Objects.requireNonNull(transform);
         BiFunction<Lazy<E>, Lazy<IdeaList<R>>, IdeaList<R>> transformAndPrependElem = (elem, list) -> IdeaList.create(Lazy.of(() -> transform.apply(elem.value())), list);
         return lazyReduceRight(IdeaList.empty(), transformAndPrependElem);
     }
 
-    public <R> IdeaList<R> mapIndexed(IntObjFunction<E, R> transform) {
+    /*public <R> IdeaList<R> mapIndexed(IntObjFunction<E, R> transform) {
         return createIndexed(IdeaList::map, transform);
+    }*/
+
+    public <R> IdeaList<R> mapIndexed(IntObjFunction<E, R> transform) {
+        return Enumerable.createIndexed(IdeaList<E>::map,this, transform);
     }
 
     public IntIdeaList mapToInt(ToIntFunction<E> transform) {
+        //Objects.requireNonNull(transform);
         BiFunction<Lazy<E>, Lazy<IntIdeaList>, IntIdeaList> transformAndPrependElem = (elem, list) -> IntIdeaList.create(LazyInt.of(() -> transform.applyAsInt(elem.value())), list);
         return lazyReduceRight(IntIdeaList.empty(), transformAndPrependElem);
     }
@@ -455,7 +509,7 @@ public abstract class IdeaList<E> implements Iterable<E> {
     }
 
     public IdeaList<E> whereIndexed(IntObjFunction<E, Boolean> predicate) {
-        return createIndexed(IdeaList::where, predicate);
+        return Enumerable.createIndexed(IdeaList<E>::where, this, predicate);
     }
 
     public IdeaList<E> filter(Function<E, Boolean> predicate) {
@@ -473,6 +527,45 @@ public abstract class IdeaList<E> implements Iterable<E> {
     public IdeaList<E> findAllIndexed(IntObjFunction<E, Boolean> predicate) {
         return whereIndexed(predicate);
     }
+
+    public IdeaList<E> step(int length) {
+        if (length < 1) throw new IllegalArgumentException("Length cannot be smaller than 1. Given: " + length);
+        return whereIndexed((index, __) -> index % length == 0);
+    }
+
+    // Implement sortByAscending() and sortByDescending() through sortWith(Comparator<E> comparator)
+    private <R extends Comparable<R>> List<E> toListSortedByAscending(Function<E, R> selector) {
+        List<E> list = toList();
+        list.sort(Comparator.comparing(selector));
+        return list;
+    }
+
+    public <R extends Comparable<R>> IdeaList<E> sortByAscending(Function<E, R> selector) {
+        return IdeaList.of(toListSortedByAscending(selector));
+    }
+
+    public <R extends Comparable<R>> IdeaList<E> sortByAsc(Function<E, R> selector) {
+        return sortByAscending(selector);
+    }
+
+    private <R extends Comparable<R>> List<E> toListSortedByDescending(Function<E, R> selector) {
+        List<E> list = toList();
+        list.sort(Comparator.comparing(selector, Comparator.reverseOrder()));
+        return list;
+    }
+
+    public <R extends Comparable<R>> IdeaList<E> sortByDescending(Function<E, R> selector) {
+        return IdeaList.of(toListSortedByDescending(selector));
+    }
+
+    public <R extends Comparable<R>> IdeaList<E> sortByDesc(Function<E, R> selector) {
+        return sortByDescending(selector);
+    }
+
+    /*public IdeaList<E> sortWith(Comparator<E> comparator) {
+        Comparator<Lazy<E>> lazyComparator = Comparator.comparing(Lazy::value, comparator);
+        return MergeSort.sort(lazyComparator, this);
+    }*/
 
     /*@SuppressWarnings("unchecked") // Cast is safe because isNested() first checks if list does in fact contain nested iterables
     private <N> IdeaList<N> concatNestedIterables() {
@@ -605,69 +698,6 @@ public abstract class IdeaList<E> implements Iterable<E> {
         return mapIndexed(IndexElement::of);
     }
 
-    public IdeaList<E> step(int length) {
-        if (length < 1) throw new IllegalArgumentException("Length cannot be smaller than 1. Given: " + length);
-        return whereIndexed((index, __) -> index % length == 0);
-    }
-
-    public int sumOf(ToIntFunction<E> selector) {
-        return mapToInt(selector).sum();
-    }
-
-    public double sumOfDouble(Function<E, Double> selector) {
-        return map(selector).reduce(Double::sum);
-    }
-
-    public int count(Predicate<E> predicate) {
-        return sumOf(elem -> predicate.test(elem) ? 1 : 0);
-    }
-
-    /*public <R extends Comparable<R>> E maxBy(Function<E, R> selector) {
-        return map(selector).zipWith(this).reduce((accum, compElem) -> accum.first.compareTo(compElem.first) > 0 ? accum : compElem).second;
-    }*/
-
-    /*public <R extends Comparable<R>> E maxBy(Function<E, R> selector) {
-        return map(selector).zipWith(this).reduce((accum, compElem) -> accum.first.compareTo(compElem.first) > 0 ? accum : compElem).second;
-    }*/
-
-    // Implement sortByAscending() and sortByDescending() through sortWith(Comparator<E> comparator)
-    private <R extends Comparable<R>> List<E> toListSortedByAscending(Function<E, R> selector) {
-        List<E> list = toList();
-        list.sort(Comparator.comparing(selector));
-        return list;
-    }
-
-    public <R extends Comparable<R>> IdeaList<E> sortByAscending(Function<E, R> selector) {
-        return IdeaList.of(toListSortedByAscending(selector));
-    }
-
-    public <R extends Comparable<R>> IdeaList<E> sortByAsc(Function<E, R> selector) {
-        return sortByAscending(selector);
-    }
-
-    private <R extends Comparable<R>> List<E> toListSortedByDescending(Function<E, R> selector) {
-        List<E> list = toList();
-        list.sort(Comparator.comparing(selector, Comparator.reverseOrder()));
-        return list;
-    }
-
-    public <R extends Comparable<R>> IdeaList<E> sortByDescending(Function<E, R> selector) {
-        return IdeaList.of(toListSortedByDescending(selector));
-    }
-
-    public <R extends Comparable<R>> IdeaList<E> sortByDesc(Function<E, R> selector) {
-        return sortByDescending(selector);
-    }
-
-    /*public IdeaList<E> sortWith(Comparator<E> comparator) {
-        Comparator<Lazy<E>> lazyComparator = Comparator.comparing(Lazy::value, comparator);
-        return MergeSort.sort(lazyComparator, this);
-    }*/
-
-    /*public IdeaList<E> reverse() {
-        return reduce(IdeaList.empty(), (accum, elem) -> IdeaList.create(elem, accum));
-    }*/
-
 
     /////////////////////////////////////////////////////////////////////////////////////////////////
     private static class NormalNode<E> extends IdeaList<E> {
@@ -694,6 +724,7 @@ public abstract class IdeaList<E> implements Iterable<E> {
             return first();
         }
 
+        // return get(-1);
         @Override
         public E last() {
             return tail.value().isEmpty() ? first() : tail.value().last();
@@ -735,7 +766,9 @@ public abstract class IdeaList<E> implements Iterable<E> {
         // Modifiers ====================================================================================
         @Override
         protected IdeaList<E> concatWhenHelper(int index, IntObjPredicate<Lazy<E>> predicate, Function<IdeaList<E>, IdeaList<E>> listAtMatchToNewList, Supplier<IdeaList<E>> orElseReturn) {
-            return predicate.test(index, value) ? listAtMatchToNewList.apply(this) : IdeaList.create(value, Lazy.of(() -> tail.value().concatWhenHelper(index + 1, predicate, listAtMatchToNewList, orElseReturn)));
+            return predicate.test(index, value)
+                    ? listAtMatchToNewList.apply(this)
+                    : IdeaList.create(value, Lazy.of(() -> tail.value().concatWhenHelper(index + 1, predicate, listAtMatchToNewList, orElseReturn)));
         }
 
 

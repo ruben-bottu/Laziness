@@ -4,8 +4,9 @@ import idealist.range.Range;
 import idealist.tuple.IndexElement;
 import idealist.tuple.Pair;
 import idealist.tuple.Triplet;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayNameGeneration;
+import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
 import java.util.*;
@@ -15,8 +16,10 @@ import static idealist.Lambda.alwaysTrue;
 import static idealist.TestUtils.assertContentEqual;
 import static idealist.TestUtils.assertEmpty;
 import static java.util.Arrays.asList;
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
+
+@DisplayNameGeneration(TestNameGenerator.class)
 public class IdeaListTest {
     private int i1, i2, i3, i4, i5, i6, i7, i8;
     private Person p1, p2, p3, p4, p5, p6;
@@ -29,10 +32,10 @@ public class IdeaListTest {
     private IdeaList<Dog> dogIdeaList;
     private IdeaList<LocalDate> localDateIdeaList;
 
-    private Set<Person> personSet;
+    private LinkedHashSet<Person> personSet;
     private LinkedList<Dog> dogLinkedList;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         initialiseIntegers();
         initialisePeople();
@@ -60,6 +63,13 @@ public class IdeaListTest {
         p4 = new Person("Jeffie", "Allstar");
         p5 = new Person("Daenerys", "Targaryen");
         p6 = new Person("John", "Jefferson");
+
+        /*p1 = new Person("Cornelia", "Viraja");
+        p2 = new Person("Dagda", "Alfredo");
+        p3 = new Person("Veera", "Raban");
+        p4 = new Person("Vanesa", "Luvinia");
+        p5 = new Person("Leonard", "Priscilla");
+        p6 = new Person("Tory", "Aquila");*/
     }
 
     private void initialiseDogs() {
@@ -69,6 +79,13 @@ public class IdeaListTest {
         d4 = new Dog(4, "Shiba");
         d5 = new Dog(13, "Floof");
         d6 = new Dog(9, "Paula");
+
+        // Lorrie
+        // Eifion
+        // Osheen
+        // Bede
+        // Quirijn
+        // Olle
     }
 
     private void initialiseCats() {
@@ -76,6 +93,11 @@ public class IdeaListTest {
         c2 = new Cat(0, "Kitty");
         c3 = new Cat(7, "Lily");
         c4 = new Cat(4, "Charlie");
+
+        // Jia
+        // Signe
+        // Dinh
+        // Hakon
     }
 
     private void initialiseLocalDates() {
@@ -100,28 +122,51 @@ public class IdeaListTest {
 
     // Constructors and factory methods =============================================================
     @Test
-    public void empty_Returns_an_empty_IdeaList() {
+    public void empty_ReturnsAnEmptyIdeaList() {
         assertEmpty(IdeaList.empty());
     }
 
-    @Test(expected = NullPointerException.class)
-    public void of_Iterable_Throws_exception_if_Iterable_null() {
+    /*@Test //(expected = NullPointerException.class)
+    public void ofIterable_NullAsParam_ThrowException() {
         IdeaList.of((Iterable<Object>) null);
-    }
+    }*/
 
     @Test
+    public void ofIterable_NullAsParameter_ThrowException() {
+        assertThrows(NullPointerException.class, () -> IdeaList.of((Iterable<Object>) null),
+                "Method should have thrown a NullPointerException");
+    }
+
+    /*@Test
     public void of_Iterable_Creates_empty_IdeaList_if_given_Iterable_is_empty() {
         assertEmpty( IdeaList.of(new PriorityQueue<>()) );
-    }
+    }*/
 
     @Test
+    public void ofIterable_EmptyIterable_ReturnEmptyIdeaList() {
+        Iterable<String> emptyIterable = new PriorityQueue<>();
+        assertEmpty( IdeaList.of(emptyIterable) );
+    }
+
+    /*@Test
     public void of_Iterable_Creates_IdeaList_of_given_Iterable_containing_null() {
         Set<Dog> dogSet = new LinkedHashSet<>(asList(d2, d6, d1, null, d1, null));
         assertContentEqual(dogSet, IdeaList.of(dogSet));
-    }
+    }*/
 
     @Test
+    public void ofIterable_IterableContainingNullValues_ReturnIdeaListOfIterable() {
+        Set<Dog> iterableContainingNulls = new LinkedHashSet<>(asList(d2, d6, d1, null, d1, null));
+        assertContentEqual(iterableContainingNulls, IdeaList.of(iterableContainingNulls));
+    }
+
+    /*@Test
     public void of_Iterable_Creates_IdeaList_of_given_Iterable() {
+        assertContentEqual(personSet, IdeaList.of(personSet));
+    }*/
+
+    @Test
+    public void ofIterable_NormalIterable_ReturnIdeaListOfIterable() {
         assertContentEqual(personSet, IdeaList.of(personSet));
     }
 
@@ -195,7 +240,7 @@ public class IdeaListTest {
         assertContentEqual(expected, ideaList);
     }
 
-    /*@Test(expected = NullPointerException.class)
+    /*@Test //(expected = NullPointerException.class)
     public void initialiseWith_Throws_exception_if_given_indexToElement_null() {
         IdeaList.initialiseWith(6, null);
     }*/
@@ -205,12 +250,12 @@ public class IdeaListTest {
         assertEmpty( IdeaList.initialiseWith(0, index -> index) );
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test //(expected = IllegalArgumentException.class)
     public void initialiseWith_Throws_exception_if_given_length_just_negative() {
         IdeaList.initialiseWith(-1, index -> index);
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test //(expected = IllegalArgumentException.class)
     public void initialiseWith_Throws_exception_if_given_length_negative() {
         IdeaList.initialiseWith(-24, index -> index);
     }
@@ -224,22 +269,22 @@ public class IdeaListTest {
 
 
     // Getters ======================================================================================
-    /*@Test(expected = IndexOutOfBoundsException.class)
+    /*@Test //(expected = IndexOutOfBoundsException.class)
     public void get_Throws_IndexOutOfBoundsException_if_index_negative() {
         localDateIdeaList.get(-75);
     }
 
-    @Test(expected = IndexOutOfBoundsException.class)
+    @Test //(expected = IndexOutOfBoundsException.class)
     public void get_Throws_IndexOutOfBoundsException_if_index_just_negative() {
         integerIdeaList.get(-1);
     }*/
 
-    @Test(expected = IndexOutOfBoundsException.class)
+    @Test //(expected = IndexOutOfBoundsException.class)
     public void get_Throws_IndexOutOfBoundsException_if_negative_index_smaller_than_last_valid_index() {
         dogIdeaList.get(-75);
     }
 
-    @Test(expected = IndexOutOfBoundsException.class)
+    @Test //(expected = IndexOutOfBoundsException.class)
     public void get_Throws_IndexOutOfBoundsException_if_negative_index_just_smaller_than_last_valid_index() {
         localDateIdeaList.get(-8);
     }
@@ -252,12 +297,12 @@ public class IdeaListTest {
         assertEquals(d2, dogIdeaList.get(-5));
     }
 
-    @Test(expected = IndexOutOfBoundsException.class)
+    @Test //(expected = IndexOutOfBoundsException.class)
     public void get_Throws_IndexOutOfBoundsException_if_index_just_bigger_than_last_valid_index() {
         personIdeaList.get(6);
     }
 
-    @Test(expected = IndexOutOfBoundsException.class)
+    @Test //(expected = IndexOutOfBoundsException.class)
     public void get_Throws_IndexOutOfBoundsException_if_index_bigger_than_last_valid_index() {
         dogIdeaList.get(21);
     }
@@ -279,7 +324,7 @@ public class IdeaListTest {
         assertEquals(d3, dogIdeaList.get(2));
     }
 
-    @Test(expected = NoSuchElementException.class)
+    @Test //(expected = NoSuchElementException.class)
     public void first_Throws_exception_if_list_is_empty() {
         IdeaList.empty().first();
     }
@@ -298,22 +343,22 @@ public class IdeaListTest {
         assertEquals(l1, localDateIdeaList.first());
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test //(expected = IllegalArgumentException.class)
     public void single_Throws_exception_if_list_containing_nulls_contains_more_than_one_element() {
         IdeaList.of(7, 8, 9, null, 7, 8, 0).single();
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test //(expected = IllegalArgumentException.class)
     public void single_Throws_exception_if_list_contains_two_elements() {
         IdeaList.of(d5, d6).single();
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test //(expected = IllegalArgumentException.class)
     public void single_Throws_exception_if_list_contains_more_than_one_element() {
         integerIdeaList.single();
     }
 
-    @Test(expected = NoSuchElementException.class)
+    @Test //(expected = NoSuchElementException.class)
     public void single_Throws_exception_if_list_is_empty() {
         IdeaList.empty().single();
     }
@@ -330,7 +375,7 @@ public class IdeaListTest {
         assertEquals(l5, IdeaList.of(l5).single());
     }
 
-    @Test(expected = NoSuchElementException.class)
+    @Test //(expected = NoSuchElementException.class)
     public void last_Throws_exception_if_list_is_empty() {
         IdeaList.empty().last();
     }
@@ -354,7 +399,7 @@ public class IdeaListTest {
         assertEquals(l7, localDateIdeaList.last());
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test //(expected = IllegalArgumentException.class)
     public void random_Throws_exception_if_list_is_empty() {
         IdeaList.empty().random();
     }
@@ -402,7 +447,7 @@ public class IdeaListTest {
         assertEquals(Optional.empty(), input.findFirst(Objects::isNull));
     }*/
 
-    @Test(expected = NullPointerException.class)
+    @Test //(expected = NullPointerException.class)
     public void findFirst_Throws_exception_if_null_satisfies_given_predicate() {
         IdeaList.of(p1, p1, p2, null, p3, p3, null).findFirst(Objects::isNull);
     }
@@ -436,7 +481,7 @@ public class IdeaListTest {
         assertEmpty( integerIdeaList.findFirstIndexed((index, integer) -> false) );
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test //(expected = NullPointerException.class)
     public void findFirstIndexed_Throws_exception_if_null_satisfies_given_predicate() {
         IdeaList.of(p1, p1, p2, null, p3, p3, null).findFirstIndexed((index, person) -> person == null);
     }
@@ -464,7 +509,7 @@ public class IdeaListTest {
         assertEmpty( integerIdeaList.first(alwaysFalse()) );
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test //(expected = NullPointerException.class)
     public void first_Throws_exception_if_null_satisfies_given_predicate() {
         IdeaList.of(p1, p1, p2, null, p3, p3, null).first(Objects::isNull);
     }
@@ -549,7 +594,7 @@ public class IdeaListTest {
         assertEquals(-1, IdeaList.empty().lastIndex());
     }*/
 
-    @Test(expected = UnsupportedOperationException.class)
+    @Test //(expected = UnsupportedOperationException.class)
     public void lastIndex_Throws_UnsupportedOperationException_if_list_is_empty() {
         IdeaList.empty().lastIndex();
     }
@@ -569,7 +614,7 @@ public class IdeaListTest {
         assertEquals(6, localDateIdeaList.lastIndex());
     }
 
-    @Test(expected = UnsupportedOperationException.class)
+    @Test //(expected = UnsupportedOperationException.class)
     public void indices_Throws_UnsupportedOperationException_if_list_is_empty() {
         IdeaList.empty().indices();
     }
@@ -886,7 +931,7 @@ public class IdeaListTest {
         assertTrue(localDateIdeaList.contains(LocalDate.of(1974, 12, 25)));
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test //(expected = NullPointerException.class)
     public void containsAll_Iterable_Throws_exception_if_given_elements_null() {
         assertFalse(localDateIdeaList.containsAll(null));
     }
@@ -1118,39 +1163,39 @@ public class IdeaListTest {
 
 
     // Modifiers ====================================================================================
-    @Test(expected = NullPointerException.class)
+    @Test //(expected = NullPointerException.class)
     public void insertAt_Iterable_Throws_exception_if_given_index_0_and_Iterable_null() {
         personIdeaList.insertAt(0, (Iterable<Person>) null);
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test //(expected = IllegalArgumentException.class)
     public void insertAt_Iterable_Throws_exception_if_given_index_2_and_Iterable_null() {
         personIdeaList.insertAt(2, (Iterable<Person>) null);
     }
 
-    @Test(expected = IndexOutOfBoundsException.class)
+    @Test //(expected = IndexOutOfBoundsException.class)
     public void insertAt_Iterable_Throws_exception_if_this_list_is_empty() {
         IdeaList.<Person>empty().insertAt(0, personSet);
     }
 
-    /*@Test(expected = IndexOutOfBoundsException.class)
+    /*@Test //(expected = IndexOutOfBoundsException.class)
     public void insertAt_Iterable_Throws_exception_if_index_just_negative() {
         personIdeaList.insertAt(-1, Collections.emptyList());
     }
 
-    @Test(expected = IndexOutOfBoundsException.class)
+    @Test //(expected = IndexOutOfBoundsException.class)
     public void insertAt_Iterable_Throws_exception_if_index_negative() {
         personIdeaList.insertAt(-23, Collections.emptyList());
     }*/
 
     //get_Throws_IndexOutOfBoundsException_if_negative_index_smaller_than_last_valid_index
 
-    @Test(expected = IndexOutOfBoundsException.class)
+    @Test //(expected = IndexOutOfBoundsException.class)
     public void insertAt_Iterable_Throws_exception_if_negative_index_just_smaller_than_last_valid_index() {
         personIdeaList.insertAt(-7, personSet);
     }
 
-    @Test(expected = IndexOutOfBoundsException.class)
+    @Test //(expected = IndexOutOfBoundsException.class)
     public void insertAt_Iterable_Throws_exception_if_negative_index_smaller_than_last_valid_index() {
         personIdeaList.insertAt(-23, personSet);
     }
@@ -1163,12 +1208,12 @@ public class IdeaListTest {
         assertEquals(expected, localDateIdeaList.insertAt(-5, asList(local1, local2)));
     }
 
-    @Test(expected = IndexOutOfBoundsException.class)
+    @Test //(expected = IndexOutOfBoundsException.class)
     public void insertAt_Iterable_Throws_exception_if_index_just_bigger_than_upper_bound() {
         personIdeaList.insertAt(6, Collections.emptyList()).toList();
     }
 
-    @Test(expected = IndexOutOfBoundsException.class)
+    @Test //(expected = IndexOutOfBoundsException.class)
     public void insertAt_Iterable_Throws_exception_if_index_bigger_than_upper_bound() {
         personIdeaList.insertAt(47, Collections.emptyList()).toList();
     }
@@ -1193,33 +1238,33 @@ public class IdeaListTest {
         assertEquals(expected, localDateIdeaList.insertAt(3, asList(local1, local2)));
     }
 
-    @Test(expected = IndexOutOfBoundsException.class)
+    @Test //(expected = IndexOutOfBoundsException.class)
     public void insertAt_elements_Throws_exception_if_this_list_is_empty() {
         IdeaList.<Person>empty().insertAt(0, p1);
     }
 
-    /*@Test(expected = IndexOutOfBoundsException.class)
+    /*@Test //(expected = IndexOutOfBoundsException.class)
     public void insertAt_elements_Throws_exception_if_index_just_negative() {
         personIdeaList.insertAt(-1, p1);
     }
 
-    @Test(expected = IndexOutOfBoundsException.class)
+    @Test //(expected = IndexOutOfBoundsException.class)
     public void insertAt_elements_Throws_exception_if_index_negative() {
         personIdeaList.insertAt(-23, p1);
     }*/
 
     // TODO refactor from here
-    @Test(expected = IndexOutOfBoundsException.class)
+    @Test //(expected = IndexOutOfBoundsException.class)
     public void insertAt_elements_Throws_exception_if_negative_index_just_smaller_than_last_valid_index() {
         integerIdeaList.insertAt(-9, i1);
     }
 
-    /*@Test(expected = IndexOutOfBoundsException.class)
+    /*@Test //(expected = IndexOutOfBoundsException.class)
     public void insertAt_Iterable_Throws_exception_if_negative_index_just_smaller_than_last_valid_index() {
         personIdeaList.insertAt(-7, personSet);
     }
 
-    @Test(expected = IndexOutOfBoundsException.class)
+    @Test //(expected = IndexOutOfBoundsException.class)
     public void insertAt_Iterable_Throws_exception_if_negative_index_smaller_than_last_valid_index() {
         personIdeaList.insertAt(-23, personSet);
     }
@@ -1232,12 +1277,12 @@ public class IdeaListTest {
         assertEquals(expected, localDateIdeaList.insertAt(-5, Arrays.asList(local1, local2)));
     }*/
 
-    @Test(expected = IndexOutOfBoundsException.class)
+    @Test //(expected = IndexOutOfBoundsException.class)
     public void insertAt_elements_Throws_exception_if_index_just_bigger_than_upper_bound() {
         personIdeaList.insertAt(6, p1).toList();
     }
 
-    @Test(expected = IndexOutOfBoundsException.class)
+    @Test //(expected = IndexOutOfBoundsException.class)
     public void insertAt_elements_Throws_exception_if_index_bigger_than_upper_bound() {
         personIdeaList.insertAt(47, p1).toList();
     }
@@ -1261,27 +1306,27 @@ public class IdeaListTest {
         assertEquals(expected, localDateIdeaList.insertAt(3, local1, local2));
     }
 
-    @Test(expected = IndexOutOfBoundsException.class)
+    @Test //(expected = IndexOutOfBoundsException.class)
     public void insertAt_IdeaList_Throws_exception_if_this_list_is_empty() {
         IdeaList.<Person>empty().insertAt(0, personIdeaList);
     }
 
-    @Test(expected = IndexOutOfBoundsException.class)
+    @Test //(expected = IndexOutOfBoundsException.class)
     public void insertAt_IdeaList_Throws_exception_if_index_just_negative() {
         personIdeaList.insertAt(-1, IdeaList.empty());
     }
 
-    @Test(expected = IndexOutOfBoundsException.class)
+    @Test //(expected = IndexOutOfBoundsException.class)
     public void insertAt_IdeaList_Throws_exception_if_index_negative() {
         personIdeaList.insertAt(-23, IdeaList.empty());
     }
 
-    @Test(expected = IndexOutOfBoundsException.class)
+    @Test //(expected = IndexOutOfBoundsException.class)
     public void insertAt_IdeaList_Throws_exception_if_index_just_bigger_than_upper_bound() {
         personIdeaList.insertAt(6, IdeaList.empty()).toList();
     }
 
-    @Test(expected = IndexOutOfBoundsException.class)
+    @Test //(expected = IndexOutOfBoundsException.class)
     public void insertAt_IdeaList_Throws_exception_if_index_bigger_than_upper_bound() {
         personIdeaList.insertAt(47, IdeaList.empty()).toList();
     }
@@ -1299,7 +1344,7 @@ public class IdeaListTest {
         assertEquals(expected, localDateIdeaList.insertAt(3, IdeaList.of(local1, local2)));
     }
 
-    /*@Test(expected = IllegalArgumentException.class)
+    /*@Test //(expected = IllegalArgumentException.class)
     public void concatWith_Iterable_Throws_exception_if_given_elements_null() {
         personIdeaList.concatWith(null);
     }*/
@@ -1392,7 +1437,7 @@ public class IdeaListTest {
         assertEquals(IdeaList.of(d1, d2, d3, d4, d5), IdeaList.of(d1, d2).add(d3, d4, d5));
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test //(expected = NullPointerException.class)
     public void linkToBackOf_Iterable_Throws_exception_if_given_elements_null() {
         personIdeaList.linkToBackOf(null);
     }
@@ -1506,27 +1551,27 @@ public class IdeaListTest {
         assertEquals(expected, inputList.removeFirst(p5));
     }
 
-    @Test(expected = IndexOutOfBoundsException.class)
+    @Test //(expected = IndexOutOfBoundsException.class)
     public void removeAt_Throws_exception_if_list_is_empty() {
         IdeaList.<String>empty().removeAt(0);
     }
 
-    @Test(expected = IndexOutOfBoundsException.class)
+    @Test //(expected = IndexOutOfBoundsException.class)
     public void removeAt_Throws_exception_if_index_just_negative() {
         dogIdeaList.removeAt(-1);
     }
 
-    @Test(expected = IndexOutOfBoundsException.class)
+    @Test //(expected = IndexOutOfBoundsException.class)
     public void removeAt_Throws_exception_if_index_negative() {
         dogIdeaList.removeAt(-23);
     }
 
-    @Test(expected = IndexOutOfBoundsException.class)
+    @Test //(expected = IndexOutOfBoundsException.class)
     public void removeAt_Throws_exception_if_index_just_bigger_than_upper_bound() {
         dogIdeaList.removeAt(6).toList();
     }
 
-    @Test(expected = IndexOutOfBoundsException.class)
+    @Test //(expected = IndexOutOfBoundsException.class)
     public void removeAt_Throws_exception_if_index_bigger_than_upper_bound() {
         dogIdeaList.removeAt(56).toList();
     }
@@ -1688,7 +1733,7 @@ public class IdeaListTest {
         assertEquals(expected, personIdeaList.select(Person::getFirstName).reduceIndexed("", (index, acc, firstName) -> acc + index + firstName));
     }
 
-    @Test(expected = UnsupportedOperationException.class)
+    @Test //(expected = UnsupportedOperationException.class)
     public void reduce_Throws_exception_if_this_list_does_not_contain_elements() {
         IdeaList.<Integer>empty().reduce((acc, integer) -> 10);
     }
@@ -1706,7 +1751,7 @@ public class IdeaListTest {
         assertEquals(expected, given.reduce((acc, string) -> acc + string));
     }
 
-    @Test(expected = UnsupportedOperationException.class)
+    @Test //(expected = UnsupportedOperationException.class)
     public void reduceIndexed_Throws_exception_if_this_list_does_not_contain_elements() {
         IdeaList.<Integer>empty().reduceIndexed((index, acc, integer) -> 10);
     }
@@ -1833,17 +1878,17 @@ public class IdeaListTest {
         assertEquals(expectedList, dogIdeaList.findAllIndexed((index, animal) -> (index % 2) == 0));
     }
 
-    @Test(expected = UnsupportedOperationException.class)
+    @Test //(expected = UnsupportedOperationException.class)
     public void flatten_Throws_exception_if_list_is_empty() {
         IdeaList.empty().flatten();
     }
 
-    @Test(expected = UnsupportedOperationException.class)
+    @Test //(expected = UnsupportedOperationException.class)
     public void flatten_Throws_exception_if_list_is_already_flat() {
         personIdeaList.flatten();
     }
 
-    @Test(expected = UnsupportedOperationException.class)
+    @Test //(expected = UnsupportedOperationException.class)
     public void flatten_Throws_exception_if_list_contains_elements_that_are_not_Iterable() {
         Map<String, Integer> map1 = new HashMap<>();
         map1.put("a", 1); map1.put("b", 2);
@@ -1896,12 +1941,12 @@ public class IdeaListTest {
     }
 
 
-    @Test(expected = NullPointerException.class)
+    @Test //(expected = NullPointerException.class)
     public void zipWith_Triplet_Throws_exception_if_other_is_null() {
         personIdeaList.zipWith(null, localDateIdeaList);
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test //(expected = NullPointerException.class)
     public void zipWith_Triplet_Throws_exception_if_other2_is_null() {
         personIdeaList.zipWith(integerIdeaList, null);
     }
@@ -1974,7 +2019,7 @@ public class IdeaListTest {
         assertEquals(expected, dogs.zipWith(dates, ints));
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test //(expected = NullPointerException.class)
     public void zipWith_Pair_Throws_exception_if_other_is_null() {
         personIdeaList.zipWith(null);
     }
@@ -2047,17 +2092,17 @@ public class IdeaListTest {
         assertEquals(expected, personIdeaList.withIndex());
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test //(expected = IllegalArgumentException.class)
     public void step_Throws_exception_if_given_length_negative() {
         IdeaList.empty().step(-17);
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test //(expected = IllegalArgumentException.class)
     public void step_Throws_exception_if_given_length_just_negative() {
         IdeaList.empty().step(-1);
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test //(expected = IllegalArgumentException.class)
     public void step_Throws_exception_if_given_length_0() {
         IdeaList.empty().step(0);
     }

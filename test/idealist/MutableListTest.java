@@ -1,7 +1,7 @@
 package idealist;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -13,7 +13,7 @@ public class MutableListTest {
 
     private LocalDate l1, l2, l3, l4, l5, l6, l7;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         initialiseLocalDates();
     }
